@@ -16,7 +16,12 @@ import type {
 } from "../../recorder/session-recorder";
 import { useFocusWhen } from "../review/transcript/remove-evidence";
 import { formatClock, minutesLeft, spokenDuration } from "../session-format";
-import { MarkIcon, PauseIcon, PlayIcon } from "../session-icons";
+import {
+  MarkIcon,
+  PauseIcon,
+  PlayIcon,
+  TranscriptIcon,
+} from "../session-icons";
 import { useSessionWorkspace } from "../session-workspace";
 import { CancelConfirmation } from "./cancel-confirmation";
 import { LevelMeter } from "./level-meter";
@@ -207,12 +212,28 @@ function CancelButton({
   );
 }
 
+function ShowSessionButton({ onShowSession }: { onShowSession: () => void }) {
+  return (
+    <button
+      aria-label="Show transcript and intentions"
+      className="dt-btn"
+      data-icon-only
+      onClick={onShowSession}
+      title="Show transcript and intentions"
+      type="button"
+    >
+      <TranscriptIcon />
+    </button>
+  );
+}
+
 function RecordingControls({
   hasKeptRecording,
   onAskToCancel,
   onFinish,
   onMark,
   onPointAt,
+  onShowSession,
   snapshot,
 }: {
   hasKeptRecording: boolean;
@@ -220,6 +241,7 @@ function RecordingControls({
   onFinish: () => void;
   onMark: () => void;
   onPointAt: () => void;
+  onShowSession: () => void;
   snapshot: RecorderSnapshot;
 }) {
   const { phase } = snapshot;
@@ -227,11 +249,14 @@ function RecordingControls({
   return (
     <>
       {isActive && (
-        <CaptureButtons
-          canCapture={phase === "recording"}
-          onMark={onMark}
-          onPointAt={onPointAt}
-        />
+        <>
+          <CaptureButtons
+            canCapture={phase === "recording"}
+            onMark={onMark}
+            onPointAt={onPointAt}
+          />
+          <ShowSessionButton onShowSession={onShowSession} />
+        </>
       )}
       <PauseToggle snapshot={snapshot} />
       <button
@@ -270,11 +295,13 @@ export function RecordingBar({
   onCancel,
   onFinish,
   onPointAt,
+  onShowSession,
   snapshot,
 }: {
   onCancel: () => void;
   onFinish: () => void;
   onPointAt: () => void;
+  onShowSession: () => void;
   snapshot: RecorderSnapshot;
 }) {
   const { account, identity, recorder } = useSessionWorkspace();
@@ -308,6 +335,7 @@ export function RecordingBar({
         onFinish={onFinish}
         onMark={markWithNote}
         onPointAt={onPointAt}
+        onShowSession={onShowSession}
         snapshot={snapshot}
       />
       {openMark && (

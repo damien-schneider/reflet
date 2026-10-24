@@ -10,6 +10,7 @@ import {
   applyContinuationResult,
   continuationResultValidator,
 } from "./continuation/apply";
+import { followRecording } from "./live_analysis";
 
 const TRANSCRIPT_CHANGED =
   "The transcript changed during the analysis. Analyze again.";
@@ -142,6 +143,7 @@ const insertProposals = async (
     proposals: ResolvedProposalValue[];
     runId: string;
     session: Doc<"sessions">;
+    transcriptRevision: number;
   }
 ): Promise<Id<"sessionProposals">[]> => {
   const { session } = options;
@@ -151,7 +153,7 @@ const insertProposals = async (
     const id = await ctx.db.insert("sessionProposals", {
       ...proposalContent(proposal),
       analysisRunId: options.runId,
-      basedOnTranscriptRevision: session.transcriptRevision,
+      basedOnTranscriptRevision: options.transcriptRevision,
       clarifications: [],
       createdAt: now,
       decision: "pending",
@@ -220,7 +222,9 @@ export const applyAnalysis = internalMutation({
     if (!isCurrentRun(session, args.runId)) {
       return null;
     }
-    if (session.transcriptRevision !== args.transcriptRevision) {
+    const transcriptMoved =
+      session.transcriptRevision !== args.transcriptRevision;
+    if (transcriptMoved && !session.analysis.startedWhileRecording) {
       await settleFailedAnalysis(ctx, session, TRANSCRIPT_CHANGED);
       return null;
     }
@@ -229,6 +233,7 @@ export const applyAnalysis = internalMutation({
       proposals: args.proposals,
       runId: args.runId,
       session,
+      transcriptRevision: args.transcriptRevision,
     });
     await suggestMerges(ctx, insertedIds, args.mergeGroups);
     if (args.continuation) {
@@ -247,6 +252,7 @@ export const applyAnalysis = internalMutation({
         updatedAt: Date.now(),
       },
     });
+    await followRecording(ctx, session._id);
     return null;
   },
   returns: v.null(),

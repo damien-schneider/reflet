@@ -219,6 +219,7 @@ export const sessionsTables = {
       error: v.optional(v.string()),
       proposalCount: v.optional(v.number()),
       runId: v.optional(v.string()),
+      startedWhileRecording: v.optional(v.boolean()),
       state: analysisStateValidator,
       updatedAt: v.optional(v.number()),
     }),

@@ -5,6 +5,7 @@ import { internalMutation, type MutationCtx } from "../../_generated/server";
 import { SESSION_CRON_BATCH_SIZE } from "../constants";
 import { spokenWordValidator } from "../validators";
 import { startWaitingAnalysis } from "./analysis_request";
+import { followRecording } from "./live_analysis";
 
 const RETRY_DELAYS_MS = [30_000, 120_000] as const;
 const AUDIO_MISSING = "The recording of this passage is no longer available.";
@@ -51,6 +52,7 @@ const settleSegment = async (
     updatedAt: now,
   });
   await startWaitingAnalysis(ctx, segment.sessionId);
+  await followRecording(ctx, segment.sessionId);
 };
 
 const isCurrentAttempt = (

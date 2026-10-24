@@ -243,6 +243,7 @@ import type * as sessions_ai_continuation_apply from "../sessions/ai/continuatio
 import type * as sessions_ai_continuation_material from "../sessions/ai/continuation/material.js";
 import type * as sessions_ai_continuation_model from "../sessions/ai/continuation/model.js";
 import type * as sessions_ai_continuation_prompt from "../sessions/ai/continuation/prompt.js";
+import type * as sessions_ai_live_analysis from "../sessions/ai/live_analysis.js";
 import type * as sessions_ai_locate_candidates from "../sessions/ai/locate/candidates.js";
 import type * as sessions_ai_locate_model from "../sessions/ai/locate/model.js";
 import type * as sessions_ai_locate_run from "../sessions/ai/locate/run.js";
@@ -641,6 +642,7 @@ declare const fullApi: ApiFromModules<{
   "sessions/ai/continuation/material": typeof sessions_ai_continuation_material;
   "sessions/ai/continuation/model": typeof sessions_ai_continuation_model;
   "sessions/ai/continuation/prompt": typeof sessions_ai_continuation_prompt;
+  "sessions/ai/live_analysis": typeof sessions_ai_live_analysis;
   "sessions/ai/locate/candidates": typeof sessions_ai_locate_candidates;
   "sessions/ai/locate/model": typeof sessions_ai_locate_model;
   "sessions/ai/locate/run": typeof sessions_ai_locate_run;

@@ -33,9 +33,9 @@ function showsBar(snapshot: RecorderSnapshot): boolean {
 
 /** Lives outside the sheet: recording goes on while every panel is closed. */
 export function RecordingLayer({
-  onFinished,
+  onOpenSession,
 }: {
-  onFinished: (target: SessionTarget) => void;
+  onOpenSession: (target: SessionTarget) => void;
 }) {
   const { recorder } = useSessionWorkspace();
   const snapshot = useRecorderSnapshot(recorder);
@@ -49,7 +49,7 @@ export function RecordingLayer({
     const { sessionId } = recorder.getSnapshot();
     try {
       const { sessionKey } = await recorder.finish();
-      onFinished({ sessionId, sessionKey });
+      onOpenSession({ sessionId, sessionKey });
     } catch (error) {
       reportFailure("The session did not finish", error, finish);
     }
@@ -69,6 +69,12 @@ export function RecordingLayer({
         onCancel={cancel}
         onFinish={finish}
         onPointAt={() => setIsPointing(true)}
+        onShowSession={() =>
+          onOpenSession({
+            sessionId: snapshot.sessionId,
+            sessionKey: snapshot.sessionKey,
+          })
+        }
         snapshot={snapshot}
       />
       {isPointing && snapshot.phase === "recording" && (

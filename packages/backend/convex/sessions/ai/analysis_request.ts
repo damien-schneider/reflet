@@ -62,13 +62,25 @@ const analysisAs = (
   updatedAt: Date.now(),
 });
 
-const startAnalysisRun = async (
+export const hasRunCoveringSession = (session: Doc<"sessions">): boolean => {
+  const { startedWhileRecording, state, updatedAt = 0 } = session.analysis;
+  const isInFlight =
+    state === "running" && Date.now() - updatedAt < ANALYSIS_STALE_AFTER_MS;
+  const missesTheEnd =
+    startedWhileRecording === true && session.collection === "ended";
+  return isInFlight && !missesTheEnd;
+};
+
+export const startAnalysisRun = async (
   ctx: MutationCtx,
   session: Doc<"sessions">
 ): Promise<void> => {
   const runId = crypto.randomUUID();
   await ctx.db.patch(session._id, {
-    analysis: analysisAs(session.analysis, "running", runId),
+    analysis: {
+      ...analysisAs(session.analysis, "running", runId),
+      startedWhileRecording: session.collection !== "ended",
+    },
   });
   await ctx.scheduler.runAfter(
     0,
@@ -81,9 +93,7 @@ export async function requestAnalysis(
   ctx: MutationCtx,
   session: Doc<"sessions">
 ): Promise<void> {
-  const { state, updatedAt = 0 } = session.analysis;
-  const runIsFresh = Date.now() - updatedAt < ANALYSIS_STALE_AFTER_MS;
-  if (state === "waiting" || (state === "running" && runIsFresh)) {
+  if (session.analysis.state === "waiting" || hasRunCoveringSession(session)) {
     return;
   }
   await ensureAnalysisAllowed(ctx, session.authorId);

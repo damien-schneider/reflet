@@ -114,12 +114,17 @@ function intentionStep(
   return { ...step, label, state: "done" };
 }
 
+function liveIntentionSteps(detail: SessionDetail): ProcessingStep[] {
+  const step = intentionStep(detail, false);
+  return step?.state === "active" || step?.state === "failed" ? [step] : [];
+}
+
 export function processingSteps(
   detail: SessionDetail,
   pendingUploads: number
 ): ProcessingStep[] {
   if (detail.session.collection !== "ended") {
-    return [];
+    return liveIntentionSteps(detail);
   }
   const isAnalysisQueued =
     pendingUploads > 0 && detail.session.analysis.state === "idle";

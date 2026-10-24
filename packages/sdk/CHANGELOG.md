@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Sessions: intentions are found while you record, not only after Finish. The new "Show transcript and intentions" button on the recording bar opens the session being recorded: passages appear as they are transcribed and intentions, with their screenshots, update as you talk. Finish still runs a last full analysis.
+
 ## [0.7.12] - 2026-10-23
 
 ### Added

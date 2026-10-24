@@ -11,7 +11,7 @@ export type IntentionView = "screens" | "cards";
 
 function emptyCopy(detail: SessionDetail): string {
   if (detail.session.collection !== "ended") {
-    return "Intentions appear here once the recording has uploaded and Reflet has read it.";
+    return "Intentions appear here as Reflet finds them in what you say.";
   }
   if (detail.segments.length === 0 && detail.marks.length === 0) {
     return "Nothing was said or marked in this session.";

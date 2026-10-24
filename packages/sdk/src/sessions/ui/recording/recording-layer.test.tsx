@@ -34,12 +34,12 @@ afterEach(() => {
 });
 
 function renderLayer(recorder = fakeRecorder(RECORDING_SNAPSHOT)) {
-  const onFinished = vi.fn();
+  const onOpenSession = vi.fn();
   renderInWorkspace(
-    <RecordingLayer onFinished={onFinished} />,
+    <RecordingLayer onOpenSession={onOpenSession} />,
     fakeWorkspace({ recorder })
   );
-  return { onFinished, recorder };
+  return { onOpenSession, recorder };
 }
 
 it("shows no recording bar while the microphone is still being asked for", () => {
@@ -123,7 +123,7 @@ it("pauses and resumes on demand", () => {
 });
 
 it("cancels the recording only once the user confirms", async () => {
-  const { onFinished, recorder } = renderLayer();
+  const { onOpenSession, recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: "Cancel recording" }));
   const keep = screen.getByRole("button", { name: "Keep recording" });
   expect(document.activeElement).toBe(keep);
@@ -137,7 +137,7 @@ it("cancels the recording only once the user confirms", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Discard" }));
   await waitFor(() => expect(recorder.cancel).toHaveBeenCalledTimes(1));
   expect(recorder.finish).not.toHaveBeenCalled();
-  expect(onFinished).not.toHaveBeenCalled();
+  expect(onOpenSession).not.toHaveBeenCalled();
 });
 
 it("explains a pause caused by hiding the tab", () => {
@@ -152,10 +152,10 @@ it("explains a pause caused by hiding the tab", () => {
 });
 
 it("opens the review of the session it finishes", async () => {
-  const { onFinished, recorder } = renderLayer();
+  const { onOpenSession, recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   await waitFor(() =>
-    expect(onFinished).toHaveBeenCalledWith({
+    expect(onOpenSession).toHaveBeenCalledWith({
       sessionId: "session_1",
       sessionKey: "key_1",
     })

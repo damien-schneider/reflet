@@ -386,7 +386,7 @@ it("confirms every undecided intention at once and undoes them together", async 
   );
 });
 
-it("does not call a session empty while its recording is still uploading", async () => {
+it("shows intentions being found while the session is still recording", async () => {
   await renderReview(
     aDetail({
       marks: [],
@@ -394,17 +394,13 @@ it("does not call a session empty while its recording is still uploading", async
       segments: [],
       session: {
         ...aDetail().session,
-        analysis: { ...aDetail().session.analysis, state: "idle" },
+        analysis: { ...aDetail().session.analysis, state: "running" },
         collection: "recording",
       },
     })
   );
 
-  expect(
-    screen.getByText(
-      "Intentions appear here once the recording has uploaded and Reflet has read it."
-    )
-  ).toBeTruthy();
+  expect(screen.getByText("Finding intentions with AI…")).toBeTruthy();
   expect(screen.queryByText(/Nothing was said/)).toBeNull();
 });
 

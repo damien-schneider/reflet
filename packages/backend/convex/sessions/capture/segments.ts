@@ -9,6 +9,7 @@ import {
   sessionFailure,
   sessionLimitReached,
 } from "../access";
+import { followRecording } from "../ai/live_analysis";
 import { scheduleTranscription } from "../ai/transcription";
 import {
   RECORDED_WHILE_PAUSED,
@@ -112,6 +113,8 @@ async function insertSegment(
   await recordSegmentUsage(ctx, { audioBytes: audio?.bytes, now, session });
   if (audio) {
     await scheduleTranscription(ctx, segmentId);
+  } else {
+    await followRecording(ctx, session._id);
   }
   return segmentId;
 }

@@ -144,7 +144,9 @@ function SessionFacts({ session }: { session: ReviewSession }) {
       <span>{formatDate(session.startedAt)}</span>
       <span>
         <ClockIcon />
-        {shortDuration(session.durationMs)}
+        {session.collection === "ended"
+          ? shortDuration(session.durationMs)
+          : "Recording"}
       </span>
       <span aria-label={sharing} role="img" title={sharing}>
         {isShared ? <TeamIcon /> : <LockIcon />}
