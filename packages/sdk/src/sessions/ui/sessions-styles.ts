@@ -5,13 +5,36 @@ import { REPORT_STYLES } from "./review/screens/report-styles";
 const MONO_FONT = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 const RECORDING_STYLES = `
-.dt-rec {
-  position: fixed; z-index: ${REFLET_Z_INDEX.devtoolsBar}; left: 50%; translate: -50% 0;
+.dt-rec-dock {
+  position: fixed; z-index: ${REFLET_Z_INDEX.devtoolsBar}; inset-inline: 0; margin-inline: auto;
   bottom: calc(var(--rf-viewport-bottom, 0px) + env(safe-area-inset-bottom) + 16px);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  width: fit-content; max-width: calc(100vw - 24px); pointer-events: none;
+}
+.dt-rec-dock > * { pointer-events: auto; }
+.dt-rec {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px;
-  max-width: calc(100vw - 24px); padding: 6px 6px 6px 12px; border-radius: var(--dt-radius-surface);
+  max-width: 100%; padding: 6px 6px 6px 12px; border-radius: var(--dt-radius-surface);
   animation: dt-rec-in 240ms var(--rf-ease);
 }
+.dt-rec-live {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  width: min(640px, calc(100vw - 24px)); padding: 10px 12px; border-radius: var(--dt-radius-surface);
+  font-size: 12.5px; line-height: 1.4; animation: dt-rec-in 240ms var(--rf-ease);
+}
+.dt-rec-live > .dt-actions { grid-column: 1 / -1; }
+.dt-rec-live-column { display: flex; flex-direction: column; min-width: 0; }
+.dt-rec-live-list {
+  display: flex; flex-direction: column-reverse; gap: 6px; max-height: 128px; margin: 0; padding: 0;
+  overflow-y: auto; overscroll-behavior: contain; list-style: none;
+}
+.dt-rec-live-list li { display: flex; gap: 8px; overflow-wrap: anywhere; animation: dt-rec-in 240ms var(--rf-ease); }
+.dt-rec-live-list .dt-meta { flex: none; font-variant-numeric: tabular-nums; line-height: inherit; }
+.dt-rec-live-number {
+  display: inline-flex; flex: none; align-items: center; justify-content: center; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--rf-accent); color: #fff; font-size: 10.5px; font-weight: 700;
+}
+@media (max-width: 560px) { .dt-rec-live { grid-template-columns: 1fr; } }
 @keyframes dt-rec-in { from { transform: translateY(8px); opacity: 0; } }
 .dt-rec-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--rf-danger); }
 .dt-rec[data-phase="recording"] .dt-rec-dot { animation: dt-rec-pulse 1.6s ease-in-out infinite; }

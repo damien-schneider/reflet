@@ -225,7 +225,7 @@ function SessionsTeamTools({
       </TeamBar>
       {workspace && (
         <RecordingLayer
-          onOpenSession={(target) => {
+          onFinished={(target) => {
             navigation.go({ target, view: "review" });
             setIsSheetOpen(true);
           }}
@@ -316,7 +316,7 @@ function BoardTeamTools({
         {openTab && <SelectionOutline node={highlighted} />}
         {workspace && (
           <RecordingLayer
-            onOpenSession={(target) => {
+            onFinished={(target) => {
               navigation.go({ target, view: "review" });
               sheet.select("sessions");
             }}

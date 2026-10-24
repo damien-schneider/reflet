@@ -55,7 +55,7 @@ Rétention : Mistral conserve les entrées de l'API jusqu'à 30 jours et ne s'en
 
 Modèle : `sessionAnalysisModel` dans `convex/ai/openrouter.ts` (routage ZDR).
 
-Les intentions se construisent pendant l'enregistrement : chaque passage transcrit relance l'analyse sur tout ce qui a été dit, avec au moins 15 s entre deux analyses et une seule à la fois. Le bouton « Show transcript and intentions » de la barre d'enregistrement ouvre la session en cours : transcription et intentions avec leurs captures s'y mettent à jour toutes les 2 s. Vérifié sur le backend de dev : la première intention apparaît une dizaine de secondes après la fin du passage qui la contient.
+Les intentions se construisent pendant l'enregistrement : chaque passage transcrit relance l'analyse sur tout ce qui a été dit, avec au moins 15 s entre deux analyses et une seule à la fois. Au-dessus de la barre d'enregistrement, un encart montre côte à côte les passages transcrits (« Transcribing… » dès la pause) et les intentions trouvées, mis à jour toutes les 2 s, sans ouvrir le panneau latéral. Il est affiché par défaut ; le bouton transcription de la barre le masque ou le réaffiche. Vérifié sur le backend de dev : un passage apparaît en « Transcribing… » environ 2 s après la pause, son texte 2 s plus tard, et l'intention qu'il contient une dizaine de secondes après la fin du passage.
 
 - Une analyse qui se termine alors que de nouveaux passages sont arrivés garde ce qu'elle a trouvé, puis la suivante reprend l'ensemble.
 - Finish relance une analyse complète sur toute la session, qui remplace celle en cours si elle avait démarré pendant l'enregistrement.

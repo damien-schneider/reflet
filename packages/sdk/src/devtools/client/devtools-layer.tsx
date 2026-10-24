@@ -262,7 +262,7 @@ export function DevtoolsLayer({
         <Notices />
         {sessions.state.kind === "ready" && (
           <RecordingLayer
-            onOpenSession={(target) => {
+            onFinished={(target) => {
               sessions.navigation.go({ target, view: "review" });
               sheet.select("sessions");
             }}

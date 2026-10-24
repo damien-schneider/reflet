@@ -212,14 +212,25 @@ function CancelButton({
   );
 }
 
-function ShowSessionButton({ onShowSession }: { onShowSession: () => void }) {
+function LiveFeedToggle({
+  isLiveShown,
+  onToggleLive,
+}: {
+  isLiveShown: boolean;
+  onToggleLive: () => void;
+}) {
   return (
     <button
-      aria-label="Show transcript and intentions"
+      aria-label="Live transcript and intentions"
+      aria-pressed={isLiveShown}
       className="dt-btn"
       data-icon-only
-      onClick={onShowSession}
-      title="Show transcript and intentions"
+      onClick={onToggleLive}
+      title={
+        isLiveShown
+          ? "Hide live transcript and intentions"
+          : "Show live transcript and intentions"
+      }
       type="button"
     >
       <TranscriptIcon />
@@ -229,19 +240,21 @@ function ShowSessionButton({ onShowSession }: { onShowSession: () => void }) {
 
 function RecordingControls({
   hasKeptRecording,
+  isLiveShown,
   onAskToCancel,
   onFinish,
   onMark,
   onPointAt,
-  onShowSession,
+  onToggleLive,
   snapshot,
 }: {
   hasKeptRecording: boolean;
+  isLiveShown: boolean;
   onAskToCancel: () => void;
   onFinish: () => void;
   onMark: () => void;
   onPointAt: () => void;
-  onShowSession: () => void;
+  onToggleLive: () => void;
   snapshot: RecorderSnapshot;
 }) {
   const { phase } = snapshot;
@@ -255,7 +268,10 @@ function RecordingControls({
             onMark={onMark}
             onPointAt={onPointAt}
           />
-          <ShowSessionButton onShowSession={onShowSession} />
+          <LiveFeedToggle
+            isLiveShown={isLiveShown}
+            onToggleLive={onToggleLive}
+          />
         </>
       )}
       <PauseToggle snapshot={snapshot} />
@@ -292,16 +308,18 @@ function RecordingClock({ activeMs }: { activeMs: number }) {
 }
 
 export function RecordingBar({
+  isLiveShown,
   onCancel,
   onFinish,
   onPointAt,
-  onShowSession,
+  onToggleLive,
   snapshot,
 }: {
+  isLiveShown: boolean;
   onCancel: () => void;
   onFinish: () => void;
   onPointAt: () => void;
-  onShowSession: () => void;
+  onToggleLive: () => void;
   snapshot: RecorderSnapshot;
 }) {
   const { account, identity, recorder } = useSessionWorkspace();
@@ -331,11 +349,12 @@ export function RecordingBar({
       </span>
       <RecordingControls
         hasKeptRecording={cancelStep === "kept"}
+        isLiveShown={isLiveShown}
         onAskToCancel={() => setCancelStep("confirming")}
         onFinish={onFinish}
         onMark={markWithNote}
         onPointAt={onPointAt}
-        onShowSession={onShowSession}
+        onToggleLive={onToggleLive}
         snapshot={snapshot}
       />
       {openMark && (

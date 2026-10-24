@@ -9,6 +9,7 @@ import type { RecorderSnapshot } from "../../recorder/session-recorder";
 import { useRecorderSnapshot } from "../../recorder/use-recorder-snapshot";
 import { useSessionWorkspace } from "../session-workspace";
 import type { SessionTarget } from "../start/session-list";
+import { LiveFeed } from "./live-feed";
 import { RecordingBar } from "./recording-bar";
 
 const SESSION_PICKER_LABELS: FeedbackWidgetLabels = {
@@ -31,15 +32,21 @@ function showsBar(snapshot: RecorderSnapshot): boolean {
   );
 }
 
+function isCapturing(snapshot: RecorderSnapshot): boolean {
+  return snapshot.phase === "recording" || snapshot.phase === "paused";
+}
+
 /** Lives outside the sheet: recording goes on while every panel is closed. */
 export function RecordingLayer({
-  onOpenSession,
+  onFinished,
 }: {
-  onOpenSession: (target: SessionTarget) => void;
+  onFinished: (target: SessionTarget) => void;
 }) {
   const { recorder } = useSessionWorkspace();
   const snapshot = useRecorderSnapshot(recorder);
   const [isPointing, setIsPointing] = useState(false);
+  const [hiddenFor, setHiddenFor] = useState<string | null>(null);
+  const isLiveShown = hiddenFor !== snapshot.sessionKey;
 
   if (!showsBar(snapshot)) {
     return null;
@@ -49,7 +56,7 @@ export function RecordingLayer({
     const { sessionId } = recorder.getSnapshot();
     try {
       const { sessionKey } = await recorder.finish();
-      onOpenSession({ sessionId, sessionKey });
+      onFinished({ sessionId, sessionKey });
     } catch (error) {
       reportFailure("The session did not finish", error, finish);
     }
@@ -65,18 +72,21 @@ export function RecordingLayer({
 
   return (
     <>
-      <RecordingBar
-        onCancel={cancel}
-        onFinish={finish}
-        onPointAt={() => setIsPointing(true)}
-        onShowSession={() =>
-          onOpenSession({
-            sessionId: snapshot.sessionId,
-            sessionKey: snapshot.sessionKey,
-          })
-        }
-        snapshot={snapshot}
-      />
+      <div className="dt-rec-dock">
+        {isLiveShown && isCapturing(snapshot) && (
+          <LiveFeed snapshot={snapshot} />
+        )}
+        <RecordingBar
+          isLiveShown={isLiveShown}
+          onCancel={cancel}
+          onFinish={finish}
+          onPointAt={() => setIsPointing(true)}
+          onToggleLive={() =>
+            setHiddenFor(isLiveShown ? snapshot.sessionKey : null)
+          }
+          snapshot={snapshot}
+        />
+      </div>
       {isPointing && snapshot.phase === "recording" && (
         <ElementPicker
           labels={SESSION_PICKER_LABELS}

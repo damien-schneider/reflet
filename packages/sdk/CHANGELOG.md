@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Sessions: while you record, the transcript and the intentions found so far show above the recording bar, side by side, without opening the side panel. The bar's transcript button hides or shows them.
+
 ## [0.7.13] - 2026-10-24
 
 ### Added

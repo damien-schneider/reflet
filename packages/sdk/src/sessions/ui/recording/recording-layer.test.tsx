@@ -7,6 +7,10 @@ import {
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import {
+  aDetail,
+  aProposal,
+  aSegment,
+  fakeApi,
   fakeRecorder,
   fakeWorkspace,
   RECORDING_SNAPSHOT,
@@ -33,13 +37,16 @@ afterEach(() => {
   syncStatus.isOnline = true;
 });
 
-function renderLayer(recorder = fakeRecorder(RECORDING_SNAPSHOT)) {
-  const onOpenSession = vi.fn();
+function renderLayer(
+  recorder = fakeRecorder(RECORDING_SNAPSHOT),
+  api = fakeApi()
+) {
+  const onFinished = vi.fn();
   renderInWorkspace(
-    <RecordingLayer onOpenSession={onOpenSession} />,
-    fakeWorkspace({ recorder })
+    <RecordingLayer onFinished={onFinished} />,
+    fakeWorkspace({ api, recorder })
   );
-  return { onOpenSession, recorder };
+  return { onFinished, recorder };
 }
 
 it("shows no recording bar while the microphone is still being asked for", () => {
@@ -123,7 +130,7 @@ it("pauses and resumes on demand", () => {
 });
 
 it("cancels the recording only once the user confirms", async () => {
-  const { onOpenSession, recorder } = renderLayer();
+  const { onFinished, recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: "Cancel recording" }));
   const keep = screen.getByRole("button", { name: "Keep recording" });
   expect(document.activeElement).toBe(keep);
@@ -137,7 +144,7 @@ it("cancels the recording only once the user confirms", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Discard" }));
   await waitFor(() => expect(recorder.cancel).toHaveBeenCalledTimes(1));
   expect(recorder.finish).not.toHaveBeenCalled();
-  expect(onOpenSession).not.toHaveBeenCalled();
+  expect(onFinished).not.toHaveBeenCalled();
 });
 
 it("explains a pause caused by hiding the tab", () => {
@@ -152,13 +159,65 @@ it("explains a pause caused by hiding the tab", () => {
 });
 
 it("opens the review of the session it finishes", async () => {
-  const { onOpenSession, recorder } = renderLayer();
+  const { onFinished, recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: "Finish" }));
   await waitFor(() =>
-    expect(onOpenSession).toHaveBeenCalledWith({
+    expect(onFinished).toHaveBeenCalledWith({
       sessionId: "session_1",
       sessionKey: "key_1",
     })
   );
   expect(recorder.finish).toHaveBeenCalledTimes(1);
+});
+
+it("shows what was heard and the intentions found while recording", async () => {
+  const recording = aDetail({
+    proposals: [aProposal({ need: "Find the save button at a glance" })],
+    segments: [
+      aSegment(),
+      aSegment({
+        id: "segment_2",
+        startMs: 12_000,
+        text: "",
+        transcription: { attempts: 0, error: null, state: "pending" },
+      }),
+    ],
+    session: {
+      ...aDetail().session,
+      analysis: { ...aDetail().session.analysis, state: "running" },
+      collection: "recording",
+    },
+  });
+  const recorder = fakeRecorder(RECORDING_SNAPSHOT);
+  renderLayer(
+    recorder,
+    fakeApi({ detail: vi.fn().mockResolvedValue(recording) })
+  );
+
+  const live = await screen.findByRole("region", {
+    name: "Live transcript and intentions",
+  });
+  await waitFor(() =>
+    expect(live.textContent).toContain("I can never find the save button here.")
+  );
+  expect(live.textContent).toContain("Transcribing…");
+  expect(live.textContent).toContain("Find the save button at a glance");
+  expect(live.textContent).toContain("Finding intentions…");
+
+  const toggle = screen.getByRole("button", {
+    name: "Live transcript and intentions",
+  });
+  fireEvent.click(toggle);
+  expect(screen.queryByRole("region")).toBeNull();
+  expect(toggle.getAttribute("aria-pressed")).toBe("false");
+  fireEvent.click(toggle);
+  expect(
+    screen.getByRole("region", { name: "Live transcript and intentions" })
+  ).toBeTruthy();
+
+  fireEvent.click(toggle);
+  act(() => recorder.emit({ sessionId: "session_2", sessionKey: "key_2" }));
+  expect(
+    screen.getByRole("region", { name: "Live transcript and intentions" })
+  ).toBeTruthy();
 });
