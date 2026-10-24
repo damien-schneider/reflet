@@ -68,6 +68,9 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
 vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-content">{children}</div>
   ),

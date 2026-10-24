@@ -49,7 +49,7 @@ export function TriggerFields({
           <FieldLabel htmlFor="settings-event-name">Event name</FieldLabel>
           <Input
             autoComplete="off"
-            className="font-mono"
+            className="[--cui-field-font-family:var(--font-mono)]"
             id="settings-event-name"
             onChange={(event) => onChange({ eventName: event.target.value })}
             placeholder="checkout_completed"
@@ -70,7 +70,7 @@ export function TriggerFields({
         <Field invalid={Boolean(issues.delaySeconds)}>
           <FieldLabel htmlFor="settings-delay">Delay in seconds</FieldLabel>
           <Input
-            className="w-28 tabular-nums"
+            className="w-28"
             id="settings-delay"
             inputMode="decimal"
             min="0"
@@ -131,7 +131,7 @@ function PageUrlFields({
         <FieldLabel htmlFor="settings-page-url">Only on these pages</FieldLabel>
         <Input
           autoComplete="off"
-          className="font-mono"
+          className="[--cui-field-font-family:var(--font-mono)]"
           id="settings-page-url"
           onChange={(event) => onPageUrlChange(event.target.value)}
           placeholder="/pricing, /checkout/*"
@@ -182,7 +182,7 @@ function PageUrlTester({ patterns }: { patterns: string }) {
       <Input
         aria-describedby={resultId}
         autoComplete="off"
-        className="font-mono"
+        className="[--cui-field-font-family:var(--font-mono)]"
         id="settings-test-url"
         inputMode="url"
         onChange={(event) => setTestUrl(event.target.value)}

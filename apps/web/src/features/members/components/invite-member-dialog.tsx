@@ -1,6 +1,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -131,32 +132,36 @@ function InviteForm({
           They’ll get an email with a link to join your organization.
         </DialogDescription>
       </DialogHeader>
-      <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmit}>
-        <Field>
-          <FieldLabel htmlFor="email">Email address</FieldLabel>
-          <Input
-            aria-describedby="invite-email-error"
-            aria-invalid={error ? true : undefined}
-            autoComplete="off"
-            id="email"
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setError(null);
-            }}
-            placeholder="colleague@example.com"
-            spellCheck={false}
-            type="email"
-            value={email}
-          />
-          <FieldError
-            id="invite-email-error"
-            match={error !== null}
-            role="alert"
-          >
-            {error}
-          </FieldError>
-        </Field>
-        {canInviteAdmins ? <RoleField onChange={setRole} value={role} /> : null}
+      <form className="contents" noValidate onSubmit={handleSubmit}>
+        <DialogBody>
+          <Field>
+            <FieldLabel htmlFor="email">Email address</FieldLabel>
+            <Input
+              aria-describedby="invite-email-error"
+              aria-invalid={error ? true : undefined}
+              autoComplete="off"
+              id="email"
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setError(null);
+              }}
+              placeholder="colleague@example.com"
+              spellCheck={false}
+              type="email"
+              value={email}
+            />
+            <FieldError
+              id="invite-email-error"
+              match={error !== null}
+              role="alert"
+            >
+              {error}
+            </FieldError>
+          </Field>
+          {canInviteAdmins ? (
+            <RoleField onChange={setRole} value={role} />
+          ) : null}
+        </DialogBody>
         <DialogFooter>
           <Button onClick={onCancel} type="button" variant="surface">
             Cancel
@@ -238,19 +243,21 @@ function InviteSuccess({
           We emailed {email}. You can also share the link directly.
         </DialogDescription>
       </DialogHeader>
-      <Field>
-        <FieldLabel htmlFor="invite-link">Invitation link</FieldLabel>
-        <div className="flex items-center gap-2">
-          <Input
-            className="flex-1 font-mono"
-            id="invite-link"
-            onFocus={(event) => event.target.select()}
-            readOnly
-            value={inviteUrl}
-          />
-          <CopyButton label="Copy invitation link" value={inviteUrl} />
-        </div>
-      </Field>
+      <DialogBody>
+        <Field>
+          <FieldLabel htmlFor="invite-link">Invitation link</FieldLabel>
+          <div className="flex items-center gap-2">
+            <Input
+              className="flex-1 [--cui-field-font-family:var(--font-mono)]"
+              id="invite-link"
+              onFocus={(event) => event.target.select()}
+              readOnly
+              value={inviteUrl}
+            />
+            <CopyButton label="Copy invitation link" value={inviteUrl} />
+          </div>
+        </Field>
+      </DialogBody>
       <DialogFooter>
         <Button onClick={onDone} tone="primary" variant="solid">
           Done

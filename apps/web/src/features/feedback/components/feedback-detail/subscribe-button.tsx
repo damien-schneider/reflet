@@ -28,14 +28,11 @@ export function SubscribeButton({
         aria-pressed={isSubscribed === true}
         render={
           <Button
-            className={cn(
-              "h-8",
-              !showLabel && "w-8",
-              isSubscribed === true && "text-primary"
-            )}
+            className={cn("h-8", !showLabel && "w-8")}
             iconOnly={!showLabel}
             onClick={onToggle}
             size="xs"
+            tone={isSubscribed === true ? "primary" : "neutral"}
             variant="ghost"
           />
         }

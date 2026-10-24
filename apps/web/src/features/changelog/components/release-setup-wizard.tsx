@@ -5,9 +5,11 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@ctrl-ui/react/ui/sheet";
@@ -132,16 +134,16 @@ export function ReleaseSetupWizard({
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent
-        className="gap-0 overflow-hidden p-0 md:w-140 md:max-w-140"
+        className="overflow-hidden md:w-140 md:max-w-140"
         side="right"
       >
-        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+        <SheetHeader className="shrink-0 flex-row items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="flex items-center gap-2">
               <GithubLogo aria-hidden className="size-5" />
               Release setup
             </SheetTitle>
-            <SheetDescription className="tabular-nums">
+            <SheetDescription>
               Step {step} of {TOTAL_STEPS} — {STEP_TITLES[step - 1]}
             </SheetDescription>
           </div>
@@ -160,58 +162,60 @@ export function ReleaseSetupWizard({
           </SheetClose>
         </SheetHeader>
 
-        <ol aria-label="Setup progress" className="flex gap-1 px-4 pt-3">
-          {STEP_TITLES.map((title, index) => {
-            const stepNumber = index + 1;
-            return (
-              <li
-                aria-current={stepNumber === step ? "step" : undefined}
-                className={cn(
-                  "h-1 flex-1 rounded-full transition-colors duration-(--duration-base) ease-(--ease-standard)",
-                  stepNumber <= step ? "bg-primary" : "bg-muted"
-                )}
-                key={title}
-              >
-                <span className="sr-only">{title}</span>
-              </li>
-            );
-          })}
-        </ol>
+        <SheetBody padding="none">
+          <ol aria-label="Setup progress" className="flex gap-1 px-4 pt-3">
+            {STEP_TITLES.map((title, index) => {
+              const stepNumber = index + 1;
+              return (
+                <li
+                  aria-current={stepNumber === step ? "step" : undefined}
+                  className={cn(
+                    "h-1 flex-1 rounded-full transition-colors duration-(--duration-base) ease-(--ease-standard)",
+                    stepNumber <= step ? "bg-primary" : "bg-muted"
+                  )}
+                  key={title}
+                >
+                  <span className="sr-only">{title}</span>
+                </li>
+              );
+            })}
+          </ol>
 
-        <ScrollArea className="flex-1">
-          <section
-            aria-label={STEP_TITLES[step - 1]}
-            className="px-4 py-4 outline-none"
-            ref={stepRegionRef}
-            tabIndex={-1}
-          >
-            {step === 1 && (
-              <WorkflowStep
-                onBranchChange={(branch) => {
-                  setHasPickedBranch(true);
-                  updateConfig({ targetBranch: branch });
-                }}
-                onChange={handleWorkflowChange}
-                organizationId={organizationId}
-                targetBranch={config.targetBranch}
-                value={config.workflow}
-              />
-            )}
-            {step === 2 && (
-              <ConfigureStep config={config} onChange={updateConfig} />
-            )}
-            {step === 3 && (
-              <SetupMethodStep
-                config={config}
-                githubConnection={githubConnection}
-                organizationId={organizationId}
-                orgSlug={orgSlug}
-              />
-            )}
-          </section>
-        </ScrollArea>
+          <ScrollArea className="min-h-0 flex-1">
+            <section
+              aria-label={STEP_TITLES[step - 1]}
+              className="px-4 pb-4 outline-none"
+              ref={stepRegionRef}
+              tabIndex={-1}
+            >
+              {step === 1 && (
+                <WorkflowStep
+                  onBranchChange={(branch) => {
+                    setHasPickedBranch(true);
+                    updateConfig({ targetBranch: branch });
+                  }}
+                  onChange={handleWorkflowChange}
+                  organizationId={organizationId}
+                  targetBranch={config.targetBranch}
+                  value={config.workflow}
+                />
+              )}
+              {step === 2 && (
+                <ConfigureStep config={config} onChange={updateConfig} />
+              )}
+              {step === 3 && (
+                <SetupMethodStep
+                  config={config}
+                  githubConnection={githubConnection}
+                  organizationId={organizationId}
+                  orgSlug={orgSlug}
+                />
+              )}
+            </section>
+          </ScrollArea>
+        </SheetBody>
 
-        <div className="flex shrink-0 items-center justify-between border-t px-4 py-3">
+        <SheetFooter className="flex-row items-center justify-between sm:justify-between">
           <Button
             disabled={!canGoBack}
             onClick={() => goToStep(step - 1)}
@@ -247,7 +251,7 @@ export function ReleaseSetupWizard({
               <ArrowRight aria-hidden className="size-4" />
             </Button>
           )}
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

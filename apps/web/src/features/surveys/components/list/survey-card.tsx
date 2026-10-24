@@ -144,8 +144,8 @@ export function SurveyCard({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="menu-item-danger"
               onClick={() => setConfirmDelete(true)}
+              tone="danger"
             >
               <Trash aria-hidden className="size-4" />
               Delete

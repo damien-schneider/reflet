@@ -3,6 +3,7 @@
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -135,46 +136,48 @@ function EmailForm({
 
   return (
     <>
-      <form className="flex flex-col gap-4" id={FORM_ID} onSubmit={sendEmail}>
-        <Field>
-          <FieldLabel htmlFor="new-email-to">To</FieldLabel>
-          <Input
-            autoComplete="email"
-            disabled={isSending}
-            id="new-email-to"
-            name="to"
-            placeholder="name@example.com"
-            required
-            type="email"
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="new-email-subject">Subject</FieldLabel>
-          <Input
-            disabled={isSending}
-            id="new-email-subject"
-            maxLength={200}
-            name="subject"
-            required
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="new-email-body">Message</FieldLabel>
-          <Textarea
-            disabled={isSending}
-            id="new-email-body"
-            maxLength={10_000}
-            name="body"
-            required
-            rows={8}
-          />
-        </Field>
-        {error && (
-          <p className="text-caption text-destructive" role="alert">
-            {error}
-          </p>
-        )}
-      </form>
+      <DialogBody>
+        <form className="flex flex-col gap-4" id={FORM_ID} onSubmit={sendEmail}>
+          <Field>
+            <FieldLabel htmlFor="new-email-to">To</FieldLabel>
+            <Input
+              autoComplete="email"
+              disabled={isSending}
+              id="new-email-to"
+              name="to"
+              placeholder="name@example.com"
+              required
+              type="email"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="new-email-subject">Subject</FieldLabel>
+            <Input
+              disabled={isSending}
+              id="new-email-subject"
+              maxLength={200}
+              name="subject"
+              required
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="new-email-body">Message</FieldLabel>
+            <Textarea
+              disabled={isSending}
+              id="new-email-body"
+              maxLength={10_000}
+              name="body"
+              required
+              rows={8}
+            />
+          </Field>
+          {error && (
+            <p className="text-caption text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+        </form>
+      </DialogBody>
       <DialogFooter>
         <Button onClick={onCancel} type="button" variant="surface">
           Cancel

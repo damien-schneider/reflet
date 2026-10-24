@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -89,38 +90,38 @@ export function AddWebsiteDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          className="flex flex-col gap-4"
-          noValidate
-          onSubmit={handleSubmit}
-        >
-          <Field>
-            <FieldLabel htmlFor="website-reference-url">Website URL</FieldLabel>
-            <Input
-              aria-describedby={
-                error ? "website-reference-url-error" : undefined
-              }
-              aria-invalid={error ? true : undefined}
-              autoComplete="url"
-              id="website-reference-url"
-              inputMode="url"
-              onChange={(e) => {
-                setUrl(e.target.value);
-                setError(null);
-              }}
-              placeholder="https://example.com/docs"
-              spellCheck={false}
-              type="url"
-              value={url}
-            />
-            <FieldError
-              id="website-reference-url-error"
-              match={error !== null}
-              role="alert"
-            >
-              {error}
-            </FieldError>
-          </Field>
+        <form className="contents" noValidate onSubmit={handleSubmit}>
+          <DialogBody>
+            <Field>
+              <FieldLabel htmlFor="website-reference-url">
+                Website URL
+              </FieldLabel>
+              <Input
+                aria-describedby={
+                  error ? "website-reference-url-error" : undefined
+                }
+                aria-invalid={error ? true : undefined}
+                autoComplete="url"
+                id="website-reference-url"
+                inputMode="url"
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setError(null);
+                }}
+                placeholder="https://example.com/docs"
+                spellCheck={false}
+                type="url"
+                value={url}
+              />
+              <FieldError
+                id="website-reference-url-error"
+                match={error !== null}
+                role="alert"
+              >
+                {error}
+              </FieldError>
+            </Field>
+          </DialogBody>
 
           <DialogFooter>
             <Button onClick={handleClose} type="button" variant="surface">

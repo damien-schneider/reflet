@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -64,9 +65,11 @@ export function DeleteTagDialog({
           </DialogDescription>
         </DialogHeader>
         {error && (
-          <p className="text-destructive-text text-sm" role="alert">
-            {error}
-          </p>
+          <DialogBody>
+            <p className="text-destructive-text text-sm" role="alert">
+              {error}
+            </p>
+          </DialogBody>
         )}
         <DialogFooter>
           <Button

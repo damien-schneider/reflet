@@ -36,7 +36,7 @@ function MenuRowSkeleton() {
     <SidebarMenuItem>
       <SidebarMenuButton aria-hidden disabled tabIndex={-1}>
         <Skeleton className="size-4 shrink-0" />
-        <Skeleton className="h-3.5 flex-1 group-data-[collapsible=icon]:hidden" />
+        <Skeleton className="h-3.5 flex-1" />
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -58,7 +58,7 @@ function RailSkeleton({ sections }: { sections: NavItem[] }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="items-center">
-        <Skeleton className="size-8 rounded-lg" />
+        <Skeleton className="size-8" />
         <Skeleton className="size-control" />
       </SidebarHeader>
       <SidebarContent>
@@ -70,7 +70,7 @@ function RailSkeleton({ sections }: { sections: NavItem[] }) {
             <MenuRowSkeleton key={row} />
           ))}
         </SidebarMenu>
-        <Skeleton className="mx-auto size-8 rounded-full" />
+        <Skeleton className="mx-auto size-8" shape="circle" />
       </SidebarFooter>
     </Sidebar>
   );

@@ -23,7 +23,7 @@ export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--mobile-nav-offset,env(safe-area-inset-bottom))+4.25rem)] z-50 flex justify-start px-4 md:bottom-4 md:justify-center">
       <ButtonLink
-        className="pointer-events-auto shadow-(--reflet-popup-shadow)"
+        className="pointer-events-auto [--cui-button-shadow:var(--reflet-popup-shadow)]"
         render={<Link href={`/dashboard/${orgSlug}`} prefetch />}
         size="sm"
         variant="surface"

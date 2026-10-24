@@ -55,11 +55,8 @@ export function ChoiceBars({
       </ul>
       {otherAnswers.length > 0 ? (
         <Collapsible>
-          <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground">
-            <CaretRight
-              aria-hidden
-              className="size-3.5 transition-transform duration-(--duration-base) ease-(--ease-standard) group-data-panel-open:rotate-90 motion-reduce:transition-none"
-            />
+          <CollapsibleTrigger>
+            <CaretRight aria-hidden className="size-3.5" />
             Other answers ({numberFormat.format(otherAnswers.length)})
           </CollapsibleTrigger>
           <CollapsibleContent>

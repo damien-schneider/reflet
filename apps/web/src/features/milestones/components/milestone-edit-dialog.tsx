@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -123,54 +124,56 @@ function MilestoneEditForm({
 
   return (
     <form className="contents" onSubmit={handleSubmit}>
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <EmojiPicker
-            onChange={(value) => edit({ emoji: value })}
-            value={emoji}
+      <DialogBody>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <EmojiPicker
+              onChange={(value) => edit({ emoji: value })}
+              value={emoji}
+            />
+            <Input
+              aria-label="Milestone name"
+              autoComplete="off"
+              autoFocus
+              className="flex-1"
+              onChange={(e) => edit({ name: e.target.value })}
+              placeholder="Milestone name…"
+              value={name}
+            />
+          </div>
+
+          <NotionColorPicker
+            onChange={(value) => edit({ color: value })}
+            value={color}
           />
-          <Input
-            aria-label="Milestone name"
-            autoComplete="off"
-            autoFocus
-            className="flex-1"
-            onChange={(e) => edit({ name: e.target.value })}
-            placeholder="Milestone name…"
-            value={name}
+
+          <Select
+            onValueChange={(val) => {
+              if (val && isTimeHorizon(val)) {
+                edit({ horizon: val });
+              }
+            }}
+            value={horizon}
+          >
+            <SelectTrigger aria-label="Time horizon">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_HORIZONS.map((h) => (
+                <SelectItem key={h} value={h}>
+                  {TIME_HORIZON_CONFIG[h].label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <MilestoneDatePicker
+            milestoneStatus={milestone.status}
+            onChange={(value) => edit({ targetDate: value })}
+            value={targetDate}
           />
         </div>
-
-        <NotionColorPicker
-          onChange={(value) => edit({ color: value })}
-          value={color}
-        />
-
-        <Select
-          onValueChange={(val) => {
-            if (val && isTimeHorizon(val)) {
-              edit({ horizon: val });
-            }
-          }}
-          value={horizon}
-        >
-          <SelectTrigger aria-label="Time horizon">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TIME_HORIZONS.map((h) => (
-              <SelectItem key={h} value={h}>
-                {TIME_HORIZON_CONFIG[h].label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <MilestoneDatePicker
-          milestoneStatus={milestone.status}
-          onChange={(value) => edit({ targetDate: value })}
-          value={targetDate}
-        />
-      </div>
+      </DialogBody>
       <DialogFooter>
         <Button onClick={onDone} type="button" variant="ghost">
           Cancel

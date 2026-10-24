@@ -35,7 +35,7 @@ export function TagFormPopover({
   const content = (
     <PopoverContent
       align="start"
-      className="max-h-(--available-height) w-72 overflow-y-auto p-3"
+      className="max-h-(--available-height) w-72 overflow-y-auto"
     >
       <TagForm
         actions={{ onCancel: () => onOpenChange(false), onSuccess }}

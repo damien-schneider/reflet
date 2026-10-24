@@ -74,9 +74,7 @@ export function FilterDropdown({
             Filter
             {activeCount > 0 && (
               <>
-                <Badge className="tabular-nums" size="sm">
-                  {activeCount}
-                </Badge>
+                <Badge size="sm">{activeCount}</Badge>
                 <span className="sr-only">active</span>
               </>
             )}

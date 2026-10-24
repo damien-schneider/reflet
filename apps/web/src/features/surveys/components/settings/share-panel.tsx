@@ -114,7 +114,7 @@ function HostedLink({ survey }: { survey: ShareSurvey }) {
           <div className="flex items-center gap-1">
             <Input
               aria-label="Survey link"
-              className="font-mono"
+              className="[--cui-field-font-family:var(--font-mono)]"
               onFocus={(event) => event.currentTarget.select()}
               readOnly
               value={linkUrl}

@@ -26,6 +26,9 @@ vi.mock("@ctrl-ui/react/ui/alert", () => ({
       {children}
     </div>
   ),
+  AlertAction: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   AlertDescription: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

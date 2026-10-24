@@ -3,7 +3,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
@@ -74,33 +73,28 @@ export function SendingDomainCard({
   orgSlug,
 }: SendingDomainCardProps) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4">
-        {domain ? (
-          <SendingDomainDetails
-            domain={domain}
-            organizationId={organizationId}
-          />
-        ) : null}
-        {!domain && isPro ? (
-          <AddSendingDomainForm organizationId={organizationId} />
-        ) : null}
-        {domain || isPro ? null : (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-body text-muted-foreground">
-              Sending from your own domain is part of Pro.
-            </p>
-            <ButtonLink
-              render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
-              size="sm"
-              variant="surface"
-            >
-              Compare plans
-            </ButtonLink>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-4">
+      {domain ? (
+        <SendingDomainDetails domain={domain} organizationId={organizationId} />
+      ) : null}
+      {!domain && isPro ? (
+        <AddSendingDomainForm organizationId={organizationId} />
+      ) : null}
+      {domain || isPro ? null : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-body text-muted-foreground">
+            Sending from your own domain is part of Pro.
+          </p>
+          <ButtonLink
+            render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
+            size="sm"
+            variant="surface"
+          >
+            Compare plans
+          </ButtonLink>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -83,7 +83,7 @@ function DraftsList({
 }) {
   if (drafts.length === 0) {
     return (
-      <Empty className="min-h-[40vh] rounded-lg border border-dashed">
+      <Empty className="min-h-[40vh]" variant="outline">
         <EmptyHeader>
           <EmptyTitle>No drafts to review</EmptyTitle>
           <EmptyDescription>

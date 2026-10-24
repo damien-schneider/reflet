@@ -2,6 +2,7 @@
 
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Empty } from "@ctrl-ui/react/ui/empty";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Popover,
@@ -64,16 +65,12 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
 
   if (!isAdding) {
     return (
-      <div className="w-72 shrink-0">
-        <Button
-          className="h-full min-h-48 w-full border border-dashed"
-          onClick={() => setIsAdding(true)}
-          variant="ghost"
-        >
+      <Empty className="min-h-48 w-72 shrink-0" variant="outline">
+        <Button onClick={() => setIsAdding(true)} variant="ghost">
           <Plus aria-hidden />
           Add column
         </Button>
-      </div>
+      </Empty>
     );
   }
 
@@ -93,7 +90,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
               className={cn("size-3 rounded-full", getTagSwatchClass(color))}
             />
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-[200px] p-2">
+          <PopoverContent align="start" className="w-[200px]" padding="sm">
             <NotionColorPicker
               onChange={(newColor) => {
                 setColor(newColor);

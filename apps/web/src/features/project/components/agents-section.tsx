@@ -1,7 +1,6 @@
 "use client";
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { ArrowSquareOut, Key } from "@phosphor-icons/react";
@@ -41,7 +40,7 @@ export function AgentsSection({ organizationId }: AgentsSectionProps) {
       title="Agents & CLI"
     >
       <SettingsSection title="Secret key">
-        <SecretKeyCard agentKey={agentKey} />
+        <SecretKeySetting agentKey={agentKey} />
       </SettingsSection>
 
       <SettingsSection title="Set up">
@@ -84,7 +83,7 @@ export function AgentsSection({ organizationId }: AgentsSectionProps) {
   );
 }
 
-function SecretKeyCard({ agentKey }: { agentKey: UseAgentApiKeyReturn }) {
+function SecretKeySetting({ agentKey }: { agentKey: UseAgentApiKeyReturn }) {
   const {
     hasExistingKey,
     newSecretKey,
@@ -104,35 +103,33 @@ function SecretKeyCard({ agentKey }: { agentKey: UseAgentApiKeyReturn }) {
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center justify-between gap-4">
-        {hasExistingKey === undefined ? (
-          <Skeleton aria-busy="true" className="h-9 w-full" />
-        ) : (
-          <>
-            <p className="min-w-0 flex-1 basis-64 text-pretty text-body text-muted-foreground">
-              {hasExistingKey
-                ? "Your organization already has a key. Generate a new one to log in on another machine."
-                : "Generate a secret key to connect the CLI to this organization."}
-            </p>
-            <Button
-              disabled={isGenerating}
-              onClick={handleGenerate}
-              size="sm"
-              tone={hasExistingKey ? "neutral" : "primary"}
-              variant={hasExistingKey ? "surface" : "solid"}
-            >
-              {isGenerating ? (
-                <Spinner aria-hidden data-icon="inline-start" size="xs" />
-              ) : (
-                <Key aria-hidden data-icon="inline-start" />
-              )}
-              {isGenerating ? "Generating…" : "Generate key"}
-            </Button>
-          </>
-        )}
-      </CardContent>
-    </Card>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      {hasExistingKey === undefined ? (
+        <Skeleton aria-busy="true" className="h-9 w-full" />
+      ) : (
+        <>
+          <p className="min-w-0 flex-1 basis-64 text-pretty text-body text-muted-foreground">
+            {hasExistingKey
+              ? "Your organization already has a key. Generate a new one to log in on another machine."
+              : "Generate a secret key to connect the CLI to this organization."}
+          </p>
+          <Button
+            disabled={isGenerating}
+            onClick={handleGenerate}
+            size="sm"
+            tone={hasExistingKey ? "neutral" : "primary"}
+            variant={hasExistingKey ? "surface" : "solid"}
+          >
+            {isGenerating ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : (
+              <Key aria-hidden data-icon="inline-start" />
+            )}
+            {isGenerating ? "Generating…" : "Generate key"}
+          </Button>
+        </>
+      )}
+    </div>
   );
 }
 

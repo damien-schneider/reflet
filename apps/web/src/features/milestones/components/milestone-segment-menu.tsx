@@ -39,8 +39,8 @@ export function MilestoneContextMenu({
           <Fragment key={action.label}>
             {action.danger ? <ContextMenuSeparator /> : null}
             <ContextMenuItem
-              className={action.danger ? "menu-item-danger" : undefined}
               onClick={action.run}
+              tone={action.danger ? "danger" : "neutral"}
             >
               {action.icon}
               {action.label}
@@ -61,22 +61,24 @@ export function MilestoneActionsMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label={`Actions for ${milestoneName}`}
-        className="absolute top-1/2 right-1 z-10 size-6 -translate-y-1/2 text-band-foreground opacity-0 pointer-coarse:opacity-100 transition-opacity group-focus-within/seg:opacity-100 group-hover/seg:opacity-100"
-        iconOnly
-        size="xs"
-        variant="ghost"
-      >
-        <DotsThreeVertical weight="bold" />
-      </DropdownMenuTrigger>
+      <span className="absolute top-1/2 right-1 z-10 flex -translate-y-1/2 opacity-0 pointer-coarse:opacity-100 transition-opacity group-focus-within/seg:opacity-100 group-hover/seg:opacity-100">
+        <DropdownMenuTrigger
+          aria-label={`Actions for ${milestoneName}`}
+          className="size-6 [--cui-button-foreground:var(--band-foreground)] [--cui-button-hover-foreground:var(--band-foreground)]"
+          iconOnly
+          size="xs"
+          variant="ghost"
+        >
+          <DotsThreeVertical weight="bold" />
+        </DropdownMenuTrigger>
+      </span>
       <DropdownMenuContent>
         {actions.map((action) => (
           <Fragment key={action.label}>
             {action.danger ? <DropdownMenuSeparator /> : null}
             <DropdownMenuItem
-              className={action.danger ? "menu-item-danger" : undefined}
               onClick={action.run}
+              tone={action.danger ? "danger" : "neutral"}
             >
               {action.icon}
               {action.label}

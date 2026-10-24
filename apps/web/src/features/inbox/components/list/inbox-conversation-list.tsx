@@ -86,10 +86,7 @@ function ConversationRow({
     >
       <Item
         aria-current={isActive ? "true" : undefined}
-        className={cn(
-          "w-full items-start text-left [--cui-item-hover-background:var(--hover-fill)]",
-          isActive && "bg-muted"
-        )}
+        className="w-full items-start text-left [--cui-item-hover-background:var(--hover-fill)]"
         onClick={() => selection.onSelect(conversation._id)}
         render={<button type="button" />}
       >
@@ -114,7 +111,11 @@ function ConversationRow({
             </time>
           </ItemTitle>
           <ItemDescription
-            className={cn("truncate", hasUnread && "text-foreground")}
+            className={cn(
+              "truncate",
+              hasUnread &&
+                "[--cui-item-description-foreground:var(--foreground)]"
+            )}
           >
             {title}
           </ItemDescription>

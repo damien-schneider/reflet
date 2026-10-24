@@ -38,7 +38,7 @@ export function OverviewCard({ analytics }: { analytics: SurveyAnalytics }) {
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-6 p-5">
+      <CardContent className="flex flex-col gap-6">
         <AnalyticsCardTitle icon={ChartLineUp}>Overview</AnalyticsCardTitle>
 
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">

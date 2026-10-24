@@ -54,7 +54,7 @@ export function ScheduleDateField({
                 aria-describedby={error ? errorId : undefined}
                 aria-invalid={Boolean(error)}
                 aria-labelledby={`${labelId} ${triggerId}`}
-                className="min-w-40 justify-start tabular-nums"
+                className="min-w-40 justify-start"
                 id={triggerId}
                 type="button"
                 variant="surface"

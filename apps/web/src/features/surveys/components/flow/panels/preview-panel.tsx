@@ -41,7 +41,7 @@ export function PreviewPanel() {
       aria-label="Live preview"
       className="pointer-events-none absolute right-4 bottom-4 z-10 flex w-[22rem] max-w-[calc(100%-2rem)] flex-col items-stretch gap-2"
     >
-      <div className="pointer-events-auto flex items-center gap-1 rounded-xl border bg-card py-1 ps-3 pe-1 shadow-xs">
+      <div className="pointer-events-auto flex items-center gap-1 rounded-xl border bg-card py-1 ps-3 pe-1 shadow-(--reflet-control-shadow)">
         <h2 className="flex-1 font-medium text-sm">Live preview</h2>
         <Button
           onClick={() => setRunCount((count) => count + 1)}

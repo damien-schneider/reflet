@@ -2,6 +2,7 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -64,27 +65,28 @@ export function DescribeStepsForm({
 
   return (
     <form className="flex flex-col gap-1.5" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-1.5 rounded-xl border bg-background p-1 ps-1.5 focus-within:border-ring">
+      <InputGroup>
         <Input
           aria-describedby={statusId}
           aria-label="Describe the steps to add"
-          className="min-w-0 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
           disabled={progress !== null}
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="Or just describe it"
           value={prompt}
         />
-        <Button
-          aria-label="Draft steps"
-          disabled={!prompt.trim() || progress !== null}
-          iconOnly
-          size="sm"
-          type="submit"
-          variant="ghost"
-        >
-          {progress ? <Spinner size="xs" /> : <Sparkle aria-hidden />}
-        </Button>
-      </div>
+        <InputGroupAddon>
+          <Button
+            aria-label="Draft steps"
+            disabled={!prompt.trim() || progress !== null}
+            iconOnly
+            size="sm"
+            type="submit"
+            variant="ghost"
+          >
+            {progress ? <Spinner size="xs" /> : <Sparkle aria-hidden />}
+          </Button>
+        </InputGroupAddon>
+      </InputGroup>
       <p
         aria-live="polite"
         className={

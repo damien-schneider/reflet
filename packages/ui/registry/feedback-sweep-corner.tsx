@@ -211,12 +211,27 @@ function SweepCornerContent({ children, className }: SweepCornerContentProps) {
 interface SweepCornerTitleProps {
   children: ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
-function SweepCornerTitle({ children, className }: SweepCornerTitleProps) {
+function SweepCornerTitle({
+  children,
+  className,
+  onClick,
+}: SweepCornerTitleProps) {
   return (
     <h3 className={cn("font-medium text-sm leading-snug", className)}>
-      {children}
+      {onClick ? (
+        <button
+          className="wrap-anywhere w-full cursor-pointer text-pretty text-left outline-none after:absolute after:inset-0 after:z-10 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          onClick={onClick}
+          type="button"
+        >
+          {children}
+        </button>
+      ) : (
+        children
+      )}
     </h3>
   );
 }

@@ -1,6 +1,5 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Card } from "@ctrl-ui/react/ui/card";
+import { Card, CardContent, CardLink } from "@ctrl-ui/react/ui/card";
 import { CaretUp, ChatCircle, Sparkle } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { TagBadge } from "@/components/tag-badge";
@@ -13,7 +12,6 @@ const MAX_VISIBLE_MILESTONES = 2;
 
 interface FeedbackCardContentProps {
   dragHandle?: ReactNode;
-  isDragging?: boolean;
   isOverlay?: boolean;
   item: FeedbackItem;
   onOpen?: () => void;
@@ -34,13 +32,7 @@ function CardTitle({
 
   return (
     <h4 className="text-pretty font-medium text-sm">
-      <Button
-        className="h-auto justify-start whitespace-normal px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:rounded-[inherit] hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
-        onClick={onOpen}
-        variant="ghost"
-      >
-        {content}
-      </Button>
+      <CardLink onClick={onOpen}>{content}</CardLink>
     </h4>
   );
 }
@@ -69,7 +61,6 @@ function CardMilestones({
 
 export function FeedbackCardContent({
   item,
-  isDragging,
   isOverlay,
   dragHandle,
   onOpen,
@@ -81,49 +72,49 @@ export function FeedbackCardContent({
   return (
     <Card
       className={cn(
-        "relative gap-2 p-3",
-        onOpen && "hover:bg-accent/50",
-        isDragging && "opacity-40",
-        isOverlay && "shadow-(--reflet-popup-shadow)"
+        "relative [--cui-card-padding-block:calc(var(--spacing)*3)] [--cui-card-padding-inline:calc(var(--spacing)*3)]",
+        isOverlay && "[--cui-card-shadow:var(--reflet-popup-shadow)]"
       )}
     >
       {dragHandle}
-      <div className={cn(dragHandle && "pr-6")}>
-        <CardTitle item={item} onOpen={onOpen} />
-      </div>
-      <FeedbackPropertySummary feedback={item} />
-      {item.isMember && <FeedbackPropertiesPopover feedbackId={item._id} />}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (
-            <TagBadge color={tag.color} key={tag._id} size="sm">
-              {tag.icon && <span>{tag.icon}</span>}
-              {tag.name}
-              {tag.appliedByAi && (
-                <>
-                  <Sparkle aria-hidden className="opacity-60" weight="fill" />
-                  <span className="sr-only">Applied by AI</span>
-                </>
-              )}
-            </TagBadge>
-          ))}
+      <CardContent className="flex flex-col gap-2">
+        <div className={cn(dragHandle && "pr-6")}>
+          <CardTitle item={item} onOpen={onOpen} />
         </div>
-      )}
-      {item.milestones && item.milestones.length > 0 && (
-        <CardMilestones milestones={item.milestones} />
-      )}
-      <div className="flex items-center gap-3 text-muted-foreground text-xs">
-        <span className="flex items-center gap-1">
-          <CaretUp aria-hidden className="size-3" />
-          <span className="tabular-nums">{item.voteCount}</span>
-          <span className="sr-only">votes</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <ChatCircle aria-hidden className="size-3" />
-          <span className="tabular-nums">{item.commentCount}</span>
-          <span className="sr-only">comments</span>
-        </span>
-      </div>
+        <FeedbackPropertySummary feedback={item} />
+        {item.isMember && <FeedbackPropertiesPopover feedbackId={item._id} />}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (
+              <TagBadge color={tag.color} key={tag._id} size="sm">
+                {tag.icon && <span>{tag.icon}</span>}
+                {tag.name}
+                {tag.appliedByAi && (
+                  <>
+                    <Sparkle aria-hidden className="opacity-60" weight="fill" />
+                    <span className="sr-only">Applied by AI</span>
+                  </>
+                )}
+              </TagBadge>
+            ))}
+          </div>
+        )}
+        {item.milestones && item.milestones.length > 0 && (
+          <CardMilestones milestones={item.milestones} />
+        )}
+        <div className="flex items-center gap-3 text-muted-foreground text-xs">
+          <span className="flex items-center gap-1">
+            <CaretUp aria-hidden className="size-3" />
+            <span className="tabular-nums">{item.voteCount}</span>
+            <span className="sr-only">votes</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <ChatCircle aria-hidden className="size-3" />
+            <span className="tabular-nums">{item.commentCount}</span>
+            <span className="sr-only">comments</span>
+          </span>
+        </div>
+      </CardContent>
     </Card>
   );
 }

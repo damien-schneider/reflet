@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -92,33 +93,35 @@ export function CreateSurveyDialog({
           <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
         {step.kind === "gallery" ? (
-          <div className="max-h-[65vh] overflow-y-auto py-1">
-            <TemplateGallery
-              onDescribe={() => setStep({ kind: "describe" })}
-              onPickTemplate={(template) =>
-                setStep({
-                  blueprint: {
-                    description: template.description,
-                    endings: template.endings,
-                    heading: `From “${template.name}”`,
-                    questions: template.questions,
-                    title: template.name,
-                    triggerConfig: template.triggerConfig,
-                    triggerType: template.triggerType,
-                  },
-                  cameFrom: "gallery",
-                  kind: "configure",
-                })
-              }
-              onStartFromScratch={() =>
-                setStep({
-                  blueprint: SCRATCH_BLUEPRINT,
-                  cameFrom: "gallery",
-                  kind: "configure",
-                })
-              }
-            />
-          </div>
+          <DialogBody>
+            <div className="max-h-[65vh] overflow-y-auto py-1">
+              <TemplateGallery
+                onDescribe={() => setStep({ kind: "describe" })}
+                onPickTemplate={(template) =>
+                  setStep({
+                    blueprint: {
+                      description: template.description,
+                      endings: template.endings,
+                      heading: `From “${template.name}”`,
+                      questions: template.questions,
+                      title: template.name,
+                      triggerConfig: template.triggerConfig,
+                      triggerType: template.triggerType,
+                    },
+                    cameFrom: "gallery",
+                    kind: "configure",
+                  })
+                }
+                onStartFromScratch={() =>
+                  setStep({
+                    blueprint: SCRATCH_BLUEPRINT,
+                    cameFrom: "gallery",
+                    kind: "configure",
+                  })
+                }
+              />
+            </div>
+          </DialogBody>
         ) : null}
         {step.kind === "describe" ? (
           <DescribeSurveyStep

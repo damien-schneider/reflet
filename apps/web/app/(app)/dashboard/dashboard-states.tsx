@@ -37,7 +37,7 @@ export function OrgPickerSkeleton() {
       <div aria-busy="true" className="flex flex-col gap-2">
         <span className="sr-only">Loading organizations…</span>
         {SKELETON_ROWS.map((row) => (
-          <Skeleton className="h-16 w-full rounded-xl" key={row} />
+          <Skeleton className="h-16 w-full" key={row} shape="panel" />
         ))}
       </div>
     </CenteredScreen>

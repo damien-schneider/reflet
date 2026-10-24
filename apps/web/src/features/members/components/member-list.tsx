@@ -56,7 +56,7 @@ export function MemberList({
       <ul aria-busy="true" className="divide-y">
         {SKELETON_ROWS.map((id) => (
           <li className="flex items-center gap-3 py-3" key={id}>
-            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-8" shape="circle" />
             <div className="flex flex-col gap-1.5">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-3 w-44" />
@@ -167,8 +167,8 @@ function MemberActions({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="menu-item-danger"
           onClick={() => onRemoveMember(member._id, name)}
+          tone="danger"
         >
           <Trash aria-hidden />
           Remove

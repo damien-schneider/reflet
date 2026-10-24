@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import {
@@ -11,7 +10,10 @@ import {
 import { CalendarBlank } from "@phosphor-icons/react";
 import { format, startOfDay } from "date-fns";
 import { useState } from "react";
-import { getDeadlineColor, getDeadlineInfo } from "@/lib/milestone-deadline";
+import {
+  getDeadlineButtonClass,
+  getDeadlineInfo,
+} from "@/lib/milestone-deadline";
 
 interface MilestoneDatePickerProps {
   milestoneStatus?: string;
@@ -28,9 +30,7 @@ export function MilestoneDatePicker({
 
   const selectedDate = value ? new Date(value) : undefined;
   const deadlineInfo = getDeadlineInfo(value, milestoneStatus ?? "active");
-  const colorClass = deadlineInfo
-    ? getDeadlineColor(deadlineInfo.status)
-    : "text-muted-foreground";
+  const deadlineClass = getDeadlineButtonClass(deadlineInfo?.status ?? "none");
 
   const handleSelect = (day: Date | undefined) => {
     if (day) {
@@ -48,11 +48,7 @@ export function MilestoneDatePicker({
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
         render={
-          <Button
-            className={cn("tabular-nums", colorClass)}
-            type="button"
-            variant="surface"
-          />
+          <Button className={deadlineClass} type="button" variant="surface" />
         }
       >
         <CalendarBlank aria-hidden />

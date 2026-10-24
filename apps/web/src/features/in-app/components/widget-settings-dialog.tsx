@@ -11,6 +11,7 @@ import {
 } from "@ctrl-ui/react/ui/color-picker";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -120,7 +121,7 @@ export function WidgetSettingsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <DialogBody>
           <Field>
             <FieldLabel htmlFor="primary-color">Primary color</FieldLabel>
             <ColorPicker
@@ -218,7 +219,7 @@ export function WidgetSettingsDialog({
                 <NumberFieldDecrement aria-label="Decrease z-index">
                   <Minus aria-hidden />
                 </NumberFieldDecrement>
-                <NumberFieldInput className="tabular-nums" />
+                <NumberFieldInput />
                 <NumberFieldIncrement aria-label="Increase z-index">
                   <Plus aria-hidden />
                 </NumberFieldIncrement>
@@ -260,7 +261,7 @@ export function WidgetSettingsDialog({
               onCheckedChange={setAutoOpen}
             />
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button

@@ -51,11 +51,7 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   const headingId = useId();
   return (
-    <section
-      aria-labelledby={headingId}
-      className="flex flex-col gap-5"
-      data-settings-section=""
-    >
+    <section aria-labelledby={headingId} className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-balance text-heading-3" id={headingId}>

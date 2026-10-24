@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import {
   ChartBar,
   EnvelopeSimple,
@@ -98,8 +99,8 @@ function StatCard({
   warn?: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-4">
+    <Card size="sm">
+      <CardContent className="flex items-center gap-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
           <Icon aria-hidden className="size-5 text-muted-foreground" />
         </div>
@@ -129,8 +130,8 @@ function DashboardSkeleton() {
     <div aria-busy="true" className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STAT_CARD_IDS.map((id) => (
-          <Card key={id}>
-            <CardContent className="flex items-center gap-4 p-4">
+          <Card key={id} size="sm">
+            <CardContent className="flex items-center gap-4">
               <Skeleton className="size-10" />
               <div className="space-y-2">
                 <Skeleton className="h-3.5 w-20" />
@@ -271,22 +272,24 @@ function ByTypeTable({ rows }: { rows: EmailTypeRows }) {
           <TableBody>
             {rows.map((row) => (
               <TableRow key={row.emailType}>
-                <TableCell className="font-medium">
-                  {EMAIL_TYPE_LABELS[row.emailType] ?? row.emailType}
+                <TableCell>
+                  <Text weight="medium">
+                    {EMAIL_TYPE_LABELS[row.emailType] ?? row.emailType}
+                  </Text>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {row.total.toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {row.delivered.toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {row.opened.toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {row.bounced.toLocaleString()}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {row.delivered > 0
                     ? formatPercent(row.opened / row.delivered)
                     : "—"}
@@ -338,11 +341,8 @@ function RecentEmailsCard({ emails }: { emails: RecentEmails }) {
             <TableBody>
               {emails.map((email) => (
                 <TableRow key={email._id}>
-                  <TableCell
-                    className="max-w-48 truncate font-mono text-sm"
-                    title={email.to}
-                  >
-                    {email.to}
+                  <TableCell className="max-w-48 truncate" title={email.to}>
+                    <Text mono>{email.to}</Text>
                   </TableCell>
                   <TableCell>
                     <Badge size="sm" variant="outline">
@@ -357,13 +357,15 @@ function RecentEmailsCard({ emails }: { emails: RecentEmails }) {
                       {email.status.replaceAll("_", " ")}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right text-muted-foreground text-sm tabular-nums">
-                    <time
-                      dateTime={new Date(email.sentAt).toISOString()}
-                      title={format(email.sentAt, "MMM d, yyyy, h:mm a")}
-                    >
-                      {formatDistanceToNow(email.sentAt, { addSuffix: true })}
-                    </time>
+                  <TableCell className="text-right">
+                    <Text tone="muted">
+                      <time
+                        dateTime={new Date(email.sentAt).toISOString()}
+                        title={format(email.sentAt, "MMM d, yyyy, h:mm a")}
+                      >
+                        {formatDistanceToNow(email.sentAt, { addSuffix: true })}
+                      </time>
+                    </Text>
                   </TableCell>
                 </TableRow>
               ))}

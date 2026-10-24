@@ -171,7 +171,7 @@ export function HostedSurvey({ surveyId }: { surveyId: string }) {
             Loading the survey…
           </p>
           <Skeleton className="h-6 w-2/3" />
-          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full" />
         </div>
       </HostedSurveyFrame>
     );

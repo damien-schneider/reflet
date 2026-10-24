@@ -57,7 +57,7 @@ function UsageProgress({
         value={isUnlimited ? 0 : Math.min(current, max)}
       >
         <MeterLabel>{label}</MeterLabel>
-        <MeterValue className="tabular-nums">
+        <MeterValue>
           {() =>
             isUnlimited ? `${current} · Unlimited` : `${current} / ${max}`
           }

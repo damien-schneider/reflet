@@ -94,35 +94,31 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
             </span>
             <CommentTimestamp createdAt={comment.createdAt} />
 
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="Comment actions"
-                render={(props: React.ComponentProps<"button">) => (
-                  <Button
-                    {...props}
-                    className="pointer-fine:pointer-events-none ml-auto pointer-fine:opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
-                    iconOnly
-                    size="xs"
-                    variant="ghost"
+            <span className="pointer-fine:pointer-events-none ml-auto pointer-fine:opacity-0 focus-within:pointer-events-auto focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 has-data-popup-open:pointer-events-auto has-data-popup-open:opacity-100">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  aria-label="Comment actions"
+                  render={(props: React.ComponentProps<"button">) => (
+                    <Button {...props} iconOnly size="xs" variant="ghost">
+                      <DotsThree className="h-4 w-4" />
+                    </Button>
+                  )}
+                />
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setIsConfirmingDelete(true)}
+                    tone="danger"
                   >
-                    <DotsThree className="h-4 w-4" />
-                  </Button>
-                )}
-              />
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="menu-item-danger"
-                  onClick={() => setIsConfirmingDelete(true)}
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <Trash className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </span>
           </div>
 
           {isEditing ? (

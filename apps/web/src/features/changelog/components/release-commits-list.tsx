@@ -54,54 +54,60 @@ export function ReleaseCommitsList({
   const totalCommits = snapshot.totalCommits ?? commits.length;
 
   return (
-    <Collapsible
-      className={cn("border-t", className)}
-      onOpenChange={setIsOpen}
-      open={isOpen}
-    >
-      <CollapsibleTrigger className="flex w-full flex-wrap items-center gap-2 px-6 py-3 text-left text-sm hover:bg-muted/50">
-        <CaretRight
-          aria-hidden="true"
-          className={cn(
-            "size-3.5 shrink-0 text-muted-foreground",
-            isOpen && "rotate-90"
+    <div className={cn("border-t", className)}>
+      <Collapsible
+        className="[--cui-collapsible-trigger-font-size:var(--text-sm)] [--cui-collapsible-trigger-padding-block:calc(var(--spacing)*3)] [--cui-collapsible-trigger-padding-inline:calc(var(--spacing)*6)]"
+        onOpenChange={setIsOpen}
+        open={isOpen}
+      >
+        <CollapsibleTrigger className="flex-wrap">
+          <CaretRight
+            aria-hidden="true"
+            className={cn(
+              "size-3.5 shrink-0 text-muted-foreground",
+              isOpen && "rotate-90"
+            )}
+          />
+          <GitCommit
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground"
+          />
+          <span className="font-medium text-muted-foreground tabular-nums">
+            {describeCommitCount(commits.length, totalCommits)} used
+          </span>
+          {headRef && (
+            <Badge
+              className="ml-1 [--cui-badge-font-family:var(--font-mono)]"
+              size="sm"
+              variant="outline"
+            >
+              {baseRef ? `${baseRef} → ${headRef}` : `up to ${headRef}`}
+              {headSha && ` @ ${headSha.slice(0, SHORT_SHA_LENGTH)}`}
+            </Badge>
           )}
-        />
-        <GitCommit
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground"
-        />
-        <span className="font-medium text-muted-foreground tabular-nums">
-          {describeCommitCount(commits.length, totalCommits)} used
-        </span>
-        {headRef && (
-          <Badge className="ml-1 font-mono" size="sm" variant="outline">
-            {baseRef ? `${baseRef} → ${headRef}` : `up to ${headRef}`}
-            {headSha && ` @ ${headSha.slice(0, SHORT_SHA_LENGTH)}`}
-          </Badge>
-        )}
-        {files.length > 0 && <FileStats files={files} />}
-      </CollapsibleTrigger>
+          {files.length > 0 && <FileStats files={files} />}
+        </CollapsibleTrigger>
 
-      <CollapsibleContent>
-        <div className="max-h-80 space-y-4 overflow-y-auto border-t bg-muted/20 px-6 py-3">
-          {maintainerNotes && (
-            <section aria-label="Maintainer notes" className="space-y-1">
-              <h4 className="font-medium text-muted-foreground text-xs">
-                GitHub release notes
-              </h4>
-              <p className="whitespace-pre-wrap text-pretty text-sm">
-                {maintainerNotes}
-              </p>
-            </section>
-          )}
-          {pullRequests.length > 0 && (
-            <PullRequestList pullRequests={pullRequests} />
-          )}
-          <CommitList commits={commits} />
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+        <CollapsibleContent>
+          <div className="max-h-80 space-y-4 overflow-y-auto border-t bg-muted/20 px-6 py-3">
+            {maintainerNotes && (
+              <section aria-label="Maintainer notes" className="space-y-1">
+                <h4 className="font-medium text-muted-foreground text-xs">
+                  GitHub release notes
+                </h4>
+                <p className="whitespace-pre-wrap text-pretty text-sm">
+                  {maintainerNotes}
+                </p>
+              </section>
+            )}
+            {pullRequests.length > 0 && (
+              <PullRequestList pullRequests={pullRequests} />
+            )}
+            <CommitList commits={commits} />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
 

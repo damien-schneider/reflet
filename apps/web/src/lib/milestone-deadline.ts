@@ -61,15 +61,15 @@ export function getDeadlineInfo(
   return { daysRemaining, label, relativeLabel, status: "upcoming" };
 }
 
-export function getDeadlineColor(status: DeadlineStatus): string {
+export function getDeadlineButtonClass(status: DeadlineStatus): string {
   switch (status) {
     case "overdue":
-      return "text-destructive-text";
+      return "[--cui-button-foreground:var(--destructive-text)] [--cui-button-hover-foreground:var(--destructive-text)]";
     case "due_today":
     case "due_soon":
-      return "text-warning-text";
+      return "[--cui-button-foreground:var(--warning-text)] [--cui-button-hover-foreground:var(--warning-text)]";
     default:
-      return "text-muted-foreground";
+      return "[--cui-button-foreground:var(--muted-foreground)] [--cui-button-hover-foreground:var(--muted-foreground)]";
   }
 }
 

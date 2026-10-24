@@ -45,11 +45,11 @@ export function PublicStatusSkeleton() {
       </PageHeader>
       <PageBody>
         <div aria-busy className="space-y-8">
-          <Skeleton className="h-16 w-full rounded-(--radius-panel)" />
+          <Skeleton className="h-16 w-full" shape="panel" />
           {SKELETON_MONITOR_KEYS.map((key) => (
             <div className="space-y-3" key={key}>
-              <Skeleton className="h-12 w-full rounded-(--radius-panel)" />
-              <Skeleton className="h-36 w-full rounded-(--radius-panel)" />
+              <Skeleton className="h-12 w-full" shape="panel" />
+              <Skeleton className="h-36 w-full" shape="panel" />
             </div>
           ))}
         </div>
@@ -169,7 +169,7 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
                         </span>
                       </div>
                       {uptimeBars === undefined ? (
-                        <Skeleton className="h-36 w-full rounded-(--radius-panel)" />
+                        <Skeleton className="h-36 w-full" shape="panel" />
                       ) : (
                         <UptimeBar
                           days={uptimeData?.days ?? []}

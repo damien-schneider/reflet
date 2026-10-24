@@ -38,7 +38,7 @@ export function TeamToolsSection() {
           label: access.origin,
         }))}
         empty={
-          <Empty className="rounded-(--radius-panel) border border-dashed">
+          <Empty variant="outline">
             <EmptyHeader>
               <EmptyMedia>
                 <AppWindow aria-hidden className="size-6" />

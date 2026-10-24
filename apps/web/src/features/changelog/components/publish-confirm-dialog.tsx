@@ -4,6 +4,7 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -100,7 +101,7 @@ export function PublishConfirmDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody>
           <PublishReleaseSummary title={title} version={version} />
 
           <PublishModeTabs
@@ -119,7 +120,7 @@ export function PublishConfirmDialog({
             organizationId={organizationId}
             orgSlug={orgSlug}
           />
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button
@@ -159,7 +160,7 @@ function PublishReleaseSummary({
         {title || UNTITLED_RELEASE_TITLE}
       </p>
       {version && (
-        <Badge className="shrink-0 tabular-nums" size="sm" variant="outline">
+        <Badge className="shrink-0" size="sm" variant="outline">
           {version}
         </Badge>
       )}

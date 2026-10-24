@@ -104,8 +104,8 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="menu-item-danger"
                   onClick={() => setShowDeleteDialog(true)}
+                  tone="danger"
                 >
                   <Trash aria-hidden className="size-4" />
                   Delete
@@ -113,7 +113,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <CardDescription className="tabular-nums">
+          <CardDescription>
             {widget.conversationCount} conversation
             {widget.conversationCount === 1 ? "" : "s"}
           </CardDescription>

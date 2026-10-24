@@ -20,7 +20,6 @@ export function DashboardFeedback() {
           <SidebarMenuButton
             {...props}
             aria-label="Give feedback to Reflet"
-            className="group-data-[collapsible=icon]:justify-center"
             tooltip="Give feedback"
           >
             <ChatTeardropText aria-hidden />

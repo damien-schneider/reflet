@@ -15,12 +15,7 @@ interface CommentAvatarProps {
 
 export function CommentAvatar({ image, isReply, name }: CommentAvatarProps) {
   return (
-    <Avatar
-      className={cn(
-        "shrink-0 outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10",
-        isReply ? "size-6" : "size-8"
-      )}
-    >
+    <Avatar className={cn("shrink-0", isReply ? "size-6" : "size-8")}>
       <AvatarImage alt="" src={image} />
       <AvatarFallback className="text-xs">
         {name.charAt(0).toUpperCase() || "?"}

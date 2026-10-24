@@ -125,11 +125,7 @@ export const ManualSyncSection = ({
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-sm">Release sync</h3>
-            {totalCount > 0 && (
-              <Badge className="tabular-nums" size="sm">
-                {totalCount}
-              </Badge>
-            )}
+            {totalCount > 0 && <Badge size="sm">{totalCount}</Badge>}
           </div>
           <SyncStatusIndicator
             lastSyncAt={lastSyncAt}
@@ -150,162 +146,167 @@ export const ManualSyncSection = ({
         </Button>
       </div>
 
-      {totalCount > 0 ? (
-        <div className="space-y-3 border-t pt-3">
-          {githubOnly.length > 0 && (
-            <SyncGroup
-              icon={CloudArrowDown}
-              label={`Available to import (${githubOnly.length})`}
-            >
-              {githubOnly.map((gr) => (
-                <SyncRow
-                  action={
-                    <Button
-                      className="ml-2 shrink-0"
-                      disabled={!isAdmin || importingId === gr._id}
-                      onClick={() => handleImport(gr._id)}
-                      size="xs"
-                      variant="ghost"
-                    >
-                      {importingId === gr._id ? (
-                        <Spinner data-icon="inline-start" size="xs" />
-                      ) : (
-                        <CloudArrowDown aria-hidden className="size-3" />
-                      )}
-                      {importingId === gr._id ? "Importing…" : "Import"}
-                    </Button>
-                  }
-                  key={gr._id}
-                  label={gr.tagName}
-                  outlined
-                  title={gr.name ?? gr.tagName}
-                />
-              ))}
-            </SyncGroup>
-          )}
-
-          {refletOnly.length > 0 && (
-            <SyncGroup
-              icon={CloudArrowUp}
-              label={`Not on GitHub (${refletOnly.length})`}
-            >
-              {refletOnly.map((r) => (
-                <SyncRow
-                  action={
-                    <Button
-                      className="ml-2 shrink-0"
-                      disabled={!isAdmin || pushingId === r._id}
-                      onClick={() => handlePush(r._id)}
-                      size="xs"
-                      variant="ghost"
-                    >
-                      {pushingId === r._id ? (
-                        <Spinner data-icon="inline-start" size="xs" />
-                      ) : (
-                        <CloudArrowUp aria-hidden className="size-3" />
-                      )}
-                      {getPushLabel(pushingId === r._id, r.githubPushStatus)}
-                    </Button>
-                  }
-                  key={r._id}
-                  label={r.version}
-                  outlined
-                  title={r.title}
-                >
-                  {r.githubPushStatus === "failed" && (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            className="shrink-0"
-                            size="xs"
-                            tone="danger"
-                            type="button"
-                            variant="quiet"
-                          >
-                            <WarningCircle aria-hidden className="size-3" />
-                            Failed
-                          </Button>
-                        }
-                      />
-                      <TooltipContent>
-                        {r.githubPushErrorType === "permission_denied"
-                          ? "GitHub App lacks permission to create releases. Reconnect to update permissions."
-                          : (r.githubPushError ?? "Push to GitHub failed")}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {r.githubPushStatus === "failed" &&
-                    r.githubPushErrorType === "permission_denied" && (
-                      <Link
-                        className="shrink-0 font-medium text-primary text-xs hover:underline"
-                        href={
-                          buildGitHubInstallUrl({
-                            organizationId,
-                            orgSlug,
-                            userId: session?.user?.id,
-                          }) ?? "#"
-                        }
+      <div className="border-t pt-3">
+        {totalCount > 0 ? (
+          <div className="space-y-3">
+            {githubOnly.length > 0 && (
+              <SyncGroup
+                icon={CloudArrowDown}
+                label={`Available to import (${githubOnly.length})`}
+              >
+                {githubOnly.map((gr) => (
+                  <SyncRow
+                    action={
+                      <Button
+                        className="ml-2 shrink-0"
+                        disabled={!isAdmin || importingId === gr._id}
+                        onClick={() => handleImport(gr._id)}
+                        size="xs"
+                        variant="ghost"
                       >
-                        Reconnect
-                      </Link>
-                    )}
-                  {r.githubPushStatus === "pending" && (
-                    <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
-                      <Spinner size="xs" />
-                      Pending
-                    </span>
-                  )}
-                </SyncRow>
-              ))}
-            </SyncGroup>
-          )}
+                        {importingId === gr._id ? (
+                          <Spinner data-icon="inline-start" size="xs" />
+                        ) : (
+                          <CloudArrowDown aria-hidden className="size-3" />
+                        )}
+                        {importingId === gr._id ? "Importing…" : "Import"}
+                      </Button>
+                    }
+                    key={gr._id}
+                    label={gr.tagName}
+                    outlined
+                    title={gr.name ?? gr.tagName}
+                  />
+                ))}
+              </SyncGroup>
+            )}
 
-          {synced.length > 0 && (
-            <SyncGroup icon={CheckCircle} label={`Linked (${synced.length})`}>
-              {synced.map((r) => (
-                <SyncRow
-                  action={
-                    r.githubHtmlUrl && (
+            {refletOnly.length > 0 && (
+              <SyncGroup
+                icon={CloudArrowUp}
+                label={`Not on GitHub (${refletOnly.length})`}
+              >
+                {refletOnly.map((r) => (
+                  <SyncRow
+                    action={
+                      <Button
+                        className="ml-2 shrink-0"
+                        disabled={!isAdmin || pushingId === r._id}
+                        onClick={() => handlePush(r._id)}
+                        size="xs"
+                        variant="ghost"
+                      >
+                        {pushingId === r._id ? (
+                          <Spinner data-icon="inline-start" size="xs" />
+                        ) : (
+                          <CloudArrowUp aria-hidden className="size-3" />
+                        )}
+                        {getPushLabel(pushingId === r._id, r.githubPushStatus)}
+                      </Button>
+                    }
+                    key={r._id}
+                    label={r.version}
+                    outlined
+                    title={r.title}
+                  >
+                    {r.githubPushStatus === "failed" && (
                       <Tooltip>
                         <TooltipTrigger
                           render={
-                            <a
-                              aria-label={`View ${r.title} on GitHub`}
-                              className="ml-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                              href={r.githubHtmlUrl}
-                              rel="noopener noreferrer"
-                              target="_blank"
+                            <Button
+                              className="shrink-0"
+                              size="xs"
+                              tone="danger"
+                              type="button"
+                              variant="quiet"
                             >
-                              <ArrowSquareOut aria-hidden className="size-4" />
-                            </a>
+                              <WarningCircle aria-hidden className="size-3" />
+                              Failed
+                            </Button>
                           }
                         />
-                        <TooltipContent>View on GitHub</TooltipContent>
+                        <TooltipContent>
+                          {r.githubPushErrorType === "permission_denied"
+                            ? "GitHub App lacks permission to create releases. Reconnect to update permissions."
+                            : (r.githubPushError ?? "Push to GitHub failed")}
+                        </TooltipContent>
                       </Tooltip>
-                    )
-                  }
-                  key={r._id}
-                  label={r.version}
-                  title={r.title}
-                />
-              ))}
-            </SyncGroup>
-          )}
-        </div>
-      ) : (
-        <Empty className="border-t pt-3">
-          <EmptyHeader>
-            <EmptyMedia>
-              <CloudArrowDown aria-hidden className="size-6" />
-            </EmptyMedia>
-            <EmptyTitle>No releases found</EmptyTitle>
-            <EmptyDescription>
-              Sync with GitHub to fetch releases from your repository.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      )}
+                    )}
+                    {r.githubPushStatus === "failed" &&
+                      r.githubPushErrorType === "permission_denied" && (
+                        <Link
+                          className="shrink-0 font-medium text-primary text-xs hover:underline"
+                          href={
+                            buildGitHubInstallUrl({
+                              organizationId,
+                              orgSlug,
+                              userId: session?.user?.id,
+                            }) ?? "#"
+                          }
+                        >
+                          Reconnect
+                        </Link>
+                      )}
+                    {r.githubPushStatus === "pending" && (
+                      <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
+                        <Spinner size="xs" />
+                        Pending
+                      </span>
+                    )}
+                  </SyncRow>
+                ))}
+              </SyncGroup>
+            )}
+
+            {synced.length > 0 && (
+              <SyncGroup icon={CheckCircle} label={`Linked (${synced.length})`}>
+                {synced.map((r) => (
+                  <SyncRow
+                    action={
+                      r.githubHtmlUrl && (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <a
+                                aria-label={`View ${r.title} on GitHub`}
+                                className="ml-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                                href={r.githubHtmlUrl}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                              >
+                                <ArrowSquareOut
+                                  aria-hidden
+                                  className="size-4"
+                                />
+                              </a>
+                            }
+                          />
+                          <TooltipContent>View on GitHub</TooltipContent>
+                        </Tooltip>
+                      )
+                    }
+                    key={r._id}
+                    label={r.version}
+                    title={r.title}
+                  />
+                ))}
+              </SyncGroup>
+            )}
+          </div>
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <CloudArrowDown aria-hidden className="size-6" />
+              </EmptyMedia>
+              <EmptyTitle>No releases found</EmptyTitle>
+              <EmptyDescription>
+                Sync with GitHub to fetch releases from your repository.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
+      </div>
     </div>
   );
 };

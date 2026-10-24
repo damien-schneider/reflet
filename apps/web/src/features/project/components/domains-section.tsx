@@ -3,7 +3,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
@@ -60,48 +59,41 @@ export function DomainsSection({
       title="Domains"
     >
       <SettingsSection title="Subdomain">
-        <Card>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-1">
-              <code className="truncate font-mono text-label">{subdomain}</code>
-              <CopyButton label="Copy subdomain" size="xs" value={subdomain} />
-            </div>
-            <Badge color="green">
-              <CheckCircle aria-hidden />
-              Active
-            </Badge>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-1">
+            <code className="truncate font-mono text-label">{subdomain}</code>
+            <CopyButton label="Copy subdomain" size="xs" value={subdomain} />
+          </div>
+          <Badge color="green">
+            <CheckCircle aria-hidden />
+            Active
+          </Badge>
+        </div>
       </SettingsSection>
 
       <SettingsSection
         description="Serve your portal from a domain you own, like feedback.example.com."
         title="Custom domain"
       >
-        <Card>
-          <CardContent className="flex flex-col gap-4">
-            {isLoading ? <Skeleton aria-busy="true" className="h-9" /> : null}
-            {isLoading || isPro ? null : <ProUpsell orgSlug={orgSlug} />}
-            {!isLoading && isPro && customDomain && domainStatus ? (
-              <CustomDomainDetails
-                challengeToken={domainStatus.customDomainChallengeToken}
-                domain={customDomain}
-                error={domainStatus.customDomainError}
-                isAdmin={isAdmin}
-                organizationId={organizationId}
-                status={domainStatus.customDomainStatus}
-                subdomain={subdomain}
-                verification={domainStatus.customDomainVerification}
-              />
-            ) : null}
-            {!isLoading && isPro && !customDomain ? (
-              <AddDomainForm
-                isAdmin={isAdmin}
-                organizationId={organizationId}
-              />
-            ) : null}
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4">
+          {isLoading ? <Skeleton aria-busy="true" className="h-9" /> : null}
+          {isLoading || isPro ? null : <ProUpsell orgSlug={orgSlug} />}
+          {!isLoading && isPro && customDomain && domainStatus ? (
+            <CustomDomainDetails
+              challengeToken={domainStatus.customDomainChallengeToken}
+              domain={customDomain}
+              error={domainStatus.customDomainError}
+              isAdmin={isAdmin}
+              organizationId={organizationId}
+              status={domainStatus.customDomainStatus}
+              subdomain={subdomain}
+              verification={domainStatus.customDomainVerification}
+            />
+          ) : null}
+          {!isLoading && isPro && !customDomain ? (
+            <AddDomainForm isAdmin={isAdmin} organizationId={organizationId} />
+          ) : null}
+        </div>
       </SettingsSection>
     </SettingsPage>
   );

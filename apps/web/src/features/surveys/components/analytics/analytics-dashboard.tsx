@@ -34,7 +34,7 @@ export function AnalyticsDashboard({ surveyId }: AnalyticsDashboardProps) {
 
   if (analytics.totalResponses === 0) {
     return (
-      <Empty className="rounded-xl border border-dashed py-16">
+      <Empty variant="outline">
         <EmptyHeader>
           <EmptyMedia>
             <ChartBar aria-hidden className="size-6" />
@@ -115,7 +115,7 @@ function AnalyticsSkeleton() {
     >
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardContent className="flex flex-col gap-6 p-5">
+          <CardContent className="flex flex-col gap-6">
             <Skeleton className="h-8 w-32" />
             <div className="grid grid-cols-3 gap-6">
               {["responses", "rate", "time"].map((id) => (
@@ -125,12 +125,12 @@ function AnalyticsSkeleton() {
                 </div>
               ))}
             </div>
-            <Skeleton className="h-40 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full" shape="panel" />
           </CardContent>
         </Card>
-        <Skeleton className="h-full min-h-60 w-full rounded-xl" />
+        <Skeleton className="h-full min-h-60 w-full" shape="panel" />
       </div>
-      <Skeleton className="h-64 w-full rounded-xl" />
+      <Skeleton className="h-64 w-full" shape="panel" />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent, CardFooter } from "@ctrl-ui/react/ui/card";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Field, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
@@ -153,75 +153,73 @@ function WebhookForm({
   const canSubmit = !isCreating && url.trim().length > 0 && events.length > 0;
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardContent className="flex flex-col gap-4">
-          <Field>
-            <FieldLabel htmlFor="webhook-url">Webhook URL</FieldLabel>
-            <Input
-              autoComplete="off"
-              id="webhook-url"
-              inputMode="url"
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://example.com/hooks/reflet"
-              spellCheck={false}
-              type="url"
-              value={url}
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="webhook-description">
-              Description (optional)
-            </FieldLabel>
-            <Input
-              id="webhook-description"
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Production Slack bridge"
-              value={description}
-            />
-          </Field>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 font-medium text-label">Events</legend>
-            {EVENT_OPTIONS.map((option) => (
-              <div className="flex items-center gap-3" key={option.value}>
-                <Switch
-                  aria-describedby={`webhook-event-${option.value}`}
-                  aria-label={option.value}
-                  checked={events.includes(option.value)}
-                  onCheckedChange={(checked) =>
-                    toggleEvent(option.value, checked)
-                  }
-                />
-                <code className="font-mono text-caption">{option.value}</code>
-                <span
-                  className="text-caption text-muted-foreground"
-                  id={`webhook-event-${option.value}`}
-                >
-                  {option.hint}
-                </span>
-              </div>
-            ))}
-            {events.length === 0 ? (
-              <p className="text-caption text-muted-foreground">
-                Select at least one event.
-              </p>
-            ) : null}
-          </fieldset>
-        </CardContent>
-        <CardFooter className="justify-end">
-          <Button
-            disabled={!canSubmit}
-            tone="primary"
-            type="submit"
-            variant="solid"
-          >
-            {isCreating ? (
-              <Spinner aria-hidden data-icon="inline-start" size="xs" />
-            ) : null}
-            {isCreating ? "Creating…" : "Add webhook"}
-          </Button>
-        </CardFooter>
-      </Card>
+    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-4">
+        <Field>
+          <FieldLabel htmlFor="webhook-url">Webhook URL</FieldLabel>
+          <Input
+            autoComplete="off"
+            id="webhook-url"
+            inputMode="url"
+            onChange={(event) => setUrl(event.target.value)}
+            placeholder="https://example.com/hooks/reflet"
+            spellCheck={false}
+            type="url"
+            value={url}
+          />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="webhook-description">
+            Description (optional)
+          </FieldLabel>
+          <Input
+            id="webhook-description"
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Production Slack bridge"
+            value={description}
+          />
+        </Field>
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 font-medium text-label">Events</legend>
+          {EVENT_OPTIONS.map((option) => (
+            <div className="flex items-center gap-3" key={option.value}>
+              <Switch
+                aria-describedby={`webhook-event-${option.value}`}
+                aria-label={option.value}
+                checked={events.includes(option.value)}
+                onCheckedChange={(checked) =>
+                  toggleEvent(option.value, checked)
+                }
+              />
+              <code className="font-mono text-caption">{option.value}</code>
+              <span
+                className="text-caption text-muted-foreground"
+                id={`webhook-event-${option.value}`}
+              >
+                {option.hint}
+              </span>
+            </div>
+          ))}
+          {events.length === 0 ? (
+            <p className="text-caption text-muted-foreground">
+              Select at least one event.
+            </p>
+          ) : null}
+        </fieldset>
+      </div>
+      <div className="flex items-center justify-end">
+        <Button
+          disabled={!canSubmit}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          {isCreating ? (
+            <Spinner aria-hidden data-icon="inline-start" size="xs" />
+          ) : null}
+          {isCreating ? "Creating…" : "Add webhook"}
+        </Button>
+      </div>
     </form>
   );
 }

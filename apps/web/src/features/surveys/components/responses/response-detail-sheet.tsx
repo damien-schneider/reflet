@@ -4,6 +4,7 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -45,7 +46,7 @@ export function ResponseDetailSheet({
   return (
     <Sheet onOpenChange={onOpenChange} open={response !== null}>
       <SheetContent
-        className="gap-0 overflow-hidden p-0 md:w-140 md:max-w-140"
+        className="overflow-hidden md:w-140 md:max-w-140"
         side="right"
       >
         {response ? (
@@ -82,7 +83,7 @@ function ResponseDetail({
 
   return (
     <>
-      <SheetHeader className="flex shrink-0 flex-row items-start justify-between gap-2 border-b px-5 py-4">
+      <SheetHeader className="flex shrink-0 flex-row items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <SheetTitle className="truncate">
             {respondentDisplayName(respondent)}
@@ -101,7 +102,7 @@ function ResponseDetail({
         </SheetClose>
       </SheetHeader>
 
-      <div className="flex flex-col gap-6 overflow-y-auto px-5 py-5">
+      <SheetBody className="gap-6">
         <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2.5 text-sm">
           <DetailRow label="Status">
             <Badge color={RESPONSE_STATUS_COLORS[response.status]} size="sm">
@@ -171,7 +172,7 @@ function ResponseDetail({
             </ol>
           )}
         </section>
-      </div>
+      </SheetBody>
     </>
   );
 }

@@ -60,8 +60,11 @@ export function TagDisplay({
                 aria-label={`Remove ${tag.name}`}
                 render={
                   <Button
-                    className="ml-0.5 h-auto rounded-full p-0.5 opacity-60 transition-opacity hover:opacity-100"
+                    className="ml-0.5 size-3.5"
+                    iconOnly
                     onClick={() => onToggleTag(tag._id, true)}
+                    shape="circle"
+                    size="xs"
                     variant="quiet"
                   />
                 }

@@ -126,6 +126,7 @@ Import primitives from `@ctrl-ui/react/ui/*`. No raw HTML form elements:
 
 **Styling:**
 - `cn()` for conditional classes — no template literal classNames
+- Control UI components (`@ctrl-ui/react/ui/*`) are used as installed: `className` only lays them out (flex, gap, width, margin, placement). Color, type, padding, borders, radius, shadows and state styles come from their props or `--cui-*` knobs — app-wide in `apps/web/src/styles/reflet-skin.css`, one-off as an arbitrary-property class (`[--cui-button-foreground:var(--muted-foreground)]`). Biome enforces this in `apps/web`
 - No inline `style={{}}` — Tailwind only
 - No CSS modules, styled-components, Emotion, SCSS
 

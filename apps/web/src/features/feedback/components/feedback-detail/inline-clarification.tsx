@@ -59,9 +59,10 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
           <div className="mt-1.5 flex items-center gap-2">
             {hasMore && (
               <Button
-                className="h-auto p-0 text-brand-text text-xs"
                 onClick={() => setIsExpanded((prev) => !prev)}
-                variant="quiet"
+                size="xs"
+                tone="primary"
+                variant="link"
               >
                 {isExpanded ? (
                   <>
@@ -75,10 +76,11 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
               </Button>
             )}
             <Button
-              className="h-auto p-0 text-muted-foreground text-xs"
+              className="[--cui-button-foreground:var(--muted-foreground)]"
               disabled={isRegenerating}
               onClick={handleRegenerate}
-              variant="quiet"
+              size="xs"
+              variant="link"
             >
               {isRegenerating ? (
                 <>

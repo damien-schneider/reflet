@@ -59,7 +59,7 @@ export function SupportMessage({
       density="compact"
       from={isOwn ? "user" : "assistant"}
     >
-      <ChatMessageRow className={cn(!(isOwn || showsAvatar) && "ps-8")}>
+      <ChatMessageRow className={cn(!(isOwn || showsAvatar) && "ms-8 w-auto")}>
         {showsAvatar && (
           <ChatMessageAvatar>
             <Avatar className="size-full">

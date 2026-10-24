@@ -93,7 +93,7 @@ export function GitHubSection({
         <div aria-busy="true" className="flex flex-col gap-4">
           <Skeleton className="h-6 w-32" />
           <div className="flex items-center gap-3">
-            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="size-8" shape="circle" />
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-5 w-20" />
           </div>

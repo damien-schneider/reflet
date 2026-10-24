@@ -16,6 +16,7 @@ import {
   PageLayout,
   type PageLayoutProps,
 } from "@ctrl-ui/react/ui/page-layout";
+import { Separator } from "@ctrl-ui/react/ui/separator";
 import { useSidebar } from "@ctrl-ui/react/ui/sidebar";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
@@ -180,6 +181,7 @@ function SurveyDetail({
             ))}
           </TabsList>
         </PageHeader>
+        {activeTab === "flow" ? null : <Separator />}
 
         <TabsPanel className="flex min-h-0 flex-1" value="flow">
           <SurveyFlowEditor
@@ -211,10 +213,7 @@ function ScrollingPanel({
   value: DetailTab;
 }) {
   return (
-    <TabsPanel
-      className="min-h-0 flex-1 overflow-y-auto border-t"
-      value={value}
-    >
+    <TabsPanel className="min-h-0 flex-1 overflow-y-auto" value={value}>
       <div className="mx-auto w-full max-w-6xl px-6 py-8">{children}</div>
     </TabsPanel>
   );
@@ -230,7 +229,7 @@ function SurveyDetailSkeleton({ orgSlug }: { orgSlug: string }) {
         <Skeleton className="h-9 w-72 max-w-full lg:hidden" />
       </PageHeader>
       <div className="flex min-h-0 flex-1 border-t">
-        <Skeleton className="m-6 flex-1 rounded-2xl" />
+        <Skeleton className="m-6 flex-1" shape="panel" />
       </div>
     </PageLayout>
   );
@@ -243,7 +242,7 @@ function SurveyNotFound({ orgSlug }: { orgSlug: string }) {
         <BackLink orgSlug={orgSlug} />
       </PageHeader>
       <PageBody>
-        <Empty className="py-16">
+        <Empty>
           <EmptyHeader>
             <EmptyTitle>Survey not found</EmptyTitle>
             <EmptyDescription>

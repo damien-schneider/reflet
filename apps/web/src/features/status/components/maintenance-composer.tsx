@@ -10,6 +10,7 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldLabel,
   FieldLegend,
   FieldSet,
@@ -136,28 +137,24 @@ export function MaintenanceComposer({
             <Field>
               <FieldLabel>Starts</FieldLabel>
               <Input
-                className="tabular-nums"
                 onChange={(e) => setStartsAt(e.target.value)}
                 required
                 type="datetime-local"
                 value={startsAt}
               />
             </Field>
-            <Field>
+            <Field invalid={!endsAfterStart}>
               <FieldLabel>Ends</FieldLabel>
               <Input
                 aria-invalid={!endsAfterStart}
-                className="tabular-nums"
                 onChange={(e) => setEndsAt(e.target.value)}
                 required
                 type="datetime-local"
                 value={endsAt}
               />
-              {!endsAfterStart && (
-                <FieldDescription className="text-destructive-text">
-                  The end must come after the start.
-                </FieldDescription>
-              )}
+              <FieldError match={!endsAfterStart}>
+                The end must come after the start.
+              </FieldError>
             </Field>
           </div>
 

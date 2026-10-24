@@ -82,7 +82,10 @@ export function RetroactiveDraftItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {release.version && (
-            <Badge className="font-mono tabular-nums" size="sm">
+            <Badge
+              className="[--cui-badge-font-family:var(--font-mono)]"
+              size="sm"
+            >
               {release.version}
             </Badge>
           )}

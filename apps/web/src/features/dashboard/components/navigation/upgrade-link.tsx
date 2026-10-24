@@ -13,7 +13,6 @@ export function UpgradeLink({ orgSlug }: { orgSlug: string }) {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton
-          className="group-data-[collapsible=icon]:justify-center"
           render={
             <Link
               href={`/dashboard/${orgSlug}/project/billing`}

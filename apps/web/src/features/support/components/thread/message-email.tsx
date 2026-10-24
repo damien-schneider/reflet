@@ -5,6 +5,7 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -142,11 +143,15 @@ function OriginalEmail({ messageId }: { messageId: Id<"supportMessages"> }) {
 
   if (original === undefined) {
     return (
-      <div className="flex flex-col gap-3" role="status">
-        <span className="sr-only">Loading the original email…</span>
-        <Skeleton aria-hidden className="h-6 w-1/2" />
-        <Skeleton aria-hidden className="h-40 w-full" />
-      </div>
+      <>
+        <DialogHeader>
+          <Skeleton aria-hidden className="h-6 w-1/2" />
+        </DialogHeader>
+        <DialogBody role="status">
+          <span className="sr-only">Loading the original email…</span>
+          <Skeleton aria-hidden className="h-40 w-full" />
+        </DialogBody>
+      </>
     );
   }
 
@@ -171,9 +176,11 @@ function OriginalEmail({ messageId }: { messageId: Id<"supportMessages"> }) {
           From {original.from} · {format(original.receivedAt, "PPpp")}
         </DialogDescription>
       </DialogHeader>
-      <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-caption">
-        {original.fullText}
-      </pre>
+      <DialogBody>
+        <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 font-mono text-caption">
+          {original.fullText}
+        </pre>
+      </DialogBody>
     </>
   );
 }

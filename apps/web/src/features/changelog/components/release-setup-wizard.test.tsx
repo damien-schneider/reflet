@@ -42,6 +42,9 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@ctrl-ui/react/ui/sheet", () => ({
   Sheet: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="sheet">{children}</div> : null,
+  SheetBody: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   SheetClose: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sheet-close">{children}</div>
   ),
@@ -50,6 +53,9 @@ vi.mock("@ctrl-ui/react/ui/sheet", () => ({
   ),
   SheetDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
+  ),
+  SheetFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
   ),
   SheetHeader: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sheet-header">{children}</div>

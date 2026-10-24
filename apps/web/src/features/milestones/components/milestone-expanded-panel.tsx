@@ -3,6 +3,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { CalendarBlank, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -64,16 +65,17 @@ function LinkedFeedbackRow({
         </span>
       </button>
       {onRemove && (
-        <Button
-          aria-label={`Unlink ${feedback.title}`}
-          className="pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
-          iconOnly
-          onClick={onRemove}
-          size="xs"
-          variant="ghost"
-        >
-          <X aria-hidden />
-        </Button>
+        <span className="pointer-fine:opacity-0 focus-within:opacity-100 group-hover:opacity-100">
+          <Button
+            aria-label={`Unlink ${feedback.title}`}
+            iconOnly
+            onClick={onRemove}
+            size="xs"
+            variant="ghost"
+          >
+            <X aria-hidden />
+          </Button>
+        </span>
       )}
     </li>
   );
@@ -182,20 +184,18 @@ function FeedbackLinkSearch({
 
   return (
     <>
-      <div className="relative mb-1">
-        <MagnifyingGlass
-          aria-hidden
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-        />
+      <InputGroup className="mb-1">
+        <InputGroupAddon>
+          <MagnifyingGlass aria-hidden className="size-4" />
+        </InputGroupAddon>
         <Input
           aria-label="Search feedback to link"
-          className="pl-9"
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search feedback to link…"
           type="search"
           value={searchQuery}
         />
-      </div>
+      </InputGroup>
       {searchQuery && (
         <LinkCandidateList
           candidates={

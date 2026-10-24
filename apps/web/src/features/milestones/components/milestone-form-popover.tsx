@@ -115,7 +115,7 @@ export function MilestoneFormPopover({
         />
         <TooltipContent>{addLabel}</TooltipContent>
       </Tooltip>
-      <PopoverContent align="start" className="w-[280px] p-3">
+      <PopoverContent align="start" className="w-[280px]">
         <form
           className="space-y-3"
           onSubmit={(event) => {

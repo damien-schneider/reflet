@@ -59,8 +59,9 @@ export function FeedbackPropertiesPopover({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="max-h-[min(44rem,80dvh)] w-104 max-w-[calc(100vw-2rem)] overflow-y-auto p-0"
+        className="max-h-[min(44rem,80dvh)] w-104 max-w-[calc(100vw-2rem)] overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
+        padding="none"
       >
         {open && <LoadedProperties feedbackId={feedbackId} />}
       </PopoverContent>

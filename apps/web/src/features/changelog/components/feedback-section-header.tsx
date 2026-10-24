@@ -62,11 +62,7 @@ export function FeedbackSectionHeader({
         <h3 className="flex items-center gap-1.5 font-medium text-sm">
           <Check aria-hidden="true" className="size-4 text-muted-foreground" />
           Linked feedback
-          {linkedCount > 0 && (
-            <Badge className="tabular-nums" size="sm">
-              {linkedCount}
-            </Badge>
-          )}
+          {linkedCount > 0 && <Badge size="sm">{linkedCount}</Badge>}
         </h3>
 
         {releaseId && (

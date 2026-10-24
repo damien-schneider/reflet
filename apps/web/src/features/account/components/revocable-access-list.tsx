@@ -68,7 +68,7 @@ export function RevocableAccessList<TId extends string>({
       ) : null}
 
       {accesses === undefined ? (
-        <Skeleton className="h-18 w-full rounded-(--radius-panel)" />
+        <Skeleton className="h-18 w-full" shape="panel" />
       ) : null}
 
       {accesses?.length === 0 ? empty : null}

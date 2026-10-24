@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 
 import { LegalContactSection } from "@/features/homepage/components/legal-contact-section";
 import { LegalDocument } from "@/features/homepage/components/legal-document";
@@ -38,13 +39,11 @@ function CookieTable({ columns, identifierColumn, rows }: CookieTableProps) {
         <TableBody>
           {rows.map(([name, purpose, detail]) => (
             <TableRow key={name}>
-              <TableCell className={identifierColumn ? "font-mono" : undefined}>
-                {name}
+              <TableCell>
+                <Text mono={identifierColumn}>{name}</Text>
               </TableCell>
               <TableCell className="whitespace-normal">{purpose}</TableCell>
-              <TableCell className="whitespace-normal tabular-nums">
-                {detail}
-              </TableCell>
+              <TableCell className="whitespace-normal">{detail}</TableCell>
             </TableRow>
           ))}
         </TableBody>

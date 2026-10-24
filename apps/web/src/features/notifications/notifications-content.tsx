@@ -21,7 +21,7 @@ function NotificationsSkeleton() {
     <div aria-hidden="true" className="space-y-1 p-2">
       {SKELETON_ROWS.map((row) => (
         <div className="flex gap-3 p-3" key={row}>
-          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <Skeleton className="size-8 shrink-0" shape="circle" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-3.5 w-3/4" />
             <Skeleton className="h-3 w-full" />

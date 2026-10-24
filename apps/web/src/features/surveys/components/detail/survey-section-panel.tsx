@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  SidebarContent,
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
@@ -92,12 +91,12 @@ export function SurveySectionPanel({
 export function SurveySectionPanelSkeleton({ orgSlug }: { orgSlug: string }) {
   return (
     <SectionPanel backHref={surveyListHref(orgSlug)} title="Surveys">
-      <SidebarContent className="gap-2 p-3">
+      <SidebarGroup className="gap-2">
         <Skeleton className="h-control-sm w-full" />
         <Skeleton className="h-control-sm w-full" />
         <Skeleton className="h-control-sm w-full" />
         <Skeleton className="h-control-sm w-full" />
-      </SidebarContent>
+      </SidebarGroup>
     </SectionPanel>
   );
 }

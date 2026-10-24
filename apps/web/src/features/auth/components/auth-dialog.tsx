@@ -23,7 +23,7 @@ export function AuthDialog() {
 
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
-      <DialogContent className="max-w-md p-0">
+      <DialogContent className="max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>Sign in to Reflet</DialogTitle>
           <DialogDescription>Sign in or create an account</DialogDescription>

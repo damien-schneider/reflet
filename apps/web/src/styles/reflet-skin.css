@@ -1,13 +1,20 @@
 @import "./reflet-theme.css";
 
 @layer components {
-  /* ---------------------------------------------------------------- surfaces */
-
   :root[data-theme="reflet"]
-  :where([data-control-family="card"][data-slot="root"]) {
+    :where([data-control-family="card"][data-slot="root"]) {
     --cui-card-radius: var(--radius-panel);
     --cui-card-border-width: 0px;
     --cui-card-shadow: none;
+    --cui-card-hover-background: oklch(from var(--accent) l c h / 0.5);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="flow"][data-slot="root"]) {
+    --cui-flow-node-body-background: oklch(from var(--muted) l c h / 0.6);
+    --cui-flow-node-body-radius: var(--radius-lg);
+    --cui-flow-node-body-padding-inline: calc(var(--spacing) * 2.5);
+    --cui-flow-node-body-padding-block: calc(var(--spacing) * 2);
   }
 
   :root[data-theme="reflet"]
@@ -31,8 +38,6 @@
     --cui-item-hover-background: var(--accent);
     --cui-item-border-width: 0px;
   }
-
-  /* ---------------------------------------------------------------- controls */
 
   :root[data-theme="reflet"] :where([data-control-family="button"]) {
     scale: none;
@@ -88,7 +93,6 @@
   :where([data-control-family="field"][data-control="true"]) {
     --cui-field-background: var(--secondary);
     --cui-field-border-color: transparent;
-    --cui-field-focus-border-color: var(--focus-ring);
     --cui-field-shadow: var(--reflet-recess);
     --cui-field-font-size: 1rem;
   }
@@ -110,12 +114,12 @@
   :root[data-theme="reflet"]
     :where([data-control-family="switch"][data-slot="root"]) {
     --cui-switch-thumb-shadow: var(--reflet-control-shadow);
-    box-shadow: var(--reflet-recess);
+    --cui-switch-shadow: var(--reflet-recess);
   }
 
   :root[data-theme="reflet"]
     :where([data-control-family="switch"][data-slot="root"][data-checked]) {
-    box-shadow: var(--reflet-solid-shadow);
+    --cui-switch-shadow: var(--reflet-solid-shadow);
   }
 
   :root[data-theme="reflet"]
@@ -130,14 +134,12 @@
     --cui-range-thumb-shadow: var(--reflet-control-shadow);
   }
 
-  /* ------------------------------------------------------------------ popups */
-
   :root[data-theme="reflet"]
-  :where(
-    [data-control-family="popup"][data-popup-part="surface"],
-    [data-control-family="popup"][data-popup-part="list-surface"],
-    [data-control-family="popup"][data-popup-part="bar"]
-  ) {
+    :where(
+      [data-control-family="popup"][data-popup-part="surface"],
+      [data-control-family="popup"][data-popup-part="list-surface"],
+      [data-control-family="popup"][data-popup-part="bar"]
+    ) {
     --cui-popup-border-width: 0px;
     --cui-popup-shadow: var(--reflet-popup-shadow);
     --cui-popup-separator-color: var(--border);
@@ -147,19 +149,6 @@
   :root[data-theme="reflet"]
     :where([data-control-family="popup"][data-popup-kind="tooltip"]) {
     --cui-popup-shadow: var(--reflet-control-shadow);
-  }
-
-  /* Control UI pads the dialog header and footer but not the body; give every
-     body the same inset so content lines up with the title. */
-  :root[data-theme="reflet"]
-  :where(
-    [data-control-family="popup"]:is(
-        [data-popup-kind="dialog"],
-        [data-popup-kind="alert-dialog"]
-      )[data-slot="content"]
-      > :not([data-slot], [data-control-family])
-  ) {
-    padding-inline: calc(var(--spacing) * 4);
   }
 
   /* The palette is opened by keyboard many times a day: open and close it
@@ -188,14 +177,12 @@
     outline-offset: 2px;
   }
 
-  /* --------------------------------------------------------------- navigation */
-
   :root[data-theme="reflet"]
-  :where(
-    [data-control-family="tabs"][data-slot="root"]:not(
-      :has([data-variant="browser"])
-    )
-  ) {
+    :where(
+      [data-control-family="tabs"][data-slot="root"]:not(
+        :has([data-variant="browser"])
+      )
+    ) {
     --cui-tabs-trigger-radius: var(--radius-control);
     --cui-tabs-list-background: var(--secondary);
     --cui-tabs-list-shadow: var(--reflet-recess);
@@ -208,14 +195,17 @@
     --cui-sidebar-wrapper-background: var(--sidebar);
     --cui-sidebar-inset-background: var(--background);
     --cui-sidebar-inset-shadow: none;
+  }
 
-    @media (width >= 64rem) {
+  :root[data-theme="reflet"]
+    :where([data-control-family="sidebar"][data-slot="wrapper"]) {
+    @variant sidebar {
       --cui-sidebar-inset-background: transparent;
     }
   }
 
   :root[data-theme="reflet"]:has([data-app-shell]) {
-    @media (width >= 64rem) {
+    @variant sidebar {
       background-color: var(--sidebar);
     }
   }
@@ -257,17 +247,13 @@
     --cui-app-shell-header-border-width: 0px;
   }
 
-  /* ---------------------------------------------------------------- pages */
-
   :root[data-theme="reflet"]
-  :where([data-control-family="page-layout"][data-slot="root"]) {
+    :where([data-control-family="page-layout"][data-slot="root"]) {
     --cui-page-layout-background: var(--background);
   }
 
-  /* ---------------------------------------------------------------- data & text */
-
   :root[data-theme="reflet"]
-  :where([data-control-family="table"][data-slot="root"]) {
+    :where([data-control-family="table"][data-slot="root"]) {
     --cui-table-border-color: var(--border);
     --cui-table-row-hover-background: var(--secondary);
     --cui-table-row-selected-background: var(--accent);
@@ -315,7 +301,6 @@
 
   :root[data-theme="reflet"]
     :where([data-control-family="skeleton"][data-slot="root"]) {
-    --cui-skeleton-radius: var(--radius-control);
     --cui-skeleton-background: var(--muted);
   }
 
@@ -343,14 +328,5 @@
     --cui-avatar-fallback-background: var(--secondary);
     --cui-avatar-fallback-foreground: var(--muted-foreground);
     --cui-avatar-group-ring-color: var(--card);
-    outline: 1px solid oklch(0 0 0 / 0.1);
-    outline-offset: -1px;
-  }
-
-  /* Pale photos and light initials have no edge of their own on a light
-     surface; the inset line gives every avatar a shape. */
-  :root.dark[data-theme="reflet"]
-  :where([data-control-family="avatar"][data-slot="root"]) {
-    outline-color: oklch(1 0 0 / 0.1);
   }
 }

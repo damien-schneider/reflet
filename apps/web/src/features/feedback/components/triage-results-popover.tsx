@@ -74,7 +74,7 @@ export function ResultsPopover({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80" padding="none">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <PopoverTitle className="flex items-center gap-1.5 font-medium text-sm">
+          <PopoverTitle className="flex items-center gap-1.5 text-sm">
             <Sparkle
               aria-hidden
               className="size-3.5 text-primary"

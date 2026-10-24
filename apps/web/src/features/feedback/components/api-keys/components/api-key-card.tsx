@@ -103,7 +103,7 @@ export function ApiKeyCard({
           <FieldLabel htmlFor={`${fieldId}-public`}>Public key</FieldLabel>
           <div className="flex items-center gap-2">
             <Input
-              className="font-mono"
+              className="[--cui-field-font-family:var(--font-mono)]"
               id={`${fieldId}-public`}
               onFocus={(event) => event.target.select()}
               readOnly
@@ -117,7 +117,7 @@ export function ApiKeyCard({
           <div className="flex items-center gap-2">
             <Input
               aria-describedby={`${fieldId}-secret-hint`}
-              className="font-mono"
+              className="[--cui-field-font-family:var(--font-mono)]"
               id={`${fieldId}-secret`}
               readOnly
               value={MASKED_SECRET}

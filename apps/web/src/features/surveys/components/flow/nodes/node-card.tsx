@@ -54,7 +54,7 @@ export function NodeCard({
         {badge}
         {menu}
       </FlowNodeHeader>
-      <FlowNodeBody className="mx-1.5 mb-1.5 min-h-0 overflow-hidden rounded-lg bg-muted/60 px-2.5 py-2">
+      <FlowNodeBody className="mx-1.5 mb-1.5 min-h-0 overflow-hidden">
         {children}
       </FlowNodeBody>
     </FlowNode>
@@ -140,10 +140,10 @@ export function NodeMenu({
       <DropdownMenuContent align="end" className="w-48">
         {actions.map((action) => (
           <DropdownMenuItem
-            className={action.isDestructive ? "text-destructive" : undefined}
             disabled={action.disabled}
             key={action.label}
             onClick={action.onSelect}
+            tone={action.isDestructive ? "danger" : "neutral"}
           >
             {action.label}
           </DropdownMenuItem>

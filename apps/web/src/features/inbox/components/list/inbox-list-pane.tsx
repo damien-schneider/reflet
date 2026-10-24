@@ -45,9 +45,13 @@ export function InboxListPane({
     >
       <div className="flex flex-col gap-2 px-3 pb-3">
         {newEmail}
-        <TabsList aria-label="Conversation views" className="w-full" size="sm">
+        <TabsList
+          aria-label="Conversation views"
+          className="w-full [--cui-tabs-trigger-padding-inline:calc(var(--spacing)*2)]"
+          size="sm"
+        >
           {INBOX_VIEWS.map((view) => (
-            <TabsTab className="flex-1 px-2" key={view.id} value={view.id}>
+            <TabsTab className="flex-1" key={view.id} value={view.id}>
               {view.label}
             </TabsTab>
           ))}
@@ -102,7 +106,7 @@ function ListBody({
     const trimmedQuery = search.query.trim();
     const view = INBOX_VIEWS.find((entry) => entry.id === views.current);
     return (
-      <Empty className="m-3 py-10">
+      <Empty className="m-3">
         <EmptyHeader>
           <EmptyTitle>
             {trimmedQuery ? "No matches" : view?.empty.title}

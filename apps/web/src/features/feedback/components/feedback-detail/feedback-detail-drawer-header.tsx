@@ -151,7 +151,7 @@ export function FeedbackDetailDrawerHeader({
   ...navigation
 }: FeedbackDetailDrawerHeaderProps) {
   return (
-    <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+    <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2">
       <SheetTitle className="sr-only">{title ?? "Feedback"}</SheetTitle>
       <SheetDescription className="sr-only">
         View and manage feedback details

@@ -88,7 +88,7 @@ export function StepEdge({
             <button
               aria-label={`Add a step ${placement}`}
               className={cn(
-                "grid size-5 place-items-center rounded-full border bg-card text-muted-foreground shadow-xs",
+                "grid size-5 place-items-center rounded-full border bg-card text-muted-foreground shadow-(--reflet-control-shadow)",
                 "transition-colors duration-150 hover:border-foreground/30 hover:text-foreground motion-reduce:transition-none",
                 "focus-visible:outline-2 focus-visible:outline-ring"
               )}

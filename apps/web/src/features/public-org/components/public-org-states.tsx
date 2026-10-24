@@ -24,7 +24,7 @@ export function PublicOrgShellSkeleton() {
       <div className="container mx-auto space-y-4 px-4 pt-6">
         <Skeleton className="h-9 w-64" />
         <Skeleton className="h-5 w-96 max-w-full" />
-        <Skeleton className="mt-6 h-40 w-full rounded-(--radius-panel)" />
+        <Skeleton className="mt-6 h-40 w-full" shape="panel" />
       </div>
     </div>
   );

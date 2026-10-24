@@ -27,27 +27,29 @@ function ComponentPreview({
   const [activeTab, setActiveTab] = useState<PreviewTab>("preview");
 
   return (
-    <Tabs
-      className={cn(FRAME, className)}
-      onValueChange={setActiveTab}
-      value={activeTab}
-    >
-      <div className={TAB_BAR}>
-        <TabsList size="sm">
-          <TabsTab value="preview">Preview</TabsTab>
-          <TabsTab value="code">Code</TabsTab>
-        </TabsList>
-        {activeTab === "code" && <CopyButton label="Copy code" value={code} />}
-      </div>
-      <TabsPanel value="preview">
-        <div className="flex min-h-52 items-center justify-center bg-background p-6 sm:p-8">
-          {children}
+    <div className={cn(FRAME, className)}>
+      <Tabs onValueChange={setActiveTab} value={activeTab}>
+        <div className={TAB_BAR}>
+          <TabsList size="sm">
+            <TabsTab value="preview">Preview</TabsTab>
+            <TabsTab value="code">Code</TabsTab>
+          </TabsList>
+          {activeTab === "code" && (
+            <CopyButton label="Copy code" value={code} />
+          )}
         </div>
-      </TabsPanel>
-      <TabsPanel className="bg-secondary" value="code">
-        <CodeSurface code={code} maxHeightClassName="max-h-[28rem]" />
-      </TabsPanel>
-    </Tabs>
+        <TabsPanel value="preview">
+          <div className="flex min-h-52 items-center justify-center bg-background p-6 sm:p-8">
+            {children}
+          </div>
+        </TabsPanel>
+        <TabsPanel value="code">
+          <div className="bg-secondary">
+            <CodeSurface code={code} maxHeightClassName="max-h-[28rem]" />
+          </div>
+        </TabsPanel>
+      </Tabs>
+    </div>
   );
 }
 
@@ -64,28 +66,26 @@ function InstallTabs({ cliCommand, manualCode, className }: InstallTabsProps) {
   const isCli = activeTab === "cli";
 
   return (
-    <Tabs
-      className={cn(FRAME, className)}
-      onValueChange={setActiveTab}
-      value={activeTab}
-    >
-      <div className={TAB_BAR}>
-        <TabsList size="sm">
-          <TabsTab value="cli">CLI</TabsTab>
-          <TabsTab value="manual">Manual</TabsTab>
-        </TabsList>
-        <CopyButton
-          label={isCli ? "Copy command" : "Copy source"}
-          value={isCli ? cliCommand : manualCode}
-        />
-      </div>
-      <TabsPanel className="bg-secondary" value="cli">
-        <CodeSurface code={cliCommand} />
-      </TabsPanel>
-      <TabsPanel className="bg-secondary" value="manual">
-        <CodeSurface code={manualCode} maxHeightClassName="max-h-[28rem]" />
-      </TabsPanel>
-    </Tabs>
+    <div className={cn(FRAME, "bg-secondary", className)}>
+      <Tabs onValueChange={setActiveTab} value={activeTab}>
+        <div className={TAB_BAR}>
+          <TabsList size="sm">
+            <TabsTab value="cli">CLI</TabsTab>
+            <TabsTab value="manual">Manual</TabsTab>
+          </TabsList>
+          <CopyButton
+            label={isCli ? "Copy command" : "Copy source"}
+            value={isCli ? cliCommand : manualCode}
+          />
+        </div>
+        <TabsPanel value="cli">
+          <CodeSurface code={cliCommand} />
+        </TabsPanel>
+        <TabsPanel value="manual">
+          <CodeSurface code={manualCode} maxHeightClassName="max-h-[28rem]" />
+        </TabsPanel>
+      </Tabs>
+    </div>
   );
 }
 

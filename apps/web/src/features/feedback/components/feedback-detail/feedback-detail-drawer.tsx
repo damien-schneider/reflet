@@ -1,7 +1,7 @@
 "use client";
 
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
-import { Sheet, SheetContent } from "@ctrl-ui/react/ui/sheet";
+import { Sheet, SheetBody, SheetContent } from "@ctrl-ui/react/ui/sheet";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { ScreenshotGallery } from "../screenshot-gallery";
@@ -54,7 +54,7 @@ export function FeedbackDetailDrawer({
   return (
     <Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
       <SheetContent
-        className="gap-0 overflow-hidden p-0 md:w-[70vw] md:max-w-[70vw]"
+        className="overflow-hidden md:w-[70vw] md:max-w-[70vw]"
         side="right"
       >
         <FeedbackDetailDrawerHeader
@@ -70,12 +70,14 @@ export function FeedbackDetailDrawer({
           total={feedbackIds.length}
         />
 
-        <FeedbackDetailContent
-          feedback={feedback}
-          feedbackId={feedbackId}
-          isAdmin={isAdmin}
-          isLoading={isLoading}
-        />
+        <SheetBody padding="none">
+          <FeedbackDetailContent
+            feedback={feedback}
+            feedbackId={feedbackId}
+            isAdmin={isAdmin}
+            isLoading={isLoading}
+          />
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );
@@ -95,9 +97,9 @@ function FeedbackDetailSkeleton() {
       <span className="sr-only">Loading feedback…</span>
       <Skeleton className="h-7 w-2/3" />
       <div className="flex gap-2">
-        <Skeleton className="h-8 w-24 rounded-full" />
-        <Skeleton className="h-8 w-24 rounded-full" />
-        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-24" shape="circle" />
+        <Skeleton className="h-8 w-24" shape="circle" />
+        <Skeleton className="h-8 w-24" shape="circle" />
       </div>
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-5/6" />

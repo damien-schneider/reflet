@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { useDraggable } from "@dnd-kit/core";
 import { DotsSixVertical } from "@phosphor-icons/react";
@@ -22,7 +23,7 @@ export function DraggableFeedbackCard({
     <Button
       {...attributes}
       aria-label={`Move ${item.title}`}
-      className="absolute top-2 right-2 z-10 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+      className="absolute top-2 right-2 z-10 cursor-grab touch-none [--cui-button-foreground:var(--muted-foreground)]"
       iconOnly
       ref={setActivatorNodeRef}
       size="xs"
@@ -35,13 +36,13 @@ export function DraggableFeedbackCard({
   return (
     <m.div
       {...(isAdmin ? listeners : {})}
+      className={cn(isDragging && "opacity-40")}
       layoutId={shouldReduceMotion ? undefined : `feedback-card-${item._id}`}
       ref={setNodeRef}
       transition={{ bounce: 0, duration: 0.25, type: "spring" }}
     >
       <FeedbackCardContent
         dragHandle={dragHandle}
-        isDragging={isDragging}
         item={item}
         onOpen={() => {
           if (!isDragging) {

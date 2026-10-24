@@ -79,7 +79,7 @@ export function ThreadLinkView({ token }: { token: string }) {
       </PageHeader>
       <PageBody>
         <div className="flex flex-col gap-4">
-          <Card className="flex h-[min(75dvh,48rem)] flex-col overflow-hidden p-0">
+          <Card className="flex h-[min(75dvh,48rem)] flex-col overflow-hidden [--cui-card-padding-block:0px]">
             <SupportThread
               conversationId={link.conversationId}
               credential={credential}

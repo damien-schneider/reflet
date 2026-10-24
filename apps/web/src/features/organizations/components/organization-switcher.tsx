@@ -2,6 +2,7 @@ import { Menu } from "@base-ui/react/menu";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -194,31 +195,33 @@ export function OrganizationSwitcher({
               An organization holds your boards, changelog and team.
             </DialogDescription>
           </DialogHeader>
-          <form
-            id="create-organization-form"
-            noValidate
-            onSubmit={handleCreateOrg}
-          >
-            <Field invalid={Boolean(createError)}>
-              <FieldLabel htmlFor="new-organization-name">
-                Organization name
-              </FieldLabel>
-              <Input
-                autoComplete="organization"
-                disabled={isCreating}
-                id="new-organization-name"
-                onChange={(e) => {
-                  setNewOrgName(e.target.value);
-                  setCreateError(null);
-                }}
-                placeholder="My Company"
-                value={newOrgName}
-              />
-              <FieldError match={Boolean(createError)}>
-                {createError}
-              </FieldError>
-            </Field>
-          </form>
+          <DialogBody>
+            <form
+              id="create-organization-form"
+              noValidate
+              onSubmit={handleCreateOrg}
+            >
+              <Field invalid={Boolean(createError)}>
+                <FieldLabel htmlFor="new-organization-name">
+                  Organization name
+                </FieldLabel>
+                <Input
+                  autoComplete="organization"
+                  disabled={isCreating}
+                  id="new-organization-name"
+                  onChange={(e) => {
+                    setNewOrgName(e.target.value);
+                    setCreateError(null);
+                  }}
+                  placeholder="My Company"
+                  value={newOrgName}
+                />
+                <FieldError match={Boolean(createError)}>
+                  {createError}
+                </FieldError>
+              </Field>
+            </form>
+          </DialogBody>
           <DialogFooter>
             <Button
               onClick={() => handleDialogOpenChange(false)}

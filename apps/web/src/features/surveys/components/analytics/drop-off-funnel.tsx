@@ -21,7 +21,7 @@ export function DropOffFunnel({ steps, totalResponses }: DropOffFunnelProps) {
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-5 p-5">
+      <CardContent className="flex flex-col gap-5">
         <AnalyticsCardTitle icon={FunnelSimple} id="drop-off-heading">
           Drop-off by question
         </AnalyticsCardTitle>

@@ -112,7 +112,7 @@ export function RoadmapColumnHeader({
               </TooltipTrigger>
               <TooltipContent>Change color</TooltipContent>
             </Tooltip>
-            <PopoverContent align="start" className="w-[200px] p-2">
+            <PopoverContent align="start" className="w-[200px]" padding="sm">
               <NotionColorPicker
                 onChange={handleColorChange}
                 value={displayColor}
@@ -143,28 +143,29 @@ export function RoadmapColumnHeader({
           </>
         ) : (
           <>
-            <Badge className="ml-auto tabular-nums" size="sm">
+            <Badge className="ml-auto" size="sm">
               {count}
             </Badge>
             {isAdmin && (
-              <Tooltip>
-                <TooltipTrigger
-                  aria-label={`Delete ${name} column`}
-                  render={
-                    <Button
-                      className="pointer-fine:opacity-0 focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100"
-                      iconOnly
-                      onClick={onDelete}
-                      size="xs"
-                      tone="danger"
-                      variant="ghost"
-                    />
-                  }
-                >
-                  <Trash aria-hidden />
-                </TooltipTrigger>
-                <TooltipContent>Delete column</TooltipContent>
-              </Tooltip>
+              <span className="pointer-fine:opacity-0 focus-within:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100">
+                <Tooltip>
+                  <TooltipTrigger
+                    aria-label={`Delete ${name} column`}
+                    render={
+                      <Button
+                        iconOnly
+                        onClick={onDelete}
+                        size="xs"
+                        tone="danger"
+                        variant="ghost"
+                      />
+                    }
+                  >
+                    <Trash aria-hidden />
+                  </TooltipTrigger>
+                  <TooltipContent>Delete column</TooltipContent>
+                </Tooltip>
+              </span>
             )}
           </>
         )}

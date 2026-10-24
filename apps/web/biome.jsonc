@@ -5,7 +5,8 @@
     "ultracite/biome/core",
     "ultracite/biome/react",
     "../../biome.jsonc",
-    "ultracite/biome/next"
+    "ultracite/biome/next",
+    "@ctrl-ui/react/biome"
   ],
   "files": {
     "includes": ["!.agents", "!**/.agents"]

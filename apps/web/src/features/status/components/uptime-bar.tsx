@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { useSyncExternalStore } from "react";
 import { Bar, BarChart, Cell, XAxis } from "recharts";
 import {
@@ -154,10 +155,12 @@ export function UptimeBar({
     <Card>
       <CardHeader>
         <CardTitle>Uptime</CardTitle>
-        <CardAction className="font-semibold tabular-nums">
-          {computedUptime === null
-            ? "No data yet"
-            : formatUptime(computedUptime)}
+        <CardAction>
+          <Text numeric weight="semibold">
+            {computedUptime === null
+              ? "No data yet"
+              : formatUptime(computedUptime)}
+          </Text>
         </CardAction>
       </CardHeader>
       <CardContent>

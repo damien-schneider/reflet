@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -41,7 +42,6 @@ export function DashboardSupport() {
       <SidebarMenuItem>
         <SidebarMenuButton
           aria-label={supportLabel}
-          className="group-data-[collapsible=icon]:justify-center"
           onClick={() => setIsOpen(true)}
           tooltip={supportLabel}
         >
@@ -55,8 +55,8 @@ export function DashboardSupport() {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <Sheet onOpenChange={setIsOpen} open={isOpen}>
-        <SheetContent className="w-full gap-0 p-0 sm:max-w-md" side="right">
-          <SheetHeader className="flex-row items-start gap-3 border-b px-4 py-3">
+        <SheetContent className="w-full sm:max-w-md" side="right">
+          <SheetHeader className="flex-row items-start gap-3">
             <div className="min-w-0 flex-1">
               <SheetTitle>{desk.name} support</SheetTitle>
               <SheetDescription>
@@ -76,7 +76,9 @@ export function DashboardSupport() {
               <X aria-hidden />
             </SheetClose>
           </SheetHeader>
-          <SupportDesk isGuest={false} org={desk} surface="panel" />
+          <SheetBody padding="none">
+            <SupportDesk isGuest={false} org={desk} surface="panel" />
+          </SheetBody>
         </SheetContent>
       </Sheet>
     </>

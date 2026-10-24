@@ -16,7 +16,7 @@ interface EndingsCardProps {
 export function EndingsCard({ completedResponses, endings }: EndingsCardProps) {
   return (
     <Card>
-      <CardContent className="flex h-full flex-col gap-5 p-5">
+      <CardContent className="flex h-full flex-col gap-5">
         <AnalyticsCardTitle icon={FlagCheckered} id="endings-heading">
           Endings
         </AnalyticsCardTitle>

@@ -54,11 +54,11 @@ function StatusDashboardSkeleton() {
       </PageHeader>
       <PageBody>
         <div aria-busy className="space-y-6">
-          <Skeleton className="h-14 w-full rounded-(--radius-panel)" />
+          <Skeleton className="h-14 w-full" shape="panel" />
           {SKELETON_MONITOR_KEYS.map((key) => (
             <div className="space-y-3" key={key}>
-              <Skeleton className="h-18 w-full rounded-(--radius-panel)" />
-              <Skeleton className="h-36 w-full rounded-(--radius-panel)" />
+              <Skeleton className="h-18 w-full" shape="panel" />
+              <Skeleton className="h-36 w-full" shape="panel" />
             </div>
           ))}
         </div>

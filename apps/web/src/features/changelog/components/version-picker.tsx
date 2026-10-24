@@ -43,7 +43,7 @@ export function VersionPicker({
   const versionInput = (
     <Input
       aria-label="Release version"
-      className="w-28 tabular-nums"
+      className="w-28"
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       placeholder="v1.0.0"
@@ -65,7 +65,7 @@ export function VersionPicker({
           versionInput
         )}
         {versionSuggestions?.current && (
-          <Badge className="tabular-nums" size="sm" variant="outline">
+          <Badge size="sm" variant="outline">
             Latest: {versionSuggestions.current}
           </Badge>
         )}
@@ -75,7 +75,6 @@ export function VersionPicker({
           {increments.map((increment) => (
             <Button
               aria-pressed={value === increment.version}
-              className="tabular-nums"
               key={increment.label}
               onClick={() => onChange(increment.version)}
               size="xs"

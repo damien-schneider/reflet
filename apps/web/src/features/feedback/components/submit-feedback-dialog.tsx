@@ -4,6 +4,7 @@ import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Sheet,
+  SheetBody,
   SheetClose,
   SheetContent,
   SheetDescription,
@@ -71,33 +72,35 @@ export function SubmitFeedbackDialog({
   return (
     <Sheet onOpenChange={onOpenChange} open={isOpen}>
       <SheetContent
-        className="gap-0 overflow-hidden p-0 md:w-[50vw] md:max-w-2xl"
+        className="overflow-hidden md:w-[50vw] md:max-w-2xl"
         side="right"
       >
         <SubmitFeedbackHeader />
-        <form
-          action={handleSubmit}
-          className="flex min-h-100 flex-1 flex-col overflow-y-auto"
-        >
-          <TitleSection
-            feedback={feedback}
-            onFeedbackChange={onFeedbackChange}
-            onSubmit={handleSubmit}
-            validation={validation}
-          />
-          <div className="mx-6 border-border/50 border-b" />
-          <DescriptionSection
-            feedback={feedback}
-            isSubmitting={isSubmitting}
-            onFeedbackChange={onFeedbackChange}
-            onSubmit={handleSubmit}
-          />
-          <SubmitFeedbackFooter
-            {...footerProps}
-            onCancel={() => onOpenChange(false)}
-            validation={validation}
-          />
-        </form>
+        <SheetBody padding="none">
+          <form
+            action={handleSubmit}
+            className="flex min-h-100 flex-1 flex-col"
+          >
+            <TitleSection
+              feedback={feedback}
+              onFeedbackChange={onFeedbackChange}
+              onSubmit={handleSubmit}
+              validation={validation}
+            />
+            <div className="mx-6 border-border/50 border-b" />
+            <DescriptionSection
+              feedback={feedback}
+              isSubmitting={isSubmitting}
+              onFeedbackChange={onFeedbackChange}
+              onSubmit={handleSubmit}
+            />
+            <SubmitFeedbackFooter
+              {...footerProps}
+              onCancel={() => onOpenChange(false)}
+              validation={validation}
+            />
+          </form>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );
@@ -105,7 +108,7 @@ export function SubmitFeedbackDialog({
 
 function SubmitFeedbackHeader() {
   return (
-    <SheetHeader className="shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
+    <SheetHeader className="shrink-0 flex-row items-center justify-between gap-2">
       <SheetTitle>Submit feedback</SheetTitle>
       <SheetDescription className="sr-only">
         Share an idea, report a bug, or request a feature.

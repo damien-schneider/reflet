@@ -132,11 +132,8 @@ export function SetupMethodStep({
                 Recommended
               </Badge>
             </div>
-            <div className="relative">
-              <ScrollArea
-                className="min-w-0 rounded-lg border bg-muted/50"
-                viewportClassName="max-h-[200px]"
-              >
+            <div className="relative min-w-0 rounded-lg border bg-muted/50">
+              <ScrollArea className="min-w-0" viewportClassName="max-h-[200px]">
                 <pre className="overflow-x-auto whitespace-pre p-3 pr-12 font-mono text-caption leading-relaxed">
                   {aiPrompt}
                 </pre>
@@ -163,9 +160,9 @@ export function SetupMethodStep({
                 </code>{" "}
                 in your repository with this content:
               </p>
-              <div className="relative">
+              <div className="relative min-w-0 rounded-lg border bg-muted/50">
                 <ScrollArea
-                  className="min-w-0 rounded-lg border bg-muted/50"
+                  className="min-w-0"
                   viewportClassName="max-h-[200px]"
                 >
                   <pre className="overflow-x-auto whitespace-pre p-3 pr-12 font-mono text-caption leading-relaxed">

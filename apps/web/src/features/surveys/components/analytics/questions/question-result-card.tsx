@@ -15,7 +15,7 @@ export function QuestionResultCard({ stat }: { stat: QuestionStat }) {
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-4 p-5">
+      <CardContent className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-muted-foreground text-xs">

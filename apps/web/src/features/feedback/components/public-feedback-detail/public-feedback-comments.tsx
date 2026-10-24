@@ -159,7 +159,7 @@ function CommentsSkeleton() {
     <div aria-busy="true" className="space-y-4">
       {[1, 2].map((i) => (
         <div className="flex gap-3" key={i}>
-          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <Skeleton className="size-8 shrink-0" shape="circle" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/4" />
             <Skeleton className="h-12 w-full" />

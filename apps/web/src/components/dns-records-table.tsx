@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import type { ReactNode } from "react";
 import { CopyButton } from "@/components/copy-button";
 
@@ -44,7 +45,9 @@ export function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
       <TableBody>
         {records.map((record) => (
           <TableRow key={`${record.type}:${record.name}:${record.value}`}>
-            <TableCell className="font-mono">{record.type}</TableCell>
+            <TableCell>
+              <Text mono>{record.type}</Text>
+            </TableCell>
             <TableCell>
               <CopyableValue label="name" value={record.name} />
             </TableCell>
@@ -52,8 +55,8 @@ export function DnsRecordsTable({ records }: { records: DnsRecord[] }) {
               <CopyableValue label="value" value={record.value} />
             </TableCell>
             {hasPriority ? (
-              <TableCell className="font-mono tabular-nums">
-                {record.priority}
+              <TableCell>
+                <Text mono>{record.priority}</Text>
               </TableCell>
             ) : null}
             {hasStatus ? <TableCell>{record.status}</TableCell> : null}

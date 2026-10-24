@@ -52,7 +52,7 @@ function TrashSkeleton() {
 
 function TrashEmpty() {
   return (
-    <Empty className="border border-dashed">
+    <Empty variant="outline">
       <EmptyHeader>
         <EmptyMedia>
           <Trash aria-hidden="true" />
@@ -124,7 +124,6 @@ export default function TrashPage({
                     </time>
                   ) : null}
                   <Badge
-                    className="tabular-nums"
                     color={
                       feedback.daysRemaining <= URGENT_DAYS_REMAINING
                         ? "orange"

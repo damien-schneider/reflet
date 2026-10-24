@@ -1,14 +1,16 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Combobox,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
+  ComboboxInputGroup,
   ComboboxItem,
   ComboboxList,
 } from "@ctrl-ui/react/ui/combobox";
+import { InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
+import { Toolbar, ToolbarButton } from "@ctrl-ui/react/ui/toolbar";
 import {
   CornersOut,
   Eye,
@@ -47,13 +49,8 @@ export function CanvasToolbar() {
 
   return (
     <div className="flex items-start gap-2">
-      <div
-        aria-label="Canvas tools"
-        aria-orientation="vertical"
-        className="flex flex-col gap-0.5 rounded-xl border bg-card p-1 shadow-xs"
-        role="toolbar"
-      >
-        <Button
+      <Toolbar aria-label="Canvas tools" orientation="vertical">
+        <ToolbarButton
           aria-label="Fit the flow to the screen"
           iconOnly
           onClick={() =>
@@ -62,47 +59,32 @@ export function CanvasToolbar() {
               maxZoom: 1,
             })
           }
-          size="sm"
-          variant="ghost"
         >
           <CornersOut aria-hidden />
-        </Button>
-        <Button
-          active={isOutlineOpen}
+        </ToolbarButton>
+        <ToolbarButton
           aria-label="Steps list"
           aria-pressed={isOutlineOpen}
           iconOnly
           onClick={() => setOutlineOpen(!isOutlineOpen)}
-          size="sm"
-          variant="ghost"
         >
           <ListBullets aria-hidden />
-        </Button>
-        <Button
-          active={isPreviewOpen}
+        </ToolbarButton>
+        <ToolbarButton
           aria-label="Live preview"
           aria-pressed={isPreviewOpen}
           iconOnly
           onClick={() => setPreviewOpen(!isPreviewOpen)}
-          size="sm"
-          variant="ghost"
         >
           <Eye aria-hidden />
-        </Button>
+        </ToolbarButton>
         <AddStepPopover
           anchor={reachableInsertAnchor(model, selection)}
-          trigger={
-            <Button
-              aria-label="Add a step"
-              iconOnly
-              size="sm"
-              variant="ghost"
-            />
-          }
+          trigger={<ToolbarButton aria-label="Add a step" iconOnly />}
         >
           <Plus aria-hidden />
         </AddStepPopover>
-      </div>
+      </Toolbar>
       <StepSearch />
     </div>
   );
@@ -114,11 +96,7 @@ function StepSearch() {
   const [query, setQuery] = useState("");
 
   return (
-    <div className="relative w-64">
-      <MagnifyingGlass
-        aria-hidden
-        className="pointer-events-none absolute start-2.5 top-1/2 z-1 size-4 -translate-y-1/2 text-muted-foreground"
-      />
+    <div className="w-64">
       <Combobox
         inputValue={query}
         items={model.questions}
@@ -137,16 +115,23 @@ function StepSearch() {
         }}
         value={null}
       >
-        <ComboboxInput
-          aria-label="Search steps"
-          className="ps-8"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setQuery("");
-            }
-          }}
-          placeholder="Search steps"
-        />
+        <ComboboxInputGroup>
+          <InputGroupAddon>
+            <MagnifyingGlass
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
+          </InputGroupAddon>
+          <ComboboxInput
+            aria-label="Search steps"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setQuery("");
+              }
+            }}
+            placeholder="Search steps"
+          />
+        </ComboboxInputGroup>
         <ComboboxContent>
           <ComboboxEmpty>No matching step</ComboboxEmpty>
           <ComboboxList>

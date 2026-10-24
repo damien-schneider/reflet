@@ -53,7 +53,18 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
     description: "Padded content area that leaves room for the corner badge.",
     name: "SweepCornerContent",
   },
-  { description: "Title, rendered as an h3.", name: "SweepCornerTitle" },
+  {
+    description: "Title, rendered as an h3.",
+    name: "SweepCornerTitle",
+    props: [
+      {
+        description:
+          "Turns the title into a button that covers the whole card and calls this on click.",
+        name: "onClick",
+        type: "() => void",
+      },
+    ],
+  },
   {
     description: "Wrapping row for tag pills.",
     name: "SweepCornerTags",

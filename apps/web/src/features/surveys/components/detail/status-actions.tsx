@@ -142,11 +142,7 @@ function BlockingIssues({
 
   return (
     <Popover onOpenChange={setIsOpen} open={isOpen}>
-      <PopoverTrigger
-        render={
-          <Button className="text-red-700 dark:text-red-300" variant="ghost" />
-        }
-      >
+      <PopoverTrigger render={<Button tone="danger" variant="ghost" />}>
         <WarningCircle aria-hidden weight="bold" />
         {count === 1 ? "1 thing to fix" : `${count} things to fix`}
       </PopoverTrigger>

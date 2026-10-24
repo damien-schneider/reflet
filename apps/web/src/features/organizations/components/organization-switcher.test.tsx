@@ -114,6 +114,9 @@ vi.mock("@ctrl-ui/react/ui/dialog", () => ({
     open: boolean;
     onOpenChange: (o: boolean) => void;
   }) => (open ? <div data-testid="dialog">{children}</div> : null),
+  DialogBody: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

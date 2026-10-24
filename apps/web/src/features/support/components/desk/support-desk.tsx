@@ -65,7 +65,7 @@ export function SupportDesk({ isGuest, org, surface }: SupportDeskProps) {
       />
     );
     return surface === "page" ? (
-      <Card className="flex h-[min(75dvh,48rem)] flex-col overflow-hidden p-0">
+      <Card className="flex h-[min(75dvh,48rem)] flex-col overflow-hidden [--cui-card-padding-block:0px]">
         {thread}
       </Card>
     ) : (

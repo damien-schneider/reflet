@@ -36,7 +36,6 @@ function NotificationsItem() {
           <SidebarMenuButton
             {...props}
             aria-label={notificationsLabel}
-            className="group-data-[collapsible=icon]:justify-center"
             tooltip={notificationsLabel}
           >
             <Bell aria-hidden="true" />
@@ -65,7 +64,6 @@ export function SidebarFooterContent({
       {orgSlug && isPublic ? (
         <SidebarMenuItem>
           <SidebarMenuButton
-            className="group-data-[collapsible=icon]:justify-center"
             render={
               <Link href={`/${orgSlug}`} rel="noopener" target="_blank" />
             }

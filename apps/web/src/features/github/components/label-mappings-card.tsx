@@ -4,6 +4,7 @@ import { Badge, type BadgeProps } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -305,7 +306,7 @@ function AddLabelMappingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <DialogBody>
           <SwatchSelectField
             disabled={isLoadingLabels || hasNoLabels}
             id="github-label"
@@ -348,7 +349,7 @@ function AddLabelMappingDialog({
             label="Sync closed issues"
             onCheckedChange={setSyncClosedIssues}
           />
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)} variant="surface">

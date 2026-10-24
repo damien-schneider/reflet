@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
+import { Separator } from "@ctrl-ui/react/ui/separator";
 import { CalendarCheck, X } from "@phosphor-icons/react";
 import { format, isPast, isToday } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
@@ -58,7 +59,12 @@ export function DeadlineDisplay({
           <span>Deadline</span>
         </PopoverTrigger>
       )}
-      <PopoverContent align="start" className="w-auto p-2" sideOffset={4}>
+      <PopoverContent
+        align="start"
+        className="w-auto"
+        padding="sm"
+        sideOffset={4}
+      >
         <Calendar
           mode="single"
           onSelect={(date) => {
@@ -69,15 +75,18 @@ export function DeadlineDisplay({
           selected={deadlineDate ?? undefined}
         />
         {hasDeadline && (
-          <Button
-            className="mt-2 h-auto w-full gap-1 border-t pt-2 text-xs"
-            onClick={onClear}
-            size="xs"
-            variant="quiet"
-          >
-            <X className="h-3 w-3" />
-            Clear deadline
-          </Button>
+          <>
+            <Separator className="my-2" />
+            <Button
+              className="w-full gap-1"
+              onClick={onClear}
+              size="xs"
+              variant="quiet"
+            >
+              <X className="h-3 w-3" />
+              Clear deadline
+            </Button>
+          </>
         )}
       </PopoverContent>
     </Popover>

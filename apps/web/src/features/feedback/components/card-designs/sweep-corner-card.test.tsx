@@ -85,8 +85,18 @@ vi.mock("@reflet/ui/feedback-sweep-corner", () => ({
   SweepCornerTags: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tags">{children}</div>
   ),
-  SweepCornerTitle: ({ children }: { children: React.ReactNode }) => (
-    <h3 data-testid="title">{children}</h3>
+  SweepCornerTitle: ({
+    children,
+    onClick,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+  }) => (
+    <h3 data-testid="title">
+      <button onClick={onClick} type="button">
+        {children}
+      </button>
+    </h3>
   ),
 }));
 

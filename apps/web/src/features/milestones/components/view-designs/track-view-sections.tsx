@@ -141,51 +141,48 @@ export function DesktopTrack({
 }) {
   const { activeHorizons } = layout;
   return (
-    <ScrollArea
-      className="rounded-xl bg-secondary"
-      lockAxis="y"
-      ref={trackRef}
-      viewportClassName="px-4"
-    >
-      <div className="py-2">
-        <div className="flex w-full items-stretch gap-0.5 p-0.5">
-          {activeHorizons.map((horizon, zoneIndex) => (
-            <div
-              className="relative flex min-w-(--zone-min) grow-(--zone-grow) items-stretch gap-0.5"
-              key={horizon}
-              style={zoneStyle(zoneIndex, zoneMinWidth)}
-            >
-              <TrackZone
-                horizon={horizon}
-                isLast={zoneIndex === activeHorizons.length - 1}
-                layout={layout}
-              />
-            </div>
-          ))}
-        </div>
+    <div className="overflow-hidden rounded-xl bg-secondary">
+      <ScrollArea lockAxis="y" ref={trackRef} viewportClassName="px-4">
+        <div className="py-2">
+          <div className="flex w-full items-stretch gap-0.5 p-0.5">
+            {activeHorizons.map((horizon, zoneIndex) => (
+              <div
+                className="relative flex min-w-(--zone-min) grow-(--zone-grow) items-stretch gap-0.5"
+                key={horizon}
+                style={zoneStyle(zoneIndex, zoneMinWidth)}
+              >
+                <TrackZone
+                  horizon={horizon}
+                  isLast={zoneIndex === activeHorizons.length - 1}
+                  layout={layout}
+                />
+              </div>
+            ))}
+          </div>
 
-        <div className="mt-2 flex w-full">
-          {activeHorizons.map((horizon, zoneIndex) => (
-            <div
-              className="min-w-(--zone-min) grow-(--zone-grow) text-center"
-              key={horizon}
-              style={zoneStyle(zoneIndex, zoneMinWidth)}
-            >
-              <span className="text-caption text-muted-foreground">
-                {TIME_HORIZON_CONFIG[horizon].label}
-              </span>
-            </div>
-          ))}
-        </div>
+          <div className="mt-2 flex w-full">
+            {activeHorizons.map((horizon, zoneIndex) => (
+              <div
+                className="min-w-(--zone-min) grow-(--zone-grow) text-center"
+                key={horizon}
+                style={zoneStyle(zoneIndex, zoneMinWidth)}
+              >
+                <span className="text-caption text-muted-foreground">
+                  {TIME_HORIZON_CONFIG[horizon].label}
+                </span>
+              </div>
+            ))}
+          </div>
 
-        <div className="relative mt-1">
-          <div className="flex items-center gap-1">
-            <div className="h-2 w-px rounded-full bg-primary" />
-            <span className="text-caption text-primary">Today</span>
+          <div className="relative mt-1">
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-px rounded-full bg-primary" />
+              <span className="text-caption text-primary">Today</span>
+            </div>
           </div>
         </div>
-      </div>
-    </ScrollArea>
+      </ScrollArea>
+    </div>
   );
 }
 

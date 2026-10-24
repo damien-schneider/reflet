@@ -86,8 +86,9 @@ export function SchedulePicker({
             render={
               <Button
                 className={cn(
-                  "min-w-0 flex-1 justify-start tabular-nums",
-                  !selectedDate && "text-muted-foreground"
+                  "min-w-0 flex-1 justify-start",
+                  !selectedDate &&
+                    "[--cui-button-foreground:var(--muted-foreground)]"
                 )}
                 disabled={disabled}
                 size="sm"
@@ -114,7 +115,7 @@ export function SchedulePicker({
 
         <Input
           aria-label="Publish time"
-          className="w-32 tabular-nums"
+          className="w-32"
           disabled={disabled}
           onChange={(e) => handleTimeChange(e.target.value)}
           size="sm"

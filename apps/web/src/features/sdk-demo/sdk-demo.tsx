@@ -2,7 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Card } from "@ctrl-ui/react/ui/card";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -64,58 +64,62 @@ function BillingOverview() {
   const planDetailsId = useId();
   return (
     <section className="grid gap-4 sm:grid-cols-2" id="plan">
-      <Card className="p-5 sm:p-6">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-sm">Current plan</span>
-          <Badge color="green" size="sm">
-            Active
-          </Badge>
-        </div>
-        <div className="mt-5 flex items-baseline gap-2">
-          <h2 className="font-semibold text-3xl tracking-tight">Pro</h2>
-          <span className="text-muted-foreground text-sm tabular-nums">
-            €49 / month
-          </span>
-        </div>
-        <p className="mt-2 text-muted-foreground text-sm">
-          Everything your studio needs to do its best work.
-        </p>
-        <Button
-          aria-controls={planDetailsId}
-          aria-expanded={showPlan}
-          className="mt-5"
-          onClick={() => setShowPlan(!showPlan)}
-          variant="surface"
-        >
-          {showPlan ? "Hide plan details" : "Manage plan"}
-          <ArrowUpRight aria-hidden data-icon="inline-end" size={14} />
-        </Button>
-        {showPlan && (
-          <p
-            className="mt-4 text-pretty text-muted-foreground text-sm"
-            id={planDetailsId}
-          >
-            3 members, unlimited projects and 100 GB of storage. This workspace
-            is a demo.
-          </p>
-        )}
-      </Card>
-      <Card className="p-5 sm:p-6">
-        <span className="text-muted-foreground text-sm">Payment method</span>
-        <div className="mt-6 flex items-center gap-3">
-          <span className="rounded-md border border-border px-3 py-2 font-semibold text-xs italic">
-            VISA
-          </span>
-          <div>
-            <p className="font-medium text-sm">Visa ending in 4242</p>
-            <p className="mt-1 text-muted-foreground text-xs tabular-nums">
-              Expires 08/2028
-            </p>
+      <Card>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-sm">Current plan</span>
+            <Badge color="green" size="sm">
+              Active
+            </Badge>
           </div>
-        </div>
-        <p className="mt-6 text-muted-foreground text-sm">
-          Your next invoice is on October 1, 2026.
-        </p>
+          <div className="mt-5 flex items-baseline gap-2">
+            <h2 className="font-semibold text-3xl tracking-tight">Pro</h2>
+            <span className="text-muted-foreground text-sm tabular-nums">
+              €49 / month
+            </span>
+          </div>
+          <p className="mt-2 text-muted-foreground text-sm">
+            Everything your studio needs to do its best work.
+          </p>
+          <Button
+            aria-controls={planDetailsId}
+            aria-expanded={showPlan}
+            className="mt-5"
+            onClick={() => setShowPlan(!showPlan)}
+            variant="surface"
+          >
+            {showPlan ? "Hide plan details" : "Manage plan"}
+            <ArrowUpRight aria-hidden data-icon="inline-end" size={14} />
+          </Button>
+          {showPlan && (
+            <p
+              className="mt-4 text-pretty text-muted-foreground text-sm"
+              id={planDetailsId}
+            >
+              3 members, unlimited projects and 100 GB of storage. This
+              workspace is a demo.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent>
+          <span className="text-muted-foreground text-sm">Payment method</span>
+          <div className="mt-6 flex items-center gap-3">
+            <span className="rounded-md border border-border px-3 py-2 font-semibold text-xs italic">
+              VISA
+            </span>
+            <div>
+              <p className="font-medium text-sm">Visa ending in 4242</p>
+              <p className="mt-1 text-muted-foreground text-xs tabular-nums">
+                Expires 08/2028
+              </p>
+            </div>
+          </div>
+          <p className="mt-6 text-muted-foreground text-sm">
+            Your next invoice is on October 1, 2026.
+          </p>
+        </CardContent>
       </Card>
     </section>
   );
@@ -131,38 +135,40 @@ function InvoiceHistory() {
         </h2>
         <span className="text-muted-foreground text-xs">2026</span>
       </div>
-      <Card className="divide-y divide-border">
-        {INVOICES.map((invoice) => (
-          <div
-            className="flex items-center gap-4 px-4 py-5 sm:px-6"
-            key={invoice.id}
-          >
-            <div className="min-w-0 flex-1">
-              <p className="font-medium text-sm">{invoice.date}</p>
-              <p className="mt-1 text-muted-foreground text-xs tabular-nums">
-                {invoice.id}
-              </p>
+      <Card className="[--cui-card-padding-block:0px]">
+        <div className="divide-y divide-border">
+          {INVOICES.map((invoice) => (
+            <div
+              className="flex items-center gap-4 px-4 py-5 sm:px-6"
+              key={invoice.id}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm">{invoice.date}</p>
+                <p className="mt-1 text-muted-foreground text-xs tabular-nums">
+                  {invoice.id}
+                </p>
+              </div>
+              <Badge
+                className="hidden sm:inline-flex"
+                size="sm"
+                variant="outline"
+              >
+                Paid
+              </Badge>
+              <span className="text-right font-medium text-sm tabular-nums sm:w-28">
+                {invoice.amount}
+              </span>
+              <Button
+                aria-label={`Download ${invoice.id}`}
+                iconOnly
+                onClick={() => setDownloaded(invoice.id)}
+                variant="ghost"
+              >
+                <ArrowDown aria-hidden size={18} />
+              </Button>
             </div>
-            <Badge
-              className="hidden sm:inline-flex"
-              size="sm"
-              variant="outline"
-            >
-              Paid
-            </Badge>
-            <span className="text-right font-medium text-sm tabular-nums sm:w-28">
-              {invoice.amount}
-            </span>
-            <Button
-              aria-label={`Download ${invoice.id}`}
-              iconOnly
-              onClick={() => setDownloaded(invoice.id)}
-              variant="ghost"
-            >
-              <ArrowDown aria-hidden size={18} />
-            </Button>
-          </div>
-        ))}
+          ))}
+        </div>
       </Card>
       <p className="mt-3 min-h-5 text-muted-foreground text-sm" role="status">
         {downloaded

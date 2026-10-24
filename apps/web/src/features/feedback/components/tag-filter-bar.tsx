@@ -77,7 +77,7 @@ function TagButton({
           Edit tag
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem className="menu-item-danger" onClick={onDelete}>
+        <ContextMenuItem onClick={onDelete} tone="danger">
           <Trash className="mr-2 h-4 w-4" />
           Delete tag
         </ContextMenuItem>

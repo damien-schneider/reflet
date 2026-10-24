@@ -2,7 +2,6 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -83,15 +82,13 @@ export function MembersSection({
           </span>
         }
       >
-        <Card>
-          <CardContent>
-            <MemberList
-              isOwner={currentMember?.role === "owner"}
-              members={members}
-              onRemoveMember={(id, name) => setRemovingMember({ id, name })}
-            />
-          </CardContent>
-        </Card>
+        <div>
+          <MemberList
+            isOwner={currentMember?.role === "owner"}
+            members={members}
+            onRemoveMember={(id, name) => setRemovingMember({ id, name })}
+          />
+        </div>
       </SettingsSection>
 
       <SettingsSection
@@ -101,19 +98,17 @@ export function MembersSection({
           </span>
         }
       >
-        <Card>
-          <CardContent>
-            {invitations === undefined ? (
-              <Skeleton aria-busy="true" className="h-12 w-full" />
-            ) : null}
-            {invitations?.length === 0 ? (
-              <p className="py-2 text-body text-muted-foreground">
-                No pending invitations.
-              </p>
-            ) : null}
-            <InvitationList invitations={invitations} />
-          </CardContent>
-        </Card>
+        <div>
+          {invitations === undefined ? (
+            <Skeleton aria-busy="true" className="h-12 w-full" />
+          ) : null}
+          {invitations?.length === 0 ? (
+            <p className="py-2 text-body text-muted-foreground">
+              No pending invitations.
+            </p>
+          ) : null}
+          <InvitationList invitations={invitations} />
+        </div>
       </SettingsSection>
 
       <InviteMemberDialog

@@ -2,6 +2,7 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Check, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { FeedbackStatusBadge } from "./feedback-status-badge";
@@ -74,21 +75,21 @@ export function FeedbackSearchInput({
 
   return (
     <div className="relative">
-      <div className="relative">
-        <MagnifyingGlass
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
-        />
+      <InputGroup size="sm">
+        <InputGroupAddon>
+          <MagnifyingGlass
+            aria-hidden="true"
+            className="size-3.5 text-muted-foreground"
+          />
+        </InputGroupAddon>
         <Input
           aria-label="Search feedback to link"
-          className="pl-8"
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search feedback to link…"
-          size="sm"
           type="search"
           value={searchQuery}
         />
-      </div>
+      </InputGroup>
       {hasQuery && (
         <div
           className="absolute right-0 left-0 z-20 mt-1 max-h-40 overflow-y-auto p-1"

@@ -117,7 +117,6 @@ function DuplicatePairCard({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Badge
-            className="tabular-nums"
             color={
               percentage >= HIGH_SIMILARITY_PERCENTAGE ? "orange" : "neutral"
             }
@@ -185,10 +184,10 @@ function MergeHistory({
   return (
     <section className="space-y-4">
       <ReviewSectionHeader title="Recent merges" />
-      <Card>
-        <CardContent className="divide-y p-0">
+      <Card className="[--cui-card-padding-block:0px]">
+        <ul className="divide-y">
           {mergeHistory.map((entry) => (
-            <div
+            <li
               className="flex items-center justify-between gap-4 px-4 py-3"
               key={entry._id}
             >
@@ -210,9 +209,9 @@ function MergeHistory({
               >
                 {formatDistanceToNow(entry.mergedAt, { addSuffix: true })}
               </time>
-            </div>
+            </li>
           ))}
-        </CardContent>
+        </ul>
       </Card>
     </section>
   );

@@ -1,6 +1,11 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowsClockwise, Warning, X } from "@phosphor-icons/react";
 
@@ -18,7 +23,7 @@ export function GitHubPermissionErrorAlert({
   onDismiss,
 }: GitHubPermissionErrorAlertProps) {
   return (
-    <Alert className="pr-10" variant="destructive">
+    <Alert variant="destructive">
       <Warning aria-hidden="true" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
@@ -36,12 +41,12 @@ export function GitHubPermissionErrorAlert({
         </Button>
       </AlertDescription>
       {onDismiss ? (
-        <div className="absolute top-2 right-2">
+        <AlertAction>
           <Button iconOnly onClick={onDismiss} size="xs" variant="ghost">
             <X aria-hidden="true" className="size-4" />
             <span className="sr-only">Dismiss</span>
           </Button>
-        </div>
+        </AlertAction>
       ) : null}
     </Alert>
   );

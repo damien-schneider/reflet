@@ -41,7 +41,6 @@ export function NavLink({
       <SidebarMenuButton
         aria-current={isActive ? "page" : undefined}
         aria-label={item.badge ? name : undefined}
-        className="group-data-[collapsible=icon]:justify-center"
         isActive={isActive}
         render={
           <Link href={item.href} onNavigate={() => setOpenMobile(false)} />

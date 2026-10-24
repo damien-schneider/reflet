@@ -127,7 +127,7 @@ function ReleaseMeta({ release }: { release: ReleaseData }) {
   return (
     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
       {release.version && (
-        <Badge className="tabular-nums" size="md" variant="outline">
+        <Badge size="md" variant="outline">
           {release.version}
         </Badge>
       )}
@@ -216,7 +216,7 @@ function ReleaseAdminActions({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="menu-item-danger" onClick={onDelete}>
+          <DropdownMenuItem onClick={onDelete} tone="danger">
             <Trash aria-hidden="true" className="size-4" />
             Delete…
           </DropdownMenuItem>

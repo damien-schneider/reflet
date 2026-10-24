@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { DialogFooter } from "@ctrl-ui/react/ui/dialog";
+import { DialogBody, DialogFooter } from "@ctrl-ui/react/ui/dialog";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { ArrowLeft } from "@phosphor-icons/react";
@@ -52,35 +52,39 @@ export function DescribeSurveyStep({
 
   return (
     <>
-      <form
-        className="flex flex-col gap-1.5"
-        id={formId}
-        onSubmit={handleSubmit}
-      >
-        <Label htmlFor={`${formId}-prompt`}>What do you want to learn?</Label>
-        <Textarea
-          aria-describedby={`${formId}-status`}
-          autoFocus
-          disabled={isDrafting}
-          id={`${formId}-prompt`}
-          onChange={(event) => setPrompt(event.target.value)}
-          placeholder="e.g. Why trial users don’t upgrade. Ask unhappy people what’s missing and thank happy ones."
-          rows={4}
-          value={prompt}
-        />
-        <p
-          aria-live="polite"
-          className={
-            error ? "text-destructive text-xs" : "text-muted-foreground text-xs"
-          }
-          id={`${formId}-status`}
+      <DialogBody>
+        <form
+          className="flex flex-col gap-1.5"
+          id={formId}
+          onSubmit={handleSubmit}
         >
-          {error ??
-            (isDrafting
-              ? "Drafting your survey…"
-              : "You can edit everything before publishing.")}
-        </p>
-      </form>
+          <Label htmlFor={`${formId}-prompt`}>What do you want to learn?</Label>
+          <Textarea
+            aria-describedby={`${formId}-status`}
+            autoFocus
+            disabled={isDrafting}
+            id={`${formId}-prompt`}
+            onChange={(event) => setPrompt(event.target.value)}
+            placeholder="e.g. Why trial users don’t upgrade. Ask unhappy people what’s missing and thank happy ones."
+            rows={4}
+            value={prompt}
+          />
+          <p
+            aria-live="polite"
+            className={
+              error
+                ? "text-destructive text-xs"
+                : "text-muted-foreground text-xs"
+            }
+            id={`${formId}-status`}
+          >
+            {error ??
+              (isDrafting
+                ? "Drafting your survey…"
+                : "You can edit everything before publishing.")}
+          </p>
+        </form>
+      </DialogBody>
       <DialogFooter>
         <Button className="sm:mr-auto" onClick={onBack} variant="ghost">
           <ArrowLeft aria-hidden />

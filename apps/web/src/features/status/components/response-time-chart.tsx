@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { format } from "date-fns";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
@@ -46,10 +47,12 @@ export function ResponseTimeChart({
     <Card>
       <CardHeader>
         <CardTitle>Response time</CardTitle>
-        <CardAction className="font-semibold tabular-nums">
-          {lastResponseTimeMs === undefined
-            ? "No data yet"
-            : formatLatency(lastResponseTimeMs)}
+        <CardAction>
+          <Text numeric weight="semibold">
+            {lastResponseTimeMs === undefined
+              ? "No data yet"
+              : formatLatency(lastResponseTimeMs)}
+          </Text>
         </CardAction>
       </CardHeader>
       <CardContent>

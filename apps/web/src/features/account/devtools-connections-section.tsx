@@ -37,7 +37,7 @@ export function DevtoolsConnectionsSection() {
           label: connection.label,
         }))}
         empty={
-          <Empty className="rounded-(--radius-panel) border border-dashed">
+          <Empty variant="outline">
             <EmptyHeader>
               <EmptyMedia>
                 <Plugs aria-hidden className="size-6" />

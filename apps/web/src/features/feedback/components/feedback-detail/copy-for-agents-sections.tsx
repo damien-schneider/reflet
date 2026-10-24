@@ -58,11 +58,7 @@ export function AgentsMenuTrigger() {
         render={
           <DropdownMenuTrigger
             render={
-              <Button
-                className="h-8 gap-1.5 px-2.5"
-                size="xs"
-                variant="surface"
-              />
+              <Button className="h-8 gap-1.5" size="xs" variant="surface" />
             }
           />
         }

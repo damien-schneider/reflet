@@ -12,6 +12,7 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -59,6 +60,9 @@ interface PreviewTarget {
   filename: string;
   url: string;
 }
+
+const OVERLAY_BUTTON_KNOBS =
+  "[--cui-button-foreground:var(--background)] [--cui-button-hover-foreground:var(--background)] [--cui-button-hover-background:oklch(from_var(--background)_l_c_h/0.2)]";
 
 const IMAGE_OUTLINE =
   "outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10";
@@ -109,7 +113,7 @@ function ScreenshotTile({
                 aria-label={`Download ${screenshot.filename}`}
                 render={
                   <ButtonLink
-                    className="text-background hover:bg-background/20"
+                    className={OVERLAY_BUTTON_KNOBS}
                     download={screenshot.filename}
                     href={displayUrl}
                     iconOnly
@@ -128,7 +132,7 @@ function ScreenshotTile({
               aria-label={`Delete ${screenshot.filename}`}
               render={
                 <Button
-                  className="text-background hover:bg-background/20"
+                  className={OVERLAY_BUTTON_KNOBS}
                   iconOnly
                   onClick={() => onDelete(screenshot)}
                   size="xs"
@@ -353,7 +357,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
           ))}
           {isUploading && (
             <li>
-              <Skeleton className="aspect-video rounded-md" />
+              <Skeleton className="aspect-video" />
             </li>
           )}
         </ul>
@@ -367,14 +371,16 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
             </DialogTitle>
           </DialogHeader>
           {preview && (
-            <Image
-              alt={preview.filename}
-              className={`w-full rounded-md ${IMAGE_OUTLINE}`}
-              height={600}
-              src={preview.url}
-              unoptimized
-              width={1200}
-            />
+            <DialogBody>
+              <Image
+                alt={preview.filename}
+                className={`w-full rounded-md ${IMAGE_OUTLINE}`}
+                height={600}
+                src={preview.url}
+                unoptimized
+                width={1200}
+              />
+            </DialogBody>
           )}
         </DialogContent>
       </Dialog>

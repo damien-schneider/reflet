@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type DeadlineStatus,
   getDeadlineBadgeStyles,
-  getDeadlineColor,
+  getDeadlineButtonClass,
   getDeadlineInfo,
 } from "./milestone-deadline";
 
@@ -151,7 +151,7 @@ describe("deadline styling", () => {
   it("styles every status through design tokens, never raw colours", () => {
     for (const status of ALL_STATUSES) {
       const { bg, text, border } = getDeadlineBadgeStyles(status);
-      for (const value of [bg, text, border, getDeadlineColor(status)]) {
+      for (const value of [bg, text, border, getDeadlineButtonClass(status)]) {
         expect(value).not.toMatch(/#|rgb\(|oklch\(|dark:/);
         expect(value.length).toBeGreaterThan(0);
       }
@@ -159,19 +159,19 @@ describe("deadline styling", () => {
   });
 
   it("draws attention to urgent deadlines and stays quiet otherwise", () => {
+    const quiet = getDeadlineButtonClass("none");
     for (const status of URGENT_STATUSES) {
-      expect(getDeadlineColor(status)).not.toBe("text-muted-foreground");
+      expect(getDeadlineButtonClass(status)).not.toBe(quiet);
     }
     for (const status of CALM_STATUSES) {
-      expect(getDeadlineColor(status)).toBe("text-muted-foreground");
+      expect(getDeadlineButtonClass(status)).toBe(quiet);
     }
   });
 
-  it("keeps the badge text colour consistent with the standalone colour", () => {
+  it("keeps the badge text colour consistent with the date button colour", () => {
     for (const status of ALL_STATUSES) {
-      expect(getDeadlineBadgeStyles(status).text).toBe(
-        getDeadlineColor(status)
-      );
+      const token = getDeadlineBadgeStyles(status).text.replace("text-", "");
+      expect(getDeadlineButtonClass(status)).toContain(`var(--${token})`);
     }
   });
 

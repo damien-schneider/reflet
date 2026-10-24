@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -27,7 +28,9 @@ export function ShareDialog({ survey }: { survey: FlowSurvey }) {
             Send a link or show it inside your app.
           </DialogDescription>
         </DialogHeader>
-        <SharePanel survey={survey} />
+        <DialogBody>
+          <SharePanel survey={survey} />
+        </DialogBody>
       </DialogContent>
     </Dialog>
   );

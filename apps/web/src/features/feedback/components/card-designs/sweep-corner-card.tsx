@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@ctrl-ui/react/lib/cn";
-import { Button } from "@ctrl-ui/react/ui/button";
 import { PushPin, Sparkle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
@@ -51,24 +50,18 @@ export function SweepCornerFeedCard({
         )}
       >
         <SweepCornerContent>
-          <SweepCornerTitle>
-            <Button
-              className="wrap-anywhere static isolation-auto h-auto w-full cursor-pointer justify-start whitespace-normal text-pretty px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:z-10 after:rounded-xl hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
-              onClick={() => onClick?.(feedback._id)}
-              variant="ghost"
-            >
-              {feedback.isPinned && (
-                <>
-                  <PushPin
-                    aria-hidden
-                    className="mr-1 inline size-3.5 align-[-2px] text-primary"
-                    weight="fill"
-                  />
-                  <span className="sr-only">Pinned: </span>
-                </>
-              )}
-              {feedback.title}
-            </Button>
+          <SweepCornerTitle onClick={() => onClick?.(feedback._id)}>
+            {feedback.isPinned && (
+              <>
+                <PushPin
+                  aria-hidden
+                  className="mr-1 inline size-3.5 align-[-2px] text-primary"
+                  weight="fill"
+                />
+                <span className="sr-only">Pinned: </span>
+              </>
+            )}
+            {feedback.title}
           </SweepCornerTitle>
           <FeedbackPropertySummary feedback={feedback} />
           {feedback.isMember && (

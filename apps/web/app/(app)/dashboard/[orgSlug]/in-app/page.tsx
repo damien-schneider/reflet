@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -62,7 +63,7 @@ function WidgetList({
 
   if (widgets.length === 0) {
     return (
-      <Empty className="rounded-lg border border-dashed py-12">
+      <Empty variant="outline">
         <EmptyHeader>
           <EmptyTitle>No live chat yet</EmptyTitle>
           <EmptyDescription>
@@ -121,20 +122,22 @@ function CreateLiveChatDialog({
             You’ll get an embed code to add to your site.
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="grid gap-2"
-          id="create-live-chat"
-          onSubmit={handleSubmit}
-        >
-          <Label htmlFor="widget-name">Name</Label>
-          <Input
-            autoFocus
-            id="widget-name"
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Main website"
-            value={name}
-          />
-        </form>
+        <DialogBody>
+          <form
+            className="grid gap-2"
+            id="create-live-chat"
+            onSubmit={handleSubmit}
+          >
+            <Label htmlFor="widget-name">Name</Label>
+            <Input
+              autoFocus
+              id="widget-name"
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Main website"
+              value={name}
+            />
+          </form>
+        </DialogBody>
         <DialogFooter>
           <DialogClose variant="surface">Cancel</DialogClose>
           <Button

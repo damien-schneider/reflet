@@ -54,7 +54,7 @@ export function SurveyList({
   if (surveys.length === 0) {
     const isFiltered = statusFilter !== "all";
     return (
-      <Empty className="rounded-xl border border-dashed py-16">
+      <Empty variant="outline">
         <EmptyHeader>
           <EmptyMedia>
             <ClipboardText aria-hidden className="size-6" />

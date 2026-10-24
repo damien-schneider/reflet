@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { DialogClose, DialogFooter } from "@ctrl-ui/react/ui/dialog";
+import {
+  DialogBody,
+  DialogClose,
+  DialogFooter,
+} from "@ctrl-ui/react/ui/dialog";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { toast } from "@ctrl-ui/react/ui/toast";
@@ -87,50 +91,56 @@ export function ConfigureSurveyStep({
 
   return (
     <>
-      <form className="flex flex-col gap-4" id={formId} onSubmit={handleCreate}>
-        <p className="text-muted-foreground text-sm">
-          {blueprint.heading}
-          {questionCount > 0
-            ? ` · ${questionCount === 1 ? "1 question" : `${questionCount} questions`}`
-            : ""}
-        </p>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${formId}-title`}>Title</Label>
-          <Input
-            autoFocus
-            id={`${formId}-title`}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="e.g. Product satisfaction"
-            value={title}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`${formId}-description`}>
-            Description{" "}
-            <span className="font-normal text-muted-foreground">
-              (optional)
+      <DialogBody>
+        <form
+          className="flex flex-col gap-4"
+          id={formId}
+          onSubmit={handleCreate}
+        >
+          <p className="text-muted-foreground text-sm">
+            {blueprint.heading}
+            {questionCount > 0
+              ? ` · ${questionCount === 1 ? "1 question" : `${questionCount} questions`}`
+              : ""}
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`${formId}-title`}>Title</Label>
+            <Input
+              autoFocus
+              id={`${formId}-title`}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Product satisfaction"
+              value={title}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`${formId}-description`}>
+              Description{" "}
+              <span className="font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </Label>
+            <Textarea
+              id={`${formId}-description`}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="What this survey is for"
+              rows={2}
+              value={description}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="font-medium text-sm" id={`${formId}-trigger`}>
+              When should this survey appear?
             </span>
-          </Label>
-          <Textarea
-            id={`${formId}-description`}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="What this survey is for"
-            rows={2}
-            value={description}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <span className="font-medium text-sm" id={`${formId}-trigger`}>
-            When should this survey appear?
-          </span>
-          <TriggerPicker
-            density="compact"
-            labelledBy={`${formId}-trigger`}
-            onChange={setTriggerType}
-            value={triggerType}
-          />
-        </div>
-      </form>
+            <TriggerPicker
+              density="compact"
+              labelledBy={`${formId}-trigger`}
+              onChange={setTriggerType}
+              value={triggerType}
+            />
+          </div>
+        </form>
+      </DialogBody>
       <DialogFooter>
         <Button className="sm:mr-auto" onClick={onBack} variant="ghost">
           <ArrowLeft aria-hidden />

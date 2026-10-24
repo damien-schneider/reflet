@@ -221,33 +221,39 @@ function WorkflowCard({
       </label>
 
       {selected && (
-        <Collapsible onOpenChange={setHowItWorksOpen} open={howItWorksOpen}>
-          <CollapsibleTrigger className="flex w-full items-center gap-1 border-t px-3 py-2 text-muted-foreground text-xs hover:text-foreground">
-            <CaretDown
-              aria-hidden
-              className={cn(
-                "size-3 transition-transform duration-(--duration-base) ease-(--ease-standard)",
-                howItWorksOpen && "rotate-180"
-              )}
-            />
-            How it works
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <ol className="space-y-1.5 px-3 pb-3">
-              {option.howItWorks.map((step, i) => (
-                <li
-                  className="flex items-start gap-2 text-muted-foreground text-xs"
-                  key={step}
-                >
-                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
-                    {i + 1}
-                  </span>
-                  {step}
-                </li>
-              ))}
-            </ol>
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="border-t">
+          <Collapsible
+            className="[--cui-collapsible-trigger-font-size:var(--text-xs)] [--cui-collapsible-trigger-foreground:var(--muted-foreground)] [--cui-collapsible-trigger-padding-block:calc(var(--spacing)*2)] [--cui-collapsible-trigger-padding-inline:calc(var(--spacing)*3)]"
+            onOpenChange={setHowItWorksOpen}
+            open={howItWorksOpen}
+          >
+            <CollapsibleTrigger className="gap-1">
+              <CaretDown
+                aria-hidden
+                className={cn(
+                  "size-3 transition-transform duration-(--duration-base) ease-(--ease-standard)",
+                  howItWorksOpen && "rotate-180"
+                )}
+              />
+              How it works
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <ol className="space-y-1.5 px-3 pb-3">
+                {option.howItWorks.map((step, i) => (
+                  <li
+                    className="flex items-start gap-2 text-muted-foreground text-xs"
+                    key={step}
+                  >
+                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
+                      {i + 1}
+                    </span>
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       )}
     </div>
   );

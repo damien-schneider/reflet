@@ -1,7 +1,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Card } from "@ctrl-ui/react/ui/card";
+import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
 import NumberFlow from "@number-flow/react";
 import { Check, Crown, Minus, Sparkle, Warning } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
@@ -215,8 +215,8 @@ export function PlanCard({
     <Card
       aria-current={isCurrentPlan ? "true" : undefined}
       className={cn(
-        "relative flex flex-col gap-6 p-6",
-        plan.highlighted && "ring-2 ring-ring"
+        "relative",
+        plan.highlighted && "[--cui-card-shadow:0_0_0_2px_var(--ring)]"
       )}
     >
       {plan.badge && (
@@ -225,7 +225,7 @@ export function PlanCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-1">
+      <CardHeader className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           {plan.id === "pro" ? (
             <Crown
@@ -246,9 +246,9 @@ export function PlanCard({
         <p className="text-pretty text-body text-muted-foreground">
           {plan.description}
         </p>
-      </div>
+      </CardHeader>
 
-      <div className="flex flex-1 flex-col gap-6">
+      <CardContent className="flex flex-1 flex-col gap-6">
         <PriceDisplay
           isSelected={selectedInterval === "yearly"}
           price={price}
@@ -298,7 +298,7 @@ export function PlanCard({
           planId={plan.id}
           priceKey={price.priceKey}
         />
-      </div>
+      </CardContent>
     </Card>
   );
 }

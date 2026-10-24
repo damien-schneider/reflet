@@ -235,8 +235,8 @@ export function MonitorCard({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="menu-item-danger"
                 onClick={() => setIsConfirmOpen(true)}
+                tone="danger"
               >
                 <Trash className="size-4" />
                 Delete monitor

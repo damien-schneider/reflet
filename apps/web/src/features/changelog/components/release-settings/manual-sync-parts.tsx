@@ -107,7 +107,7 @@ export function SyncRow({
       <div className="flex items-center gap-2 overflow-hidden">
         {label && (
           <Badge
-            className="shrink-0 font-mono tabular-nums"
+            className="shrink-0 [--cui-badge-font-family:var(--font-mono)]"
             size="sm"
             variant={outlined ? "outline" : "default"}
           >

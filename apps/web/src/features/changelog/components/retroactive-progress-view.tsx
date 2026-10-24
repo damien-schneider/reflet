@@ -67,7 +67,7 @@ export function ProgressView({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Spinner className="text-primary" />
+            <Spinner className="[--cui-spinner-foreground:var(--primary)]" />
             <div aria-live="polite">
               <h3 className="font-medium text-sm">Generating changelog…</h3>
               <p className="text-muted-foreground text-xs">
@@ -153,8 +153,8 @@ export function ProgressView({
         </ol>
 
         {job.groups && job.groups.length > 0 && (
-          <Collapsible>
-            <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground">
+          <Collapsible className="[--cui-collapsible-trigger-font-size:var(--text-xs)] [--cui-collapsible-trigger-foreground:var(--muted-foreground)]">
+            <CollapsibleTrigger className="group gap-1">
               View groups
               <CaretDown
                 aria-hidden

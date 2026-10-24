@@ -3,6 +3,7 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
@@ -62,7 +63,6 @@ export function ResponseChecksFields({
         <FieldLabel htmlFor={statusCodesId}>Expected status codes</FieldLabel>
         <Input
           autoComplete="off"
-          className="tabular-nums"
           id={statusCodesId}
           inputMode="numeric"
           onChange={(event) =>
@@ -166,8 +166,10 @@ function ResponseChecksForm({
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <ResponseChecksFields draft={draft} onDraftChange={setDraft} />
+    <form className="contents" onSubmit={handleSubmit}>
+      <DialogBody>
+        <ResponseChecksFields draft={draft} onDraftChange={setDraft} />
+      </DialogBody>
       <DialogFooter>
         <DialogClose>Cancel</DialogClose>
         <Button

@@ -45,10 +45,7 @@ export function FeedbackDeleteMenu({
       <ContextMenu>
         <ContextMenuTrigger>{children}</ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem
-            className="menu-item-danger"
-            onClick={() => setIsConfirmOpen(true)}
-          >
+          <ContextMenuItem onClick={() => setIsConfirmOpen(true)} tone="danger">
             <Trash aria-hidden data-icon="inline-start" />
             Move to trash
           </ContextMenuItem>

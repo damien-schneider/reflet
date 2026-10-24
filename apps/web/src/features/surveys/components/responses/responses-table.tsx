@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   type ResponseRow,
@@ -45,10 +46,7 @@ export function ResponsesTable({
         </TableHeader>
         <TableBody>
           {responses.map((response) => (
-            <TableRow
-              className="relative cursor-pointer hover:bg-accent/50"
-              key={response._id}
-            >
+            <TableRow className="relative cursor-pointer" key={response._id}>
               <TableCell className="max-w-56">
                 <button
                   className="block max-w-full truncate text-left font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:rounded-sm focus-visible:after:outline-2 focus-visible:after:outline-ring"
@@ -72,30 +70,36 @@ export function ResponsesTable({
                   {RESPONSE_STATUS_LABELS[response.status]}
                 </Badge>
               </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                {RESPONSE_CHANNEL_LABELS[response.channel]}
+              <TableCell className="whitespace-nowrap">
+                <Text tone="muted">
+                  {RESPONSE_CHANNEL_LABELS[response.channel]}
+                </Text>
               </TableCell>
-              <TableCell className="max-w-40 truncate text-muted-foreground">
-                {response.endingId === undefined
-                  ? "—"
-                  : (endingTitles.get(response.endingId) ?? response.endingId)}
+              <TableCell className="max-w-40 truncate">
+                <Text tone="muted">
+                  {response.endingId === undefined
+                    ? "—"
+                    : (endingTitles.get(response.endingId) ??
+                      response.endingId)}
+                </Text>
               </TableCell>
-              <TableCell className="text-right tabular-nums">
+              <TableCell className="text-right">
                 {response.answers.length}
               </TableCell>
-              <TableCell
-                className="max-w-48 truncate text-muted-foreground"
-                title={response.pageUrl}
-              >
-                {response.pageUrl ?? "—"}
+              <TableCell className="max-w-48 truncate" title={response.pageUrl}>
+                <Text tone="muted">{response.pageUrl ?? "—"}</Text>
               </TableCell>
-              <TableCell className="whitespace-nowrap text-muted-foreground">
-                <time
-                  dateTime={new Date(response.startedAt).toISOString()}
-                  title={format(response.startedAt, "PPPp")}
-                >
-                  {formatDistanceToNow(response.startedAt, { addSuffix: true })}
-                </time>
+              <TableCell className="whitespace-nowrap">
+                <Text tone="muted">
+                  <time
+                    dateTime={new Date(response.startedAt).toISOString()}
+                    title={format(response.startedAt, "PPPp")}
+                  >
+                    {formatDistanceToNow(response.startedAt, {
+                      addSuffix: true,
+                    })}
+                  </time>
+                </Text>
               </TableCell>
             </TableRow>
           ))}

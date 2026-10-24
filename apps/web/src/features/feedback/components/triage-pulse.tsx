@@ -57,7 +57,7 @@ function ProcessingIndicator({
   return (
     <Progress
       aria-label="AI auto-tagging progress"
-      className="w-auto shrink-0 flex-row items-center gap-2 px-2"
+      className="mx-2 w-auto shrink-0 flex-row items-center gap-2"
       max={total}
       value={processed}
     >
@@ -73,7 +73,11 @@ function ProcessingIndicator({
       )}
 
       <ProgressTrack className="w-12">
-        <ProgressIndicator className={cn(failed > 0 && "bg-warning")} />
+        <ProgressIndicator
+          className={cn(
+            failed > 0 && "[--cui-range-indicator-background:var(--warning)]"
+          )}
+        />
       </ProgressTrack>
     </Progress>
   );

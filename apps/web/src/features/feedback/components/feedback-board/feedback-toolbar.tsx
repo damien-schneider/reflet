@@ -31,7 +31,7 @@ export const FeedbackToolbar = ({
     {!inlineInputRef && (
       <div className="fixed right-4 bottom-[calc(var(--mobile-nav-offset,env(safe-area-inset-bottom))+4.25rem)] z-50 md:right-8 md:bottom-8">
         <Button
-          className="shadow-(--reflet-popup-shadow)"
+          className="[--cui-button-shadow:var(--reflet-popup-shadow)]"
           onClick={onSubmitClick}
           size="lg"
           tone="primary"

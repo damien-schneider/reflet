@@ -75,7 +75,7 @@ function FeedbackDetail({
         <div className="mx-auto max-w-3xl">
           {feedback.description && (
             <Card className="mb-6">
-              <CardContent className="p-6">
+              <CardContent>
                 <p className="max-w-prose whitespace-pre-wrap text-pretty">
                   {feedback.description}
                 </p>
@@ -196,8 +196,8 @@ function FeedbackComments({
 
       {comments && comments.length > 0 ? (
         comments.map((comment) => (
-          <Card key={comment._id}>
-            <CardHeader className="pb-2">
+          <Card key={comment._id} size="sm">
+            <CardHeader>
               <div className="flex items-center gap-2">
                 <span className="font-medium">
                   {comment.author?.name ?? "Anonymous"}
@@ -216,7 +216,7 @@ function FeedbackComments({
         ))
       ) : (
         <Card>
-          <CardContent className="py-8 text-center">
+          <CardContent className="text-center">
             <Muted>No comments yet.</Muted>
           </CardContent>
         </Card>

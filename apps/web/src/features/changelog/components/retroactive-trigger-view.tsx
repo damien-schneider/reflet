@@ -126,8 +126,8 @@ export function TriggerView({
           )}
         </Button>
 
-        <Collapsible>
-          <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground">
+        <Collapsible className="[--cui-collapsible-trigger-font-size:var(--text-xs)] [--cui-collapsible-trigger-foreground:var(--muted-foreground)]">
+          <CollapsibleTrigger className="group gap-1">
             Options
             <CaretDown
               aria-hidden

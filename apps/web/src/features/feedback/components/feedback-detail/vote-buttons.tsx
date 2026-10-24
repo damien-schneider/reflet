@@ -16,12 +16,10 @@ export function VoteButtons({
   return (
     <div className="flex items-center gap-1">
       <Button
-        className={cn(
-          "h-8 gap-1.5 rounded-full px-3",
-          userVoteType === "upvote" &&
-            "border-primary bg-primary/10 text-primary"
-        )}
+        active={userVoteType === "upvote"}
+        className="h-8 gap-1.5"
         onClick={() => onVote("upvote")}
+        shape="circle"
         size="xs"
         variant="surface"
       >
@@ -35,13 +33,12 @@ export function VoteButtons({
         <span className="font-semibold tabular-nums">{voteCount}</span>
       </Button>
       <Button
-        className={cn(
-          "h-8 rounded-full px-2.5",
-          userVoteType === "downvote" &&
-            "border-destructive bg-destructive/10 text-destructive"
-        )}
+        active={userVoteType === "downvote"}
+        className="h-8"
         onClick={() => onVote("downvote")}
+        shape="circle"
         size="xs"
+        tone={userVoteType === "downvote" ? "danger" : "neutral"}
         variant="surface"
       >
         <ArrowDown

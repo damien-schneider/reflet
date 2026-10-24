@@ -52,8 +52,8 @@ export function SectionPanel({
       collapsible="none"
       label={title}
     >
-      <SidebarHeader className="h-14 shrink-0 justify-center px-4">
-        <h2 className="text-heading-2 tracking-tight">
+      <SidebarHeader className="h-14 shrink-0 justify-center">
+        <h2 className="mx-2 text-heading-2 tracking-tight">
           {backHref ? (
             <Link
               className="-ms-1 inline-flex items-center gap-1.5 rounded-md px-1 hover:text-muted-foreground"

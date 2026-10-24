@@ -89,7 +89,7 @@ export function AudienceFields({
             </FieldLabel>
             <div className="flex items-center gap-2">
               <Input
-                className="w-24 tabular-nums"
+                className="w-24"
                 id="settings-recontact"
                 inputMode="numeric"
                 min="1"
@@ -114,7 +114,7 @@ export function AudienceFields({
           <FieldLabel htmlFor="settings-sample-rate">Sample rate</FieldLabel>
           <div className="flex items-center gap-2">
             <Input
-              className="w-24 tabular-nums"
+              className="w-24"
               id="settings-sample-rate"
               inputMode="numeric"
               max="100"
@@ -144,7 +144,7 @@ export function AudienceFields({
             Response limit
           </FieldLabel>
           <Input
-            className="w-32 tabular-nums"
+            className="w-32"
             id="settings-max-responses"
             inputMode="numeric"
             min="1"

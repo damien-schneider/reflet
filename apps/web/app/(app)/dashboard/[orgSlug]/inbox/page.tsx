@@ -157,7 +157,7 @@ function InboxPanes({
           search={{ onChange: inbox.setSearchQuery, query: inbox.searchQuery }}
           views={{ current: inbox.view, onChange: inbox.setView }}
         />
-        <SidebarFooter className="p-3">
+        <SidebarFooter>
           <InboxCount inbox={inbox} />
           <SupportPageToggle inbox={inbox} org={org} />
         </SidebarFooter>

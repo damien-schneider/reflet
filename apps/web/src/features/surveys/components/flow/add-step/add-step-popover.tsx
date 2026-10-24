@@ -27,11 +27,7 @@ export function AddStepPopover({
   return (
     <Popover onOpenChange={setIsOpen} open={isOpen}>
       <PopoverTrigger render={trigger}>{children}</PopoverTrigger>
-      <PopoverContent
-        className="w-auto rounded-3xl p-4"
-        padding="none"
-        sideOffset={10}
-      >
+      <PopoverContent className="w-auto" sideOffset={10}>
         <AddStepPicker
           anchor={anchor}
           onInserted={(questionId) => {

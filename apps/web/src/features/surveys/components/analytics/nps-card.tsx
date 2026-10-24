@@ -41,7 +41,7 @@ export function NpsCard({ nps }: { nps: NpsResult }) {
 
   return (
     <Card>
-      <CardContent className="flex h-full flex-col gap-6 p-5">
+      <CardContent className="flex h-full flex-col gap-6">
         <AnalyticsCardTitle icon={Gauge}>Net Promoter Score</AnalyticsCardTitle>
 
         <div className="flex flex-col gap-0.5">

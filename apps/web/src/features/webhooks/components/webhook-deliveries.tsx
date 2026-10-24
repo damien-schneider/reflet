@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import {
   CheckCircle,
   Hourglass,
@@ -45,8 +46,10 @@ export function WebhookDeliveries({
             const status = DELIVERY_STATUS[delivery.status];
             return (
               <TableRow key={delivery._id}>
-                <TableCell className="font-mono text-caption">
-                  {delivery.event}
+                <TableCell>
+                  <Text mono size="caption">
+                    {delivery.event}
+                  </Text>
                 </TableCell>
                 <TableCell>
                   <Badge color={status.color} size="sm">
@@ -54,21 +57,23 @@ export function WebhookDeliveries({
                     {status.label}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right">
                   {delivery.attempts}
                 </TableCell>
                 <TableCell
-                  className="max-w-48 truncate text-muted-foreground"
+                  className="max-w-48 truncate"
                   title={delivery.lastError}
                 >
-                  {delivery.lastError ?? "None"}
+                  <Text tone="muted">{delivery.lastError ?? "None"}</Text>
                 </TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
-                  <time dateTime={new Date(delivery.createdAt).toISOString()}>
-                    {formatDistanceToNow(delivery.createdAt, {
-                      addSuffix: true,
-                    })}
-                  </time>
+                <TableCell className="whitespace-nowrap">
+                  <Text tone="muted">
+                    <time dateTime={new Date(delivery.createdAt).toISOString()}>
+                      {formatDistanceToNow(delivery.createdAt, {
+                        addSuffix: true,
+                      })}
+                    </time>
+                  </Text>
                 </TableCell>
               </TableRow>
             );

@@ -14,7 +14,7 @@ const SKELETON_ROWS = ["a", "b", "c", "d"] as const;
 
 function FeedCardSkeleton() {
   return (
-    <div className="relative rounded-xl border border-border/50 bg-card">
+    <div className="relative overflow-hidden rounded-xl border border-border/50 bg-card">
       <div className="space-y-3 px-4 pt-4 pr-20">
         <Skeleton className="h-4 w-3/4" />
         <div className="flex gap-1">
@@ -25,7 +25,7 @@ function FeedCardSkeleton() {
       <div className="mt-3 border-border/30 border-t px-4 py-2">
         <Skeleton className="h-3 w-24" />
       </div>
-      <Skeleton className="absolute top-0 right-0 h-8 w-20 rounded-tr-xl rounded-bl-xl" />
+      <Skeleton className="absolute top-0 right-0 h-8 w-20" />
     </div>
   );
 }
@@ -45,7 +45,7 @@ export function LoadingState({ view }: { view?: BoardView }) {
           <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-24" />
         </div>
-        <Skeleton className="mb-4 h-16 w-full rounded-xl" />
+        <Skeleton className="mb-4 h-16 w-full" shape="panel" />
         <div className="space-y-4">
           {SKELETON_ROWS.map((id) => (
             <FeedCardSkeleton key={id} />

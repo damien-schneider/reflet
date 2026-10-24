@@ -3,6 +3,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   AlertDialog,
+  AlertDialogBody,
   AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
@@ -106,11 +107,13 @@ export function ColumnDeleteDialog({
         </AlertDialogHeader>
 
         {!isOnlyColumn && hasFeedback && (
-          <MoveToColumnSelect
-            onChange={setMoveToStatusId}
-            otherStatuses={otherStatuses}
-            value={moveToStatusId}
-          />
+          <AlertDialogBody>
+            <MoveToColumnSelect
+              onChange={setMoveToStatusId}
+              otherStatuses={otherStatuses}
+              value={moveToStatusId}
+            />
+          </AlertDialogBody>
         )}
 
         <AlertDialogFooter>

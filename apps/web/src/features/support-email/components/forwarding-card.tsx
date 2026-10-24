@@ -2,7 +2,6 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
@@ -34,42 +33,40 @@ export function ForwardingCard({
   settings,
 }: ForwardingCardProps) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-6">
-        {settings.inboundAddress ? (
-          <>
-            <div className="flex flex-col gap-1">
-              <span className="text-label">Your Reflet support address</span>
-              <div className="flex min-w-0 items-center gap-1">
-                <code className="truncate font-mono text-label">
-                  {settings.inboundAddress}
-                </code>
-                <CopyButton
-                  label="Copy support address"
-                  size="xs"
-                  value={settings.inboundAddress}
-                />
-              </div>
+    <div className="flex flex-col gap-6">
+      {settings.inboundAddress ? (
+        <>
+          <div className="flex flex-col gap-1">
+            <span className="text-label">Your Reflet support address</span>
+            <div className="flex min-w-0 items-center gap-1">
+              <code className="truncate font-mono text-label">
+                {settings.inboundAddress}
+              </code>
+              <CopyButton
+                label="Copy support address"
+                size="xs"
+                value={settings.inboundAddress}
+              />
             </div>
-            <ForwardingAddressForm
-              currentAddress={settings.forwardingAddress}
+          </div>
+          <ForwardingAddressForm
+            currentAddress={settings.forwardingAddress}
+            organizationId={organizationId}
+          />
+          {settings.forwardingAddress ? (
+            <ForwardingStatus
+              forwardingVerifiedAt={settings.forwardingVerifiedAt}
               organizationId={organizationId}
             />
-            {settings.forwardingAddress ? (
-              <ForwardingStatus
-                forwardingVerifiedAt={settings.forwardingVerifiedAt}
-                organizationId={organizationId}
-              />
-            ) : null}
-            {settings.gmailConfirmation ? (
-              <GmailConfirmation confirmation={settings.gmailConfirmation} />
-            ) : null}
-          </>
-        ) : (
-          <CreateAliasButton organizationId={organizationId} />
-        )}
-      </CardContent>
-    </Card>
+          ) : null}
+          {settings.gmailConfirmation ? (
+            <GmailConfirmation confirmation={settings.gmailConfirmation} />
+          ) : null}
+        </>
+      ) : (
+        <CreateAliasButton organizationId={organizationId} />
+      )}
+    </div>
   );
 }
 

@@ -154,7 +154,7 @@ function ResponsesBody({
         role="status"
       >
         {["row-1", "row-2", "row-3", "row-4"].map((id) => (
-          <Skeleton className="h-12 w-full rounded-lg" key={id} />
+          <Skeleton className="h-12 w-full" key={id} />
         ))}
       </div>
     );
@@ -162,7 +162,7 @@ function ResponsesBody({
 
   if (results.length === 0) {
     return (
-      <Empty className="rounded-xl border border-dashed py-16">
+      <Empty variant="outline">
         <EmptyHeader>
           <EmptyMedia>
             <Tray aria-hidden className="size-6" />
