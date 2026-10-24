@@ -10,7 +10,7 @@ import {
   listenOnPageAndWidget,
   listenToKeydown,
 } from "../../../feedback/ui/widget-events";
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { NoteCard } from "../notes/note-card";
 import type { NotesSnapshot } from "../notes/note-store";
 import { type PinAnchor, usePinAnchors } from "./use-pin-anchors";

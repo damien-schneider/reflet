@@ -75,6 +75,14 @@ export interface SourceFile {
   path: string;
 }
 
+/** Server Components' frames point into the dev server's own chunks: only the route can map them. */
+export const SERVER_FRAME_ORIGIN = "(?:about|rsc)://React/Server/";
+export const SERVER_FRAME_PREFIX = new RegExp(`^${SERVER_FRAME_ORIGIN}`);
+
+export function isServerFrame(fileName: string): boolean {
+  return SERVER_FRAME_PREFIX.test(fileName);
+}
+
 export interface CodeMatch {
   absolutePath: string;
   line: number;

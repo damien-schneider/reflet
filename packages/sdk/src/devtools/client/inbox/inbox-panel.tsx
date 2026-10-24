@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { RefreshIcon, ViewOptionsIcon } from "../devtools-icons";
 import { Menu } from "../menu";
 import type { BoardCall, BoardFeedbackPage } from "../route/dev-route";

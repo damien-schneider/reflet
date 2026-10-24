@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { PencilIcon, TrashIcon } from "../../../feedback/ui/icons";
 import { isSubmitEnter } from "../../../feedback/ui/keyboard";
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { reportFailure } from "../notices";
 import { type DevNote, noteStore } from "./note-store";
 

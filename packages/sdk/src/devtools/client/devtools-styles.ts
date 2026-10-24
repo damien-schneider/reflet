@@ -185,6 +185,12 @@ a.dt-open { color: inherit; text-decoration: none; }
 .dt-match span { font: 11.5px ${MONO_FONT}; color: var(--rf-text-muted); white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .dt-code-head { display: flex; flex-direction: column; gap: 6px; }
 .dt-code-path { margin: 0; font: 12px/1.4 ${MONO_FONT}; overflow-wrap: anywhere; }
+.dt-trail ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.dt-trail li { display: flex; align-items: center; min-width: 0; }
+.dt-trail li + li::before { content: "›" / ""; padding-inline: 1px; color: var(--rf-text-muted); }
+.dt-crumb { max-width: 180px; height: 24px; padding: 0 8px; overflow: hidden; border-radius: var(--rf-pill); color: var(--rf-text-muted); font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.dt-crumb:hover { background: var(--rf-bg-hover); color: var(--rf-text); }
+.dt-crumb[aria-current="location"] { background: var(--rf-bg-hover); color: var(--rf-text); }
 .dt-code { flex: 1; min-height: 0; overflow: auto; margin: 0; padding: 8px 0; border-radius: var(--dt-radius-card); background: var(--rf-bg-subtle); font: 12px/1.6 ${MONO_FONT}; }
 .dt-code-lines { display: table; min-width: 100%; }
 .dt-line { display: table-row; white-space: pre; }

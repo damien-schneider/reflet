@@ -70,7 +70,8 @@ function isMeaningfulName(name: string): boolean {
   );
 }
 
-function componentName(type: unknown, depth = 0): string | null {
+/** The name a component was declared with, through `memo` and `forwardRef`. */
+function declaredName(type: unknown, depth = 0): string | null {
   if (typeof type === "string" || type === null || depth > 3) {
     return null;
   }
@@ -78,15 +79,38 @@ function componentName(type: unknown, depth = 0): string | null {
   if (isRecord(type)) {
     const marker = Reflect.get(type, "$$typeof");
     if (marker === MEMO_TYPE) {
-      return componentName(Reflect.get(type, "type"), depth + 1);
+      return declaredName(Reflect.get(type, "type"), depth + 1);
     }
     if (marker === FORWARD_REF_TYPE) {
-      return componentName(Reflect.get(type, "render"), depth + 1);
+      return declaredName(Reflect.get(type, "render"), depth + 1);
     }
   }
 
-  const name = readName(type);
+  return readName(type);
+}
+
+function componentName(type: unknown): string | null {
+  const name = declaredName(type);
   return name && isMeaningfulName(name) ? name : null;
+}
+
+/**
+ * The component whose code wrote an element: a client fiber, or the debug info
+ * React keeps for a Server Component. Unfiltered: only dev builds carry owners,
+ * and their short names (`App`, `Nav`) are real.
+ */
+export function ownerName(owner: unknown): string | null {
+  if (!isRecord(owner)) {
+    return null;
+  }
+  const serverComponentName = Reflect.get(owner, "name");
+  if (typeof serverComponentName === "string") {
+    return serverComponentName || null;
+  }
+  return (
+    declaredName(Reflect.get(owner, "type")) ??
+    declaredName(Reflect.get(owner, "elementType"))
+  );
 }
 
 /** Component names owning the fiber, innermost first. */

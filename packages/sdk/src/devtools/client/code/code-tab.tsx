@@ -1,67 +1,66 @@
-import { useCallback, useState } from "react";
-import { describeElement } from "../../../feedback/core/element-selector";
-import {
-  getFiberFromNode,
-  resolveComponentStack,
-} from "../../../feedback/core/react-source";
-import { locateElementSource } from "../element-source";
+import { shortenSourcePath } from "../../../feedback/core/react-source";
+import type { CodeFrame } from "../element-source";
 import { MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
-import { CodePanel, type CodeTarget } from "./code-panel";
+import { CodePanel } from "./code-panel";
+import {
+  type CodeLookup,
+  type LocatedCode,
+  locationKey,
+} from "./use-code-lookup";
 
-export type CodeLookup =
-  | { element: Element; kind: "locating"; title: string }
-  | { kind: "located"; target: CodeTarget }
-  | { kind: "unlocated"; title: string };
+const PATH_SEPARATOR = /[\\/]/;
 
-export function titleFor(element: Element): string {
-  const owner = resolveComponentStack(getFiberFromNode(element))[0];
-  const label = describeElement(element);
-  return owner ? `<${owner}> ${label}` : label;
+function frameLabel({ component, request }: CodeFrame): string {
+  return component ?? request.fileName.split(PATH_SEPARATOR).at(-1) ?? "";
 }
 
-export function useCodeLookup(showCodeTab: (tab: "code") => void) {
-  const [codeLookup, setCodeLookup] = useState<CodeLookup | null>(null);
-
-  const openCode = useCallback(
-    (target: CodeTarget) => {
-      setCodeLookup({ kind: "located", target });
-      showCodeTab("code");
-    },
-    [showCodeTab]
+/** Outermost component first, like a breadcrumb; each step opens where that component writes the element. */
+function ComponentPath({
+  code,
+  onSelectFrame,
+}: {
+  code: LocatedCode;
+  onSelectFrame: (index: number) => void;
+}) {
+  const outermostFirst = code.trail
+    .map((frame, index) => ({ frame, index }))
+    .reverse();
+  return (
+    <nav aria-label="Component path" className="dt-trail">
+      <ol>
+        {outermostFirst.map(({ frame, index }) => {
+          const path = shortenSourcePath(frame.request.fileName);
+          return (
+            <li key={locationKey(frame.request)}>
+              <button
+                aria-current={index === code.selected ? "location" : undefined}
+                className="dt-crumb"
+                onClick={() => onSelectFrame(index)}
+                title={
+                  frame.request.line === null
+                    ? path
+                    : `${path}:${frame.request.line}`
+                }
+                type="button"
+              >
+                {frameLabel(frame)}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
-
-  const inspectElement = useCallback(
-    (element: Element) => {
-      const title = titleFor(element);
-      setCodeLookup({ element, kind: "locating", title });
-      showCodeTab("code");
-      locateElementSource(element)
-        .catch(() => null)
-        .then((request) =>
-          setCodeLookup((current) => {
-            const isStillWanted =
-              current?.kind === "locating" && current.element === element;
-            if (!isStillWanted) {
-              return current;
-            }
-            return request
-              ? { kind: "located", target: { request, title } }
-              : { kind: "unlocated", title };
-          })
-        );
-    },
-    [showCodeTab]
-  );
-
-  return { codeLookup, inspectElement, openCode };
 }
 
 export function CodeTab({
   lookup,
+  onSelectFrame,
   route,
 }: {
   lookup: CodeLookup;
+  onSelectFrame: (index: number) => void;
   route: DevRouteState;
 }) {
   if (route.kind === "missing") {
@@ -81,12 +80,18 @@ export function CodeTab({
       </div>
     );
   }
-  const { request } = lookup.target;
   return (
-    <CodePanel
-      editor={route.status.editor}
-      key={`${request.fileName}:${request.line}:${request.column}`}
-      target={lookup.target}
-    />
+    <>
+      <div className="dt-code-head">
+        <p className="dt-card-title">{lookup.title}</p>
+        {lookup.trail.length > 1 && (
+          <ComponentPath code={lookup} onSelectFrame={onSelectFrame} />
+        )}
+      </div>
+      <CodePanel
+        editor={route.status.editor}
+        request={lookup.trail[lookup.selected].request}
+      />
+    </>
   );
 }

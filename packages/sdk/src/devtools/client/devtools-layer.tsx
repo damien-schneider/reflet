@@ -6,8 +6,13 @@ import { sessionSheetPlace } from "../../sessions/ui/sessions-panel";
 import { SESSIONS_STYLES } from "../../sessions/ui/sessions-styles";
 import { DevtoolsAccount } from "./account/devtools-account";
 import { BoardTab } from "./board/board-tab";
-import type { CodeTarget } from "./code/code-panel";
-import { type CodeLookup, CodeTab, useCodeLookup } from "./code/code-tab";
+import { CodeTab } from "./code/code-tab";
+import {
+  type CodeLookup,
+  type CodeTarget,
+  inspectedNode,
+  useCodeLookup,
+} from "./code/use-code-lookup";
 import {
   DevtoolsBar,
   DevtoolsBarButtons,
@@ -101,6 +106,7 @@ function SheetPanel({
   handlers: {
     onClose: () => void;
     onOpenCode: (target: CodeTarget) => void;
+    onSelectCodeFrame: (index: number) => void;
     onPick: () => void;
     onShowSelector: (selector: string) => boolean;
   };
@@ -147,7 +153,15 @@ function SheetPanel({
       />
     );
   }
-  return codeLookup && <CodeTab lookup={codeLookup} route={route} />;
+  return (
+    codeLookup && (
+      <CodeTab
+        lookup={codeLookup}
+        onSelectFrame={handlers.onSelectCodeFrame}
+        route={route}
+      />
+    )
+  );
 }
 
 export function DevtoolsLayer({
@@ -167,7 +181,9 @@ export function DevtoolsLayer({
   const sheet = useSheetTab();
   const { openTab } = sheet;
   const { clearHighlight, highlighted, showSelector } = usePageHighlight();
-  const { codeLookup, inspectElement, openCode } = useCodeLookup(sheet.select);
+  const { codeLookup, inspectElement, openCode, selectFrame } = useCodeLookup(
+    sheet.select
+  );
 
   const edge = position.startsWith("top") ? "top" : "bottom";
   const side = position.endsWith("right") ? "right" : "left";
@@ -241,6 +257,7 @@ export function DevtoolsLayer({
                 onClose: closeSheet,
                 onOpenCode: openCode,
                 onPick: startPick,
+                onSelectCodeFrame: selectFrame,
                 onShowSelector: showSelector,
               }}
               notes={notes}
@@ -258,7 +275,13 @@ export function DevtoolsLayer({
             unsentNoteCount={unsentNoteCount(notes)}
           />
         </DevtoolsBar>
-        {openTab && <SelectionOutline node={highlighted} />}
+        {openTab && (
+          <SelectionOutline
+            node={
+              (openTab === "code" && inspectedNode(codeLookup)) || highlighted
+            }
+          />
+        )}
         <Notices />
         {sessions.state.kind === "ready" && (
           <RecordingLayer

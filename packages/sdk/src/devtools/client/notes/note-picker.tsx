@@ -5,7 +5,7 @@ import {
 } from "../../../feedback/types";
 import { ElementPicker, type PickerInspect } from "../../../feedback/ui/picker";
 import { copyToClipboard } from "../clipboard";
-import { titleFor } from "../code/code-tab";
+import { titleFor } from "../code/use-code-lookup";
 import { announce, reportFailure } from "../notices";
 import { noteAsContext } from "./agent-prompt";
 import { draftLocatedNote, draftNote, enrichNote } from "./capture-note";

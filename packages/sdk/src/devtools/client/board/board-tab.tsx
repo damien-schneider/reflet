@@ -1,4 +1,4 @@
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { InboxPanel } from "../inbox/inbox-panel";
 import { callReflet } from "../route/dev-route";
 import { MISSING_SECRET_KEY_HINT, MissingRouteHint } from "../route/route-hint";

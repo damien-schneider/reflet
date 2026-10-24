@@ -5,6 +5,16 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Devtools Code tab: a component path above the code, like `App › SettingsForm › Button`. Click a step to see where that component uses the element you picked, and click back down to return. The page outlines what the selected step draws. Components from libraries are skipped. Server Components are included when the dev server can read their source.
+
+### Changed
+
+- Devtools Code tab: moving to another file keeps the current code on screen until the new file has loaded.
+
 ## [0.7.14] - 2026-10-24
 
 ### Changed

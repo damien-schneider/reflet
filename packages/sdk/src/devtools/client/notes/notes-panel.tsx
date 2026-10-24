@@ -1,6 +1,6 @@
 import { TargetIcon } from "../../../feedback/ui/icons";
 import { countLabel } from "../../../sessions/ui/session-format";
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { CopyButton } from "../copy-button";
 import { reportFailure } from "../notices";
 import type { BoardCall } from "../route/dev-route";

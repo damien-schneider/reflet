@@ -4,13 +4,8 @@ import { CopyButton } from "../copy-button";
 import { fetchSourceFile, type SourceRequest } from "../route/dev-route";
 import { editorUrl } from "./editor-url";
 
-export interface CodeTarget {
-  request: SourceRequest;
-  title: string;
-}
-
 type SourceState =
-  | { kind: "failed"; message: string }
+  | { kind: "failed"; message: string; request: SourceRequest }
   | { kind: "loading" }
   | { file: SourceFile; kind: "ready" };
 
@@ -57,14 +52,14 @@ function SourceView({ file }: { file: SourceFile }) {
 
 export function CodePanel({
   editor,
-  target,
+  request,
 }: {
   editor: EditorId;
-  target: CodeTarget;
+  request: SourceRequest;
 }) {
   const [state, setState] = useState<SourceState>({ kind: "loading" });
-  const { request } = target;
 
+  // No reset per request: the last file stays up until the next one lands.
   useEffect(() => {
     let active = true;
     fetchSourceFile(request)
@@ -78,6 +73,7 @@ export function CodePanel({
               error instanceof Error
                 ? error.message
                 : "Could not read the file.",
+            request,
           })
       );
     return () => {
@@ -91,7 +87,7 @@ export function CodePanel({
   if (state.kind === "failed") {
     return (
       <>
-        <p className="dt-code-path">{request.fileName}</p>
+        <p className="dt-code-path">{state.request.fileName}</p>
         <p className="dt-error">{state.message}</p>
       </>
     );
@@ -102,7 +98,6 @@ export function CodePanel({
   return (
     <>
       <div className="dt-code-head">
-        <p className="dt-card-title">{target.title}</p>
         <p className="dt-code-path">{location}</p>
         <div className="dt-actions">
           <a
@@ -115,7 +110,10 @@ export function CodePanel({
           <CopyButton label="Copy path" text={location} />
         </div>
       </div>
-      <SourceView file={file} />
+      <SourceView
+        file={file}
+        key={`${file.path}:${file.line}:${file.column}`}
+      />
     </>
   );
 }

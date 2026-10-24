@@ -2,20 +2,16 @@ import { readFile, realpath, stat } from "node:fs/promises";
 import { SourceMap } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SERVER_FRAME_PREFIX } from "../../protocol";
 import { type DevtoolsOutcome, failure } from "../json-response";
 import type { SourceRequest } from "./source-file";
 import { workspaceRelativePath } from "./workspace-path";
 
-const SERVER_FRAME_PREFIX = /^(?:about|rsc):\/\/React\/Server\//;
 const QUERY_OR_HASH = /[?#].*$/;
 const SOURCE_MAPPING_URL = /\/\/# sourceMappingURL=(\S+)\s*$/;
 const MAX_MAP_BYTES = 50 * 1_048_576;
 
 const mapCache = new Map<string, { map: SourceMap; mtimeMs: number }>();
-
-export function isServerFrame(fileName: string): boolean {
-  return SERVER_FRAME_PREFIX.test(fileName);
-}
 
 async function mapPathFor(chunkPath: string): Promise<string> {
   const code = await readFile(chunkPath, "utf8");

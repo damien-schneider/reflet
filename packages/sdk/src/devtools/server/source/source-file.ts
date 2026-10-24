@@ -1,10 +1,10 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { extname, isAbsolute, join } from "node:path";
-import type { SourceFile } from "../../protocol";
+import { isServerFrame, type SourceFile } from "../../protocol";
 import { type DevtoolsOutcome, failure } from "../json-response";
 import { jsxElementLines } from "./jsx-range";
 import type { ProjectRoots } from "./project-roots";
-import { isServerFrame, mapServerFrame } from "./server-frame";
+import { mapServerFrame } from "./server-frame";
 import { workspaceRelativePath } from "./workspace-path";
 
 const MAX_SOURCE_BYTES = 1_048_576;

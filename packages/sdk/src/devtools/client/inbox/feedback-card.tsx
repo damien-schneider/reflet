@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ElementSelection } from "../../../types";
-import type { CodeTarget } from "../code/code-panel";
+import type { CodeTarget } from "../code/use-code-lookup";
 import { CopyButton } from "../copy-button";
 import { boardFeedbackToPrompt } from "../notes/agent-prompt";
 import type { BoardFeedback, SourceRequest } from "../route/dev-route";
