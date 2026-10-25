@@ -1,12 +1,12 @@
+import type { LiveHubEntry, LiveHubFeed } from "reflet-sdk/live-hub";
 import {
   type BinaryWriter,
   imageExtensionOf,
   nodeBinaryWriter,
   safeFileStem,
 } from "../commands/screenshot-download";
-import type { LiveEntry, LiveFeed } from "./live-feed";
 
-export const LIVE_SESSIONS_DIRECTORY = ".reflet/sessions";
+export const LIVE_SESSIONS_DIRECTORY = ".reflet/live";
 
 const SCREENSHOT_REQUEST_TIMEOUT_MS = 20_000;
 
@@ -15,11 +15,10 @@ interface SaveOptions {
   writer?: BinaryWriter;
 }
 
-/** A screenshot that fails to download is reported missing instead of holding back what was said. */
 export async function saveCitedScreenshots(
   input: {
-    entries: LiveEntry[];
-    screenshots: LiveFeed["screenshots"];
+    entries: LiveHubEntry[];
+    screenshots: LiveHubFeed["screenshots"];
     sessionId: string;
   },
   options: SaveOptions = {}

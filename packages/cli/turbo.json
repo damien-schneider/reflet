@@ -1,0 +1,7 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "check-types": { "dependsOn": ["^build"] },
+    "test:unit": { "dependsOn": ["^build"] }
+  }
+}

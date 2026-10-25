@@ -23,11 +23,20 @@ const SKILLS = [
     name: "reflet",
   },
   {
-    command: "session watch",
+    command: "live watch",
     description: LIVE_SKILL_DESCRIPTION,
     name: "reflet-live",
   },
 ];
+
+function declaredDescription(document: string) {
+  const [, frontmatter = ""] = document.split("---\n");
+  const declared = frontmatter
+    .split("\n")
+    .find((line) => line.startsWith("description: "))
+    ?.slice("description: ".length);
+  return { declared: JSON.parse(declared ?? '""'), frontmatter };
+}
 
 describe("agent install", () => {
   it.each(SKILLS)(
@@ -35,30 +44,61 @@ describe("agent install", () => {
     ({ command, description, name }) => {
       const { files, store } = workspace();
 
-      runAgentInstall({ cwd: "/app", dryRun: false, files });
+      runAgentInstall({ cwd: "/app", dryRun: false, files, scope: "repo" });
 
       for (const root of [".agents/skills", ".claude/skills"]) {
         const document = store.get(`/app/${root}/${name}/SKILL.md`) ?? "";
-        const [, frontmatter = ""] = document.split("---\n");
-        const declared = frontmatter
-          .split("\n")
-          .find((line) => line.startsWith("description: "))
-          ?.slice("description: ".length);
+        const { declared, frontmatter } = declaredDescription(document);
         expect(frontmatter).toContain(`name: ${name}\n`);
-        expect(JSON.parse(declared ?? "")).toBe(description);
+        expect(declared).toBe(description);
         expect(document).toContain(command);
       }
-      expect(store.get(`/app/.claude/commands/${name}.md`)).toContain(
-        "$ARGUMENTS"
-      );
+      expect(store.get(`/app/.claude/commands/${name}.md`)).toContain(command);
     }
   );
+
+  it("lets the feedback command take a scope but not the live one", () => {
+    const { files, store } = workspace();
+
+    runAgentInstall({ cwd: "/app", dryRun: false, files, scope: "repo" });
+
+    expect(store.get("/app/.claude/commands/reflet.md")).toContain(
+      "$ARGUMENTS"
+    );
+    expect(store.get("/app/.claude/commands/reflet-live.md")).not.toContain(
+      "$ARGUMENTS"
+    );
+  });
+
+  it("installs only the live loop for every repository with --global", () => {
+    const { files, store } = workspace({ "/home/me/.gitignore": "*.log\n" });
+
+    runAgentInstall({
+      cwd: "/home/me",
+      dryRun: false,
+      files,
+      scope: "global",
+    });
+
+    expect([...store.keys()].sort()).toEqual([
+      "/home/me/.agents/skills/reflet-live/SKILL.md",
+      "/home/me/.claude/commands/reflet-live.md",
+      "/home/me/.claude/skills/reflet-live/SKILL.md",
+      "/home/me/.gitignore",
+    ]);
+    expect(store.get("/home/me/.gitignore")).toBe("*.log\n");
+  });
 
   it("reports unchanged on a second run", () => {
     const { files } = workspace();
 
-    runAgentInstall({ cwd: "/app", dryRun: false, files });
-    const second = runAgentInstall({ cwd: "/app", dryRun: false, files });
+    runAgentInstall({ cwd: "/app", dryRun: false, files, scope: "repo" });
+    const second = runAgentInstall({
+      cwd: "/app",
+      dryRun: false,
+      files,
+      scope: "repo",
+    });
 
     expect(second.filter(({ status }) => status !== "unchanged")).toEqual([
       { note: "add .reflet/ yourself", path: ".gitignore", status: "skipped" },
@@ -68,7 +108,7 @@ describe("agent install", () => {
   it("keeps downloaded screenshots out of git", () => {
     const { files, store } = workspace({ "/app/.gitignore": "node_modules\n" });
 
-    runAgentInstall({ cwd: "/app", dryRun: false, files });
+    runAgentInstall({ cwd: "/app", dryRun: false, files, scope: "repo" });
 
     expect(store.get("/app/.gitignore")).toBe("node_modules\n.reflet/\n");
   });
@@ -76,7 +116,12 @@ describe("agent install", () => {
   it("writes nothing on a dry run", () => {
     const { files, store } = workspace();
 
-    const changes = runAgentInstall({ cwd: "/app", dryRun: true, files });
+    const changes = runAgentInstall({
+      cwd: "/app",
+      dryRun: true,
+      files,
+      scope: "repo",
+    });
 
     expect(changes.every(({ status }) => status !== "unchanged")).toBe(true);
     expect(store.size).toBe(0);

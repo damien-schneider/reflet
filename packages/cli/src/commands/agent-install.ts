@@ -14,14 +14,17 @@ const SLASH_COMMAND_DIRECTORY = ".claude/commands";
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ENTRY = `${SCREENSHOT_DIRECTORY.split("/")[0]}/`;
 
+export type AgentInstallScope = "repo" | "global";
+
 export interface AgentInstallInput {
   cwd: string;
   dryRun: boolean;
   files: FileSystemPort;
+  scope: AgentInstallScope;
 }
 
 interface AgentWorkflow {
-  argumentsLine: string;
+  argumentsLine: string | null;
   commandDescription: string;
   name: string;
   prompt: string;
@@ -29,27 +32,25 @@ interface AgentWorkflow {
   title: string;
 }
 
-const WORKFLOWS: AgentWorkflow[] = [
-  {
-    argumentsLine:
-      "Scope for this run — a feedback id works only that item, empty works the whole\nqueue: $ARGUMENTS",
-    commandDescription: "Work the Reflet feedback queue end to end.",
-    name: SKILL_NAME,
-    prompt: AGENT_PROMPT,
-    skillDescription: SKILL_DESCRIPTION,
-    title: "Reflet feedback queue",
-  },
-  {
-    argumentsLine:
-      "Dev server for this run — its address, empty for the default above:\n$ARGUMENTS",
-    commandDescription:
-      "Follow the Reflet session I am recording and fix what I point out.",
-    name: LIVE_SKILL_NAME,
-    prompt: LIVE_AGENT_PROMPT,
-    skillDescription: LIVE_SKILL_DESCRIPTION,
-    title: "Reflet live session",
-  },
-];
+const FEEDBACK_WORKFLOW: AgentWorkflow = {
+  argumentsLine:
+    "Scope for this run — a feedback id works only that item, empty works the whole\nqueue: $ARGUMENTS",
+  commandDescription: "Work the Reflet feedback queue end to end.",
+  name: SKILL_NAME,
+  prompt: AGENT_PROMPT,
+  skillDescription: SKILL_DESCRIPTION,
+  title: "Reflet feedback queue",
+};
+
+const LIVE_WORKFLOW: AgentWorkflow = {
+  argumentsLine: null,
+  commandDescription:
+    "Follow what I say while Reflet Live records me across my apps, and change the right repo.",
+  name: LIVE_SKILL_NAME,
+  prompt: LIVE_AGENT_PROMPT,
+  skillDescription: LIVE_SKILL_DESCRIPTION,
+  title: "Reflet Live",
+};
 
 const skillDocument = (workflow: AgentWorkflow): string => `---
 name: ${workflow.name}
@@ -66,9 +67,7 @@ description: ${workflow.commandDescription}
 ---
 
 ${workflow.prompt}
-
-${workflow.argumentsLine}
-`;
+${workflow.argumentsLine === null ? "" : `\n${workflow.argumentsLine}\n`}`;
 
 function writeDocument(
   input: AgentInstallInput,
@@ -116,24 +115,27 @@ function ignoreScreenshots(input: AgentInstallInput): InitChange {
 /**
  * Drops the workflows where agents look for skills — `.agents/skills` for
  * Codex and omp, `.claude/skills` for Claude Code — so they run without the
- * user copying a prompt around.
+ * user copying a prompt around. `global` writes under `cwd` as the home
+ * directory and only the live workflow: the feedback queue is per repository.
  */
 export function runAgentInstall(input: AgentInstallInput): InitChange[] {
-  return [
-    ...WORKFLOWS.flatMap((workflow) => [
-      ...SKILL_DIRECTORIES.map((directory) =>
-        writeDocument(
-          input,
-          `${directory}/${workflow.name}/SKILL.md`,
-          skillDocument(workflow)
-        )
-      ),
+  const isGlobal = input.scope === "global";
+  const workflows = isGlobal
+    ? [LIVE_WORKFLOW]
+    : [FEEDBACK_WORKFLOW, LIVE_WORKFLOW];
+  const documents = workflows.flatMap((workflow) => [
+    ...SKILL_DIRECTORIES.map((directory) =>
       writeDocument(
         input,
-        `${SLASH_COMMAND_DIRECTORY}/${workflow.name}.md`,
-        slashCommandDocument(workflow)
-      ),
-    ]),
-    ignoreScreenshots(input),
-  ];
+        `${directory}/${workflow.name}/SKILL.md`,
+        skillDocument(workflow)
+      )
+    ),
+    writeDocument(
+      input,
+      `${SLASH_COMMAND_DIRECTORY}/${workflow.name}.md`,
+      slashCommandDocument(workflow)
+    ),
+  ]);
+  return isGlobal ? documents : [...documents, ignoreScreenshots(input)];
 }

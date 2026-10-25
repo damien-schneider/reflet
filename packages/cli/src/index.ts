@@ -1,16 +1,19 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
+import { LIVE_HUB_DEFAULT_PORT } from "reflet-sdk/live-hub";
 import { AGENT_PROMPT } from "./agent-prompt";
 import { ADMIN_RESOURCES, runAdmin } from "./commands/admin";
 import { runAgentInstall } from "./commands/agent-install";
 import { runDoctor } from "./commands/doctor";
 import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
 import { runLogin } from "./commands/login";
+import { runLive } from "./live/live-command";
 import { LIVE_AGENT_PROMPT } from "./live/live-prompt";
-import { runSessionWatch } from "./live/session-watch";
+import { DEFAULT_TIMEOUT_SECONDS } from "./live/watch";
 import { nodeFileSystem, type PackageManager } from "./project";
 import { heading, indent, SYMBOL, style, terminalSafe } from "./render";
 import { SETUP_PROMPT } from "./setup-prompt";
@@ -47,10 +50,16 @@ ${style.bold("Widget setup")}
   reflet prompt             print the setup prompt for a coding agent
 
 ${style.bold("Coding agents")}
-  reflet agent install      write the feedback and live session loops as skills
+  reflet agent install      write the feedback and live loops as skills in this repository
+    --global               write the live loop once for every repository (~/.claude, ~/.agents)
   reflet prompt agent       print the fix-a-feedback loop for a coding agent
   reflet prompt live        print the follow-my-recording loop for a coding agent
-  reflet session watch      wait for what you say in the devtools session you record
+  reflet live               start Reflet Live and open its window to record across your apps
+    --port <n>             port of the Live window (default ${LIVE_HUB_DEFAULT_PORT})
+    --no-open              do not open the Live window
+  reflet live watch         wait for what you say while Reflet Live records
+    --timeout <seconds>    return with nothing new after this long (default ${DEFAULT_TIMEOUT_SECONDS})
+    --json                 print JSON (default when piped)
 
 ${style.bold("Admin API")} ${style.dim("(REFLET_API_KEY or reflet login)")}
   reflet login              store a secret key in ~/.reflet/config.json
@@ -69,6 +78,7 @@ ${style.bold("Options for init")}
 ${style.bold("Examples")}
   npx reflet-cli init --public-key fb_pub_abc --yes
   npx reflet-cli agent install
+  npx reflet-cli live
   npx reflet-cli login --api-key fb_sec_abc
   npx reflet-cli feedback claim-next --json
   npx reflet-cli screenshot download <id>
@@ -196,13 +206,19 @@ function commandAgentInstall(argv: string[]): number {
   const { values } = parseArgs({
     allowPositionals: true,
     args: argv,
-    options: { cwd: { type: "string" }, "dry-run": { type: "boolean" } },
+    options: {
+      cwd: { type: "string" },
+      "dry-run": { type: "boolean" },
+      global: { type: "boolean" },
+    },
   });
   const dryRun = values["dry-run"] === true;
+  const isGlobal = values.global === true;
   const changes = runAgentInstall({
-    cwd: values.cwd ?? process.cwd(),
+    cwd: isGlobal ? homedir() : (values.cwd ?? process.cwd()),
     dryRun,
     files: nodeFileSystem,
+    scope: isGlobal ? "global" : "repo",
   });
 
   process.stdout.write(heading(dryRun ? "Would write" : "Reflet agent setup"));
@@ -210,12 +226,15 @@ function commandAgentInstall(argv: string[]): number {
   for (const change of changes) {
     const symbol = change.status === "skipped" ? SYMBOL.warn : SYMBOL.tick;
     const note = change.note ? style.dim(` — ${change.note}`) : "";
+    const path = isGlobal ? `~/${change.path}` : change.path;
     process.stdout.write(
-      indent(`${symbol} ${change.path} ${style.dim(change.status)}${note}\n`)
+      indent(`${symbol} ${path} ${style.dim(change.status)}${note}\n`)
     );
   }
+  const liveHint = `Run ${style.cyan("/reflet-live")} in Claude Code or ${style.cyan("$reflet-live")} in Codex while ${style.cyan("npx reflet-cli live")} records you, to get fixes as you talk.`;
+  const feedbackHint = `Run ${style.cyan("/reflet")} in Claude Code, ${style.cyan("$reflet")} in Codex, or ask any agent to work the Reflet queue.`;
   process.stdout.write(
-    `\n${indent(`Run ${style.cyan("/reflet")} in Claude Code, ${style.cyan("$reflet")} in Codex, or ask any agent to work the Reflet queue.\nRun ${style.cyan("/reflet-live")} or ${style.cyan("$reflet-live")} while you record a devtools session to get fixes as you talk.`)}\n\n`
+    `\n${indent(isGlobal ? liveHint : `${feedbackHint}\n${liveHint}`)}\n\n`
   );
   return 0;
 }
@@ -236,8 +255,8 @@ export async function run(argv: string[]): Promise<number> {
     process.stdout.write(`${LIVE_AGENT_PROMPT}\n`);
     return 0;
   }
-  if (command === "session") {
-    return await runSessionWatch(argv.slice(1));
+  if (command === "live") {
+    return await runLive(argv.slice(1));
   }
   if (command === "agent" && subcommand === "install") {
     return commandAgentInstall(argv.slice(2));

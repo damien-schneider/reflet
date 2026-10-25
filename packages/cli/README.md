@@ -72,37 +72,63 @@ Running it twice changes nothing. `--dry-run` and `--cwd <dir>` behave as in
 `init`. `reflet prompt agent` and `reflet prompt live` print the same
 workflows to stdout.
 
+`--global` writes only the `reflet-live` workflow, once for every repository:
+`~/.agents/skills/reflet-live/SKILL.md`, `~/.claude/skills/reflet-live/SKILL.md`
+and `~/.claude/commands/reflet-live.md`. It leaves `.gitignore` alone; the
+feedback workflow stays per repository.
+
 `reflet` claims one item, reads its screenshots, element source locations and
 console errors, fixes it, opens the pull request, comments and moves the
 status — then repeats until the queue is empty. Pass a feedback id (`/reflet
 fb_…`) to work just that one.
 
-`reflet-live` follows the session you are recording in your app's devtools:
-you talk through what is wrong, the agent changes the code while you keep
-recording, and it summarises what it did when you end the session. Pass the
-dev server (`/reflet-live http://localhost:5173`) when it is not on port 3000.
+`reflet-live` follows what you say while Reflet Live records you: you talk
+through what is wrong while moving between your apps, the agent changes the
+code of the app each passage is about while you keep recording, and it
+summarises what it did when you stop. Start the agent over the folder that
+holds your repositories (`claude --add-dir ~/Documents/GitHub`) so it can edit
+each of them.
 
-### `reflet session watch`
+### `reflet live`
 
-Waits for what you say in the devtools session you are recording, then prints
-each new passage with the elements you clicked or pointed at, their selector
-and source location, and the screenshots around it, saved under
-`.reflet/sessions/<session>/`. It returns once you pause, when the session
-ends, or after `--timeout` seconds (default 90) with nothing new, and never
-prints the same passage twice. `reflet-live` runs it in a loop. When the
-session was started with "Several people are talking", each passage says who
-spoke (`[00:10] Speaker 1: … Speaker 2: …`), and `reflet-live` tells the agent
-not to take one speaker's remark as another's change of mind.
+Starts Reflet Live on this machine and opens its window (Chrome or Edge as an
+app window, else your default browser). Press Record there once: the
+recording lives in that window, so reloads, restarts and crashes of your apps
+never touch it. Every app in development with the `reflet-sdk` devtools route
+joins on its own when its panel loads, and its devtools bar gains Live
+controls (Point at, Pause, Stop).
 
 ```bash
-npx reflet-cli session watch --url http://localhost:3000
+npx reflet-cli live            # Reflet Live · http://localhost:47417
 ```
 
-It reads through the app's dev server, so it needs the `reflet-sdk` devtools
-route and Connect done from the devtools panel footer: only your own sessions,
-and only in development. A session already ended when it first looks is left
-alone. Delete `.reflet/sessions/watch.json` to read the current session from
-the start again.
+The terminal prints each app that joins and each Record, Pause and Stop.
+Ctrl+C stops the recording, waits up to 15 seconds for the window to finish
+uploading, then exits; a second Ctrl+C exits at once. Running it again while
+it runs reopens the window. `--port <n>` picks another port when 47417 is
+taken; `--no-open` skips opening the window. Transcription runs in Reflet's
+cloud, billed to the organization you pick in the window. Live recordings never
+show in the Sessions tab and are erased 24 hours after their last update.
+
+### `reflet live watch`
+
+Waits for what you say while Reflet Live records, then prints each new passage
+under the app it is about (`in one-rec/apps/electron · Export (/export)`, or
+`outside your apps (last: …)` while you were in your editor or terminal), with
+what you clicked or pointed at, its selector and source location, and the
+screenshots around it, saved under `.reflet/live/<session>/`. An `Apps` legend
+maps each app to its folder. It returns once you pause, when the recording
+ends, or after `--timeout` seconds (default 90) with nothing new, and never
+prints the same passage twice. `--json` gives each entry its `place`.
+`reflet-live` runs it in a loop.
+
+```bash
+npx reflet-cli live watch
+```
+
+When Reflet Live is not running it keeps waiting until the timeout, then says
+so. A recording already ended when it first looks is left alone. Delete
+`.reflet/live/watch.json` to read the current recording from the start again.
 
 ### Admin API
 

@@ -1,7 +1,12 @@
-import type { LiveEntry, LiveFeed, LiveSession } from "./live-feed";
+import type { LiveHubEntry, LiveHubFeed } from "reflet-sdk/live-hub";
+import { LIVE_SESSIONS_DIRECTORY } from "./live-screenshots";
 
+export const DEFAULT_TIMEOUT_SECONDS = 90;
+export const WATCH_STATE_FILE = `${LIVE_SESSIONS_DIRECTORY}/watch.json`;
 const POLL_INTERVAL_MS = 2000;
 const QUIET_BEFORE_HANDOVER_MS = 5000;
+
+type LiveHubSession = NonNullable<LiveHubFeed["session"]>;
 
 export interface WatchState {
   delivered: string[];
@@ -10,28 +15,28 @@ export interface WatchState {
 }
 
 export interface WatchPorts {
-  fetchFeed: () => Promise<LiveFeed>;
+  fetchFeed: () => Promise<LiveHubFeed | null>;
   now: () => number;
   sleep: (ms: number) => Promise<void>;
 }
 
 export interface FollowedSession {
-  session: LiveSession;
-  transcription: LiveFeed["transcription"];
+  session: LiveHubSession;
+  transcription: LiveHubFeed["transcription"];
 }
 
 export interface WatchResult {
   ended: boolean;
-  entries: LiveEntry[];
+  entries: LiveHubEntry[];
   followed: FollowedSession | null;
-  screenshots: LiveFeed["screenshots"];
+  hubRunning: boolean;
+  screenshots: LiveHubFeed["screenshots"];
   state: WatchState | null;
 }
 
-/** A session first seen already ended was recorded before the agent watched: it is never handed over. */
 function followNewestSession(
   state: WatchState | null,
-  session: LiveSession | null
+  session: LiveHubSession | null
 ): WatchState | null {
   if (!session || session.id === state?.sessionId) {
     return state;
@@ -44,9 +49,9 @@ function followNewestSession(
 }
 
 function resultOf(
-  feed: LiveFeed,
+  feed: LiveHubFeed,
   state: WatchState | null,
-  handover: { ended: boolean; entries: LiveEntry[] }
+  handover: { ended: boolean; entries: LiveHubEntry[] }
 ): WatchResult {
   const isFollowed =
     state !== null &&
@@ -58,9 +63,34 @@ function resultOf(
       isFollowed && feed.session
         ? { session: feed.session, transcription: feed.transcription }
         : null,
+    hubRunning: true,
     screenshots: feed.screenshots,
     state,
   };
+}
+
+function handoverOf(
+  feed: LiveHubFeed,
+  following: WatchState,
+  isQuietEnough: boolean
+): WatchResult | null {
+  const fresh = feed.entries.filter(
+    ({ id }) => !following.delivered.includes(id)
+  );
+  const ended =
+    feed.session?.collection === "ended" && feed.transcription.running === 0;
+  if (!(ended || (fresh.length > 0 && isQuietEnough))) {
+    return null;
+  }
+  return resultOf(
+    feed,
+    {
+      delivered: [...following.delivered, ...fresh.map(({ id }) => id)],
+      ended,
+      sessionId: following.sessionId,
+    },
+    { ended, entries: fresh }
+  );
 }
 
 export async function watchLiveSession(
@@ -74,46 +104,42 @@ export async function watchLiveSession(
 
   for (;;) {
     const feed = await ports.fetchFeed();
-    state = followNewestSession(state, feed.session);
     const now = ports.now();
-    const snapshot = JSON.stringify([
-      feed.session?.collection,
-      feed.transcription.running,
-      feed.entries.map(({ id }) => id),
-    ]);
-    if (snapshot !== lastSnapshot) {
-      lastSnapshot = snapshot;
-      changedAt = now;
-    }
-
-    const activeState = state?.ended === false ? state : null;
-    const fresh = activeState
-      ? feed.entries.filter(({ id }) => !activeState.delivered.includes(id))
-      : [];
-    const isTranscribing = feed.transcription.running > 0;
-    const ended =
-      activeState !== null &&
-      feed.session?.collection === "ended" &&
-      !isTranscribing;
-    const isSettled =
-      !isTranscribing && now - changedAt >= QUIET_BEFORE_HANDOVER_MS;
     const isTimedOut = now >= deadline;
-    const hasHandover =
-      ended || (fresh.length > 0 && (isSettled || isTimedOut));
-
-    if (activeState && hasHandover) {
-      return resultOf(
-        feed,
-        {
-          delivered: [...activeState.delivered, ...fresh.map(({ id }) => id)],
-          ended,
-          sessionId: activeState.sessionId,
-        },
-        { ended, entries: fresh }
-      );
+    if (feed) {
+      state = followNewestSession(state, feed.session);
+      const snapshot = JSON.stringify([
+        feed.session?.collection,
+        feed.transcription.running,
+        feed.entries.map(({ id }) => id),
+      ]);
+      if (snapshot !== lastSnapshot) {
+        lastSnapshot = snapshot;
+        changedAt = now;
+      }
+      const isSettled =
+        feed.transcription.running === 0 &&
+        now - changedAt >= QUIET_BEFORE_HANDOVER_MS;
+      const handover =
+        state?.ended === false
+          ? handoverOf(feed, state, isSettled || isTimedOut)
+          : null;
+      if (handover) {
+        return handover;
+      }
+    }
+    if (isTimedOut && feed) {
+      return resultOf(feed, state, { ended: false, entries: [] });
     }
     if (isTimedOut) {
-      return resultOf(feed, state, { ended: false, entries: [] });
+      return {
+        ended: false,
+        entries: [],
+        followed: null,
+        hubRunning: false,
+        screenshots: [],
+        state,
+      };
     }
     await ports.sleep(POLL_INTERVAL_MS);
   }

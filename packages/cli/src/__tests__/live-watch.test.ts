@@ -1,34 +1,59 @@
+import type { LiveApp, LiveHubEntry, LiveHubFeed } from "reflet-sdk/live-hub";
 import { describe, expect, it } from "vitest";
-import type { LiveEntry, LiveFeed, LiveSession } from "../live/live-feed";
 import { type WatchState, watchLiveSession } from "../live/watch";
+import { jsonReport, textReport } from "../live/watch-report";
 
-const RECORDING: LiveSession = {
+type Session = NonNullable<LiveHubFeed["session"]>;
+
+const RECORDING: Session = {
   collection: "recording",
   id: "s1",
-  title: "Checkout",
+  organizationName: "Acme",
+  startedAt: 0,
 };
-const ENDED: LiveSession = { ...RECORDING, collection: "ended" };
+const ENDED: Session = { ...RECORDING, collection: "ended" };
 
-const passage = (id: string): LiveEntry => ({
+const app = (label: string, root: string): LiveApp => ({
+  id: `http://localhost:3000|${root}`,
+  label,
+  origin: "http://localhost:3000",
+  repoRoot: root,
+  root,
+});
+const ELECTRON = app(
+  "one-rec/apps/electron",
+  "/Users/me/GitHub/one-rec/apps/electron"
+);
+const WEB = app("reflet/apps/web", "/Users/me/GitHub/reflet/apps/web");
+
+const passage = (
+  id: string,
+  place: LiveHubEntry["place"] = { app: WEB, kind: "app", page: null }
+): LiveHubEntry => ({
+  atMs: 0,
+  endMs: 0,
   id,
   lines: [`[00:00] ${id}`],
+  place,
   screenshotIds: [],
 });
 
 function feed(
-  session: LiveSession | null,
-  entryIds: string[],
+  session: Session | null,
+  entries: Array<string | LiveHubEntry>,
   running = 0
-): LiveFeed {
+): LiveHubFeed {
   return {
-    entries: entryIds.map(passage),
+    entries: entries.map((entry) =>
+      typeof entry === "string" ? passage(entry) : entry
+    ),
     screenshots: [],
     session,
-    transcription: { failed: 0, running },
+    transcription: { running },
   };
 }
 
-function scriptedWatch(script: (atMs: number) => LiveFeed) {
+function scriptedWatch(script: (atMs: number) => LiveHubFeed | null) {
   let atMs = 0;
   const ports = {
     fetchFeed: () => Promise.resolve(script(atMs)),
@@ -45,9 +70,9 @@ function scriptedWatch(script: (atMs: number) => LiveFeed) {
   };
 }
 
-const idsOf = (entries: LiveEntry[]) => entries.map(({ id }) => id);
+const idsOf = (entries: LiveHubEntry[]) => entries.map(({ id }) => id);
 
-describe("session watch", () => {
+describe("live watch", () => {
   it("hands over a thought once the developer pauses and it is transcribed", async () => {
     const { elapsedMs, watch } = scriptedWatch((atMs) =>
       atMs < 4000 ? feed(RECORDING, ["a"], 1) : feed(RECORDING, ["a", "b"])
@@ -91,7 +116,7 @@ describe("session watch", () => {
     expect(idsOf(result.entries)).toEqual(["p0", "p1", "p2", "p3", "p4", "p5"]);
   });
 
-  it("ignores a session that ended before the agent watched, then follows the next one", async () => {
+  it("ignores a recording that ended before the agent watched, then follows the next one", async () => {
     let current = feed(ENDED, ["old"]);
     const { watch } = scriptedWatch(() => current);
 
@@ -105,7 +130,7 @@ describe("session watch", () => {
     expect(idsOf(next.entries)).toEqual(["new"]);
   });
 
-  it("flushes the last passages once when the followed session ends", async () => {
+  it("flushes the last passages once when the followed recording ends", async () => {
     const { elapsedMs, watch } = scriptedWatch((atMs) =>
       atMs < 4000 ? feed(ENDED, ["a", "b"], 1) : feed(ENDED, ["a", "b", "c"])
     );
@@ -120,5 +145,76 @@ describe("session watch", () => {
     expect(afterEnd.ended).toBe(false);
     expect(afterEnd.entries).toEqual([]);
     expect(afterEnd.followed).toBeNull();
+  });
+
+  it("keeps waiting while Reflet Live is not running, then follows it once started", async () => {
+    const { watch } = scriptedWatch((atMs) =>
+      atMs < 20_000 ? null : feed(RECORDING, ["a"])
+    );
+
+    const result = await watch(null);
+
+    expect(result.hubRunning).toBe(true);
+    expect(idsOf(result.entries)).toEqual(["a"]);
+  });
+
+  it("says Reflet Live is not running when it never started before the timeout", async () => {
+    const { elapsedMs, watch } = scriptedWatch(() => null);
+
+    const result = await watch(null, 10_000);
+
+    expect(elapsedMs()).toBe(10_000);
+    expect(result.hubRunning).toBe(false);
+    expect(textReport(result, new Map())).toContain(
+      "Reflet Live is not running: start it with npx reflet-cli live."
+    );
+  });
+});
+
+describe("live watch report", () => {
+  const entries = [
+    passage("a", {
+      app: ELECTRON,
+      kind: "app",
+      page: { path: "/export", title: "Export" },
+    }),
+    passage("b", { app: WEB, kind: "app", page: { path: "/", title: null } }),
+    passage("c", { kind: "outside", lastApp: ELECTRON }),
+  ];
+
+  async function handedOver() {
+    const { watch } = scriptedWatch(() => feed(RECORDING, entries));
+    return await watch(null);
+  }
+
+  it("says which app and page each passage is about, and where each app lives", async () => {
+    const lines = textReport(await handedOver(), new Map()).split("\n");
+
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        "in one-rec/apps/electron · Export (/export)",
+        "in reflet/apps/web · /",
+        "outside your apps (last: one-rec/apps/electron)",
+        "Apps",
+        "  one-rec/apps/electron  /Users/me/GitHub/one-rec/apps/electron",
+        "  reflet/apps/web        /Users/me/GitHub/reflet/apps/web",
+      ])
+    );
+    expect(lines.indexOf("in one-rec/apps/electron · Export (/export)")).toBe(
+      lines.indexOf("[00:00] a") - 1
+    );
+  });
+
+  it("gives each JSON entry its place and lists where each cited app lives", async () => {
+    const report = JSON.parse(jsonReport(await handedOver(), new Map()));
+
+    expect(report.entries[2].place).toEqual({
+      kind: "outside",
+      lastApp: ELECTRON,
+    });
+    expect(report.apps).toEqual([
+      { label: "one-rec/apps/electron", root: ELECTRON.root },
+      { label: "reflet/apps/web", root: WEB.root },
+    ]);
   });
 });

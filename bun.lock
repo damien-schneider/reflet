@@ -160,6 +160,7 @@
       },
       "devDependencies": {
         "@types/node": "^26.1.2",
+        "reflet-sdk": "workspace:*",
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vite": "catalog:",
