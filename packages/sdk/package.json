@@ -70,6 +70,11 @@
       "types": "./dist/desktop.d.ts",
       "import": "./dist/desktop.js",
       "default": "./dist/desktop.js"
+    },
+    "./live-hub": {
+      "types": "./dist/live-hub.d.ts",
+      "import": "./dist/live-hub.js",
+      "default": "./dist/live-hub.js"
     }
   },
   "main": "./dist/index.js",
@@ -81,7 +86,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && tsdown -c tsdown.live-window.config.ts",
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch",
     "lint": "cd ../.. && bun x ultracite check packages/sdk",

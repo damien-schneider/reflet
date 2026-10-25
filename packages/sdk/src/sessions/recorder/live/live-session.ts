@@ -21,12 +21,17 @@ import type {
   SpeakerToken,
   SpeakerTurn,
 } from "../../protocol";
+import type { SurfaceCapture } from "../surface-capture";
 import {
   type CollectionRun,
   startCollectionRun,
   type VoiceCapture,
 } from "./collection-run";
-import { createEventBatcher, type EventBatcher } from "./event-batcher";
+import {
+  createEventBatcher,
+  type EventBatcher,
+  eventBatchSize,
+} from "./event-batcher";
 import {
   evidencePayload,
   speakerPayloads,
@@ -34,7 +39,6 @@ import {
 } from "./session-payloads";
 import { SessionQuota } from "./session-quota";
 
-const LARGEST_EVENT_BATCH = 100;
 const TICK_MS = 1000;
 const DRAFT_SAVE_INTERVAL_MS = 5000;
 const SPEAKER_SETTLE_MS = 2500;
@@ -57,9 +61,9 @@ export interface SpeakerDetectionSetup {
 
 export interface LiveSessionOptions {
   account: Pick<AccountSessions, "outbox" | "store">;
+  capture: SurfaceCapture;
   clock: SessionClock;
   hooks: LiveSessionHooks;
-  includeSource: boolean;
   limits: SessionLimits;
   sessionKey: string;
   speakers: SpeakerDetectionSetup | null;
@@ -87,15 +91,12 @@ export class LiveSession {
     this.sessionKey = options.sessionKey;
     this.quota = new SessionQuota(options.limits);
     this.events = createEventBatcher({
-      maxBatchEvents: Math.min(
-        LARGEST_EVENT_BATCH,
-        options.limits.maxEventsPerBatch
-      ),
+      maxBatchEvents: eventBatchSize(options.limits),
       onBatch: this.sendBatch,
     });
     this.evidence = createEvidenceScheduler({
       atMs: options.clock.atMs,
-      includeSource: options.includeSource,
+      includeSource: options.capture.source,
       limits: options.limits,
       onEvidence: (captured) => this.persist(evidencePayload(captured)),
     });
@@ -186,7 +187,7 @@ export class LiveSession {
     this.events.add({
       atMs: this.clock.atMs(),
       element: describeElementRef(element, {
-        includeSource: this.options.includeSource,
+        includeSource: this.options.capture.source,
       }),
       evidenceClientKey: this.captureEvidence({
         element,
@@ -200,7 +201,7 @@ export class LiveSession {
   }
 
   startCollecting(voice: VoiceCapture): void {
-    const { limits } = this.options;
+    const { capture, limits } = this.options;
     const hasVoiceRoom = this.hasVoiceRoom();
     if (!hasVoiceRoom) {
       voice.stop();
@@ -210,8 +211,8 @@ export class LiveSession {
     speakers?.startRun(startMs);
     this.run = startCollectionRun({
       atMs: this.clock.atMs,
-      collectEvents: !this.quota.stopped.has("events"),
-      includeSource: this.options.includeSource,
+      collectEvents: capture.page && !this.quota.stopped.has("events"),
+      includeSource: capture.source,
       maxSegmentMs: Math.min(
         limits.maxSegmentMs,
         maxWavDurationMs(limits.maxSegmentBytes)
@@ -235,6 +236,7 @@ export class LiveSession {
       onSamples: speakers?.pushSamples,
       startMs,
       voice: hasVoiceRoom ? voice : null,
+      watchNavigation: capture.page,
     });
     this.listen();
     this.tick = window.setInterval(this.hooks.onTick, TICK_MS);
@@ -298,12 +300,14 @@ export class LiveSession {
   private listen(): void {
     this.stopListening = new AbortController();
     const listen = { signal: this.stopListening.signal };
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        this.hooks.onHidden();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility, listen);
+    if (this.options.capture.pauseWhenHidden) {
+      const onVisibility = () => {
+        if (document.visibilityState === "hidden") {
+          this.hooks.onHidden();
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibility, listen);
+    }
     window.addEventListener("pagehide", this.hooks.onPageHide, listen);
   }
 

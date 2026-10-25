@@ -55,7 +55,9 @@ export function startPayload(draft: StoredDraft): OutboxPayload {
   };
 }
 
-export function evidencePayload(captured: CapturedEvidence): OutboxPayload {
+export function evidencePayload(
+  captured: CapturedEvidence
+): Extract<OutboxPayload, { kind: "evidence" }> {
   const { element, image, missingReason, note, visibleElements } = captured;
   return {
     evidence: {

@@ -20,6 +20,7 @@ import type {
   SessionRecorder,
   SessionRecorderOptions,
 } from "./session-recorder";
+import { SURFACE_CAPTURE } from "./surface-capture";
 
 const MAX_NOTE_CHARS = 1000;
 const MAX_TITLE_CHARS = 120;
@@ -198,7 +199,9 @@ export class RecordingController implements SessionRecorder {
     const live = this.adopt(draft, []);
     live.startCollecting(voice);
     this.publish({ phase: "recording" });
-    live.captureEvidence({ trigger: "start" });
+    if (SURFACE_CAPTURE[this.options.surface].page) {
+      live.captureEvidence({ trigger: "start" });
+    }
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -216,6 +219,7 @@ export class RecordingController implements SessionRecorder {
     const clock = createSessionClock({ gaps, startedAt });
     const live = new LiveSession({
       account: this.account,
+      capture: SURFACE_CAPTURE[this.options.surface],
       clock,
       hooks: {
         onHidden: () => this.pauseFor("hidden"),
@@ -230,7 +234,6 @@ export class RecordingController implements SessionRecorder {
         onTick: () => this.onTick(live),
         reachLimit: (limit) => this.reachLimit(live, limit),
       },
-      includeSource: this.options.surface === "devtools",
       limits: this.options.limits,
       sessionKey,
       speakers: draft.detectSpeakers

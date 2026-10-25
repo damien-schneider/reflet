@@ -6,7 +6,7 @@ import {
   sessionContinuationSchema,
 } from "./intention-protocol";
 
-export const SESSION_SURFACES = ["devtools", "app"] as const;
+export const SESSION_SURFACES = ["devtools", "app", "live"] as const;
 export type SessionSurface = (typeof SESSION_SURFACES)[number];
 
 export const SESSION_GAP_REASONS = [
@@ -64,6 +64,7 @@ export type SessionLimits = z.infer<typeof sessionLimitsSchema>;
 export const sessionIdentitySchema = z.object({
   analysisConfigured: z.boolean(),
   limits: sessionLimitsSchema,
+  liveLimits: sessionLimitsSchema,
   organizationId: z.string(),
   organizationName: z.string(),
   speakersConfigured: z.boolean().default(false),

@@ -14,10 +14,12 @@ export type SheetTab = (typeof SHEET_TABS)[number];
 
 export function BarButton({
   children,
+  disabled = false,
   label,
   onClick,
 }: {
   children: ReactNode;
+  disabled?: boolean;
   label: string;
   onClick: () => void;
 }) {
@@ -25,6 +27,7 @@ export function BarButton({
     <button
       aria-label={label}
       className="icon-btn"
+      disabled={disabled}
       onClick={onClick}
       title={label}
       type="button"

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { type SessionApi, SessionApiError } from "../api/session-api";
+import {
+  type AddEvidenceBody,
+  type SessionApi,
+  SessionApiError,
+} from "../api/session-api";
 import { uploadSessionBlob } from "../api/session-transports";
 import type { SessionLimitKind } from "../protocol";
 import type {
@@ -115,6 +119,22 @@ async function sendVoice(
   });
 }
 
+export function evidenceBody(
+  payload: Extract<OutboxPayload, { kind: "evidence" }>,
+  sessionId: string,
+  storageId: string | null
+): AddEvidenceBody {
+  const { image } = payload;
+  return {
+    ...payload.evidence,
+    image:
+      image && storageId
+        ? { height: image.height, storageId, width: image.width }
+        : undefined,
+    sessionId,
+  };
+}
+
 async function sendEvidence(
   context: OperationContext,
   payload: Extract<OutboxPayload, { kind: "evidence" }>
@@ -130,14 +150,9 @@ async function sendEvidence(
         })
       )
     : null;
-  await context.api.addEvidence({
-    ...payload.evidence,
-    image:
-      image && storageId
-        ? { height: image.height, storageId, width: image.width }
-        : undefined,
-    sessionId: context.sessionId,
-  });
+  await context.api.addEvidence(
+    evidenceBody(payload, context.sessionId, storageId)
+  );
 }
 
 async function sendSessionOperation(

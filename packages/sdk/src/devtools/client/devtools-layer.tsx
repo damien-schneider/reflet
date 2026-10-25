@@ -22,6 +22,8 @@ import {
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
 import { findOnPage, usePageHighlight } from "./find-on-page";
+import { LiveControls, LivePicker } from "./live/live-controls";
+import { useLiveLink } from "./live/use-live-link";
 import { enrichNote, hasTriedToLocate } from "./notes/capture-note";
 import { NotePicker } from "./notes/note-picker";
 import {
@@ -177,7 +179,12 @@ export function DevtoolsLayer({
   const notes = useNotes();
   useResumeLocating(notes, route);
   const sessions = useDevtoolsSessions({ onUnauthorized: refresh, route });
+  const live = useLiveLink(route.kind === "ready");
   const [isPicking, setIsPicking] = useState(false);
+  const [isLivePointing, setIsLivePointing] = useState(false);
+  if (isLivePointing && live.status.state !== "recording") {
+    setIsLivePointing(false);
+  }
   const sheet = useSheetTab();
   const { openTab } = sheet;
   const { clearHighlight, highlighted, showSelector } = usePageHighlight();
@@ -189,7 +196,7 @@ export function DevtoolsLayer({
   const side = position.endsWith("right") ? "right" : "left";
   const canReadSource = route.kind === "ready";
   const canConnect = canConnectBoard(route, publicKey);
-  const isRecessed = isWidgetOpen || isPicking;
+  const isRecessed = isWidgetOpen || isPicking || isLivePointing;
 
   const closeSheet = () => {
     sheet.close();
@@ -198,6 +205,7 @@ export function DevtoolsLayer({
 
   const startPick = useCallback(() => setIsPicking(true), []);
   const cancelPick = useCallback(() => setIsPicking(false), []);
+  const stopLivePointing = useCallback(() => setIsLivePointing(false), []);
 
   const inspect = useMemo(
     () => ({
@@ -274,6 +282,7 @@ export function DevtoolsLayer({
             onPick={startPick}
             unsentNoteCount={unsentNoteCount(notes)}
           />
+          <LiveControls live={live} onPointAt={() => setIsLivePointing(true)} />
         </DevtoolsBar>
         {openTab && (
           <SelectionOutline
@@ -297,6 +306,9 @@ export function DevtoolsLayer({
             inspect={inspect}
             onDone={cancelPick}
           />
+        )}
+        {isLivePointing && (
+          <LivePicker onDone={stopLivePointing} select={live.select} />
         )}
       </div>
     </SessionsScope>

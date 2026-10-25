@@ -1,7 +1,14 @@
-import type { SessionEvent } from "../../protocol";
+import type { SessionEvent, SessionLimits } from "../../protocol";
 
 const FLUSH_INTERVAL_MS = 5000;
 const NOTE_WAIT_MS = 60_000;
+const LARGEST_EVENT_BATCH = 100;
+
+export function eventBatchSize(
+  limits: Pick<SessionLimits, "maxEventsPerBatch">
+): number {
+  return Math.min(LARGEST_EVENT_BATCH, limits.maxEventsPerBatch);
+}
 
 type MarkEvent = Extract<SessionEvent, { kind: "mark" }>;
 

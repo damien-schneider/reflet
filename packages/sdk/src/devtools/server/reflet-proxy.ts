@@ -16,6 +16,12 @@ export interface RefletProxyTarget {
   token: string | null;
 }
 
+export const refletApiHeaders = (token: string) => ({
+  Accept: "application/json",
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+});
+
 type ForwardedBody = { body: string | undefined } | { error: string };
 
 function isProxiedApiPath(path: string): path is ProxiedApiPath {
@@ -79,11 +85,7 @@ export async function proxyToReflet(
   try {
     upstream = await fetch(`${target.apiUrl}${apiPath}${search}`, {
       body: forwarded.body,
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${target.token}`,
-        "Content-Type": "application/json",
-      },
+      headers: refletApiHeaders(target.token),
       method: request.method,
       signal: AbortSignal.timeout(15_000),
     });

@@ -77,7 +77,7 @@ function isDevtoolsStatus(value: unknown): value is DevtoolsStatus {
   );
 }
 
-async function callDevRoute<T>(
+export async function callDevRoute<T>(
   endpoint: string,
   init: {
     body?: unknown;

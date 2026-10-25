@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { captureViewport } from "../../feedback/core/capture";
 import { createIndexedSessionStore } from "../local/indexed-session-store";
-import { type SessionLimits, sessionEventSchema } from "../protocol";
+import {
+  type SessionLimits,
+  type SessionSurface,
+  sessionEventSchema,
+} from "../protocol";
 import { type FakeAudio, installFakeAudio } from "../testing/fake-audio";
 import {
   createFakeSessionServer,
@@ -49,7 +53,10 @@ function speech(ms: number): Float32Array {
   );
 }
 
-function setup(limits: Partial<SessionLimits> = {}) {
+function setup(
+  limits: Partial<SessionLimits> = {},
+  surface: SessionSurface = "devtools"
+) {
   const server = createFakeSessionServer();
   const accountKey = `org:${crypto.randomUUID()}`;
   const recorder = createSessionRecorder({
@@ -61,7 +68,7 @@ function setup(limits: Partial<SessionLimits> = {}) {
     },
     api: server.api,
     limits: { ...LIMITS, ...limits },
-    surface: "devtools",
+    surface,
   });
   return { accountKey, recorder, server };
 }
@@ -213,6 +220,29 @@ describe("createSessionRecorder", () => {
     await recorder.resume();
     expect(recorder.getSnapshot().phase).toBe("recording");
     expect(audio.getUserMedia).toHaveBeenCalledTimes(2);
+    visibility.mockRestore();
+    recorder.dispose();
+  });
+
+  it("keeps a live recording going while its window is hidden, without watching the page", async () => {
+    const { recorder, server } = setup({}, "live");
+    await recorder.start({});
+    const button = document.createElement("button");
+    document.body.append(button);
+    const visibility = vi.spyOn(document, "visibilityState", "get");
+    visibility.mockReturnValue("hidden");
+    document.dispatchEvent(new Event("visibilitychange"));
+    button.click();
+    audio.emitFrame(speech(1500));
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(recorder.getSnapshot().phase).toBe("recording");
+    recorder.pause();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.callsTo("/api/v1/sessions/segments")).toHaveLength(1);
+    expect(sentEvents(server)).toEqual([]);
+    expect(server.callsTo("/api/v1/sessions/evidence")).toEqual([]);
+    button.remove();
     visibility.mockRestore();
     recorder.dispose();
   });

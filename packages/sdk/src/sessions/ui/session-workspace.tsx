@@ -70,7 +70,7 @@ async function openWorkspace(options: {
   const recorder = createSessionRecorder({
     account,
     api,
-    limits: identity.limits,
+    limits: surface === "live" ? identity.liveLimits : identity.limits,
     surface,
   });
   return {

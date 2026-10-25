@@ -1,3 +1,4 @@
+import { LIVE_HUB_ENDPOINTS } from "../live/protocol";
 import { SESSION_API_PATHS } from "../sessions/api-paths";
 
 export const DEVTOOLS_ROUTE_BASE = "/api/reflet-devtools";
@@ -12,6 +13,8 @@ export const DEVTOOLS_ENDPOINTS = {
   connectCallback: "/connect/callback",
   connectStart: "/connect/start",
   disconnect: "/connect/disconnect",
+  liveCommand: LIVE_HUB_ENDPOINTS.command,
+  livePresence: LIVE_HUB_ENDPOINTS.presence,
   proxy: "/proxy",
   search: "/search",
   source: "/source",

@@ -25,6 +25,7 @@ export default defineConfig({
     "devtools-vite": "src/devtools/server/vite.ts",
     feedback: "src/feedback/entry.ts",
     index: "src/index.ts",
+    "live-hub": "src/live/hub/index.ts",
     react: "src/react.ts",
     server: "src/server.ts",
     surveys: "src/surveys/entry.ts",

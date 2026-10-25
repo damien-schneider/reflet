@@ -102,6 +102,7 @@ export interface CollectionRunOptions {
   onSamples?: (samples: Float32Array) => void;
   startMs: number;
   voice: VoiceCapture | null;
+  watchNavigation: boolean;
 }
 
 export function startCollectionRun(
@@ -118,7 +119,9 @@ export function startCollectionRun(
   let interactions: InteractionRecorder | null = options.collectEvents
     ? startInteractionRecorder(options)
     : null;
-  const navigation: NavigationWatch = startNavigationWatch(options);
+  const navigation: NavigationWatch | null = options.watchNavigation
+    ? startNavigationWatch(options)
+    : null;
   const stopVoice = () => {
     const stopping = voice;
     voice = null;
@@ -133,7 +136,7 @@ export function startCollectionRun(
     stop: () => {
       stopVoice();
       stopEvents();
-      navigation.stop();
+      navigation?.stop();
     },
     stopEvents,
     stopVoice,

@@ -21,21 +21,31 @@ import {
   SessionWorkspaceProvider,
 } from "../session-workspace";
 
+const LIMITS: SessionIdentity["limits"] = {
+  audioRetentionMs: 86_400_000,
+  maxDurationMs: 1_800_000,
+  maxEvents: 5000,
+  maxEventsPerBatch: 200,
+  maxEvidence: 60,
+  maxImageBytes: 2_500_000,
+  maxLocalBufferBytes: 60_000_000,
+  maxSegmentBytes: 1_100_000,
+  maxSegmentMs: 30_000,
+  maxSegments: 400,
+  minAutoCaptureIntervalMs: 10_000,
+  warnBeforeLimitMs: 300_000,
+};
+
 export const IDENTITY: SessionIdentity = {
   analysisConfigured: true,
-  limits: {
-    audioRetentionMs: 86_400_000,
-    maxDurationMs: 1_800_000,
-    maxEvents: 5000,
-    maxEventsPerBatch: 200,
-    maxEvidence: 60,
-    maxImageBytes: 2_500_000,
-    maxLocalBufferBytes: 60_000_000,
-    maxSegmentBytes: 1_100_000,
-    maxSegmentMs: 30_000,
-    maxSegments: 400,
-    minAutoCaptureIntervalMs: 10_000,
-    warnBeforeLimitMs: 300_000,
+  limits: LIMITS,
+  liveLimits: {
+    ...LIMITS,
+    maxDurationMs: 14_400_000,
+    maxEvents: 20_000,
+    maxEvidence: 240,
+    maxSegments: 2000,
+    warnBeforeLimitMs: 600_000,
   },
   organizationId: "org_1",
   organizationName: "Acme",

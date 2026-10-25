@@ -1,3 +1,4 @@
+import { LIVE_ROUTE_PREFIX } from "../../live/protocol";
 import {
   DEVTOOLS_ENDPOINTS,
   DEVTOOLS_ROUTE_BASE,
@@ -10,11 +11,8 @@ import {
   finishConnect,
   startConnect,
 } from "./connect/connect-routes";
-import {
-  type DevtoolsOutcome,
-  errorResponse,
-  jsonResponse,
-} from "./json-response";
+import { errorResponse, jsonResponse, outcomeResponse } from "./json-response";
+import { forwardToLiveHub } from "./live-forward";
 import {
   type DevtoolsEnv,
   type DevtoolsServerOptions,
@@ -39,12 +37,6 @@ const ENDPOINT_METHODS: Record<string, "GET" | "POST"> = {
   [DEVTOOLS_ENDPOINTS.source]: "GET",
   [DEVTOOLS_ENDPOINTS.status]: "GET",
 };
-
-function outcomeResponse<T>(outcome: DevtoolsOutcome<T>): Response {
-  return outcome.ok
-    ? jsonResponse(outcome.value)
-    : errorResponse(outcome.error, outcome.status);
-}
 
 function routeSubPath(pathname: string): string | null {
   const baseIndex = pathname.indexOf(DEVTOOLS_ROUTE_BASE);
@@ -75,6 +67,10 @@ async function routeRequest(
   if (subPath?.startsWith(`${DEVTOOLS_ENDPOINTS.proxy}/`)) {
     const apiPath = subPath.slice(DEVTOOLS_ENDPOINTS.proxy.length);
     return await proxyWithBoardCredential(request, apiPath, settings);
+  }
+
+  if (subPath?.startsWith(`${LIVE_ROUTE_PREFIX}/`)) {
+    return await forwardToLiveHub(request, subPath, projectRoots());
   }
 
   const requiredMethod = subPath ? ENDPOINT_METHODS[subPath] : undefined;

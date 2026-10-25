@@ -5,6 +5,19 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Reflet Live: `npx reflet-cli live` opens one Live window that records your voice for up to 4 hours across every app running the Reflet devtools. It keeps recording while minimized or behind other windows, and each passage carries the app you were in, the page, what you clicked and what you pointed at, so a coding agent following `npx reflet-cli live watch` knows which repository to change.
+- Devtools bar: while Reflet Live runs, each app shows its state with Record, Pause, Resume and Stop, plus "Point at an element" to send a pick with its source location into the recording. Clicks and screenshots from the focused app reach the recording too.
+- Devtools route: `/api/reflet-devtools/live/*` forwards an app's presence, commands and captures to Reflet Live on this machine. Without Reflet Live running, the bar simply shows nothing.
+- `reflet-sdk/live-hub`: the local Reflet Live server the CLI starts. Not meant for apps.
+
+### Changed
+
+- Sessions: the identity answer includes `liveLimits`, the limits of a Live recording. This needs the matching Reflet API.
+
 ## [0.7.15] - 2026-10-25
 
 ### Added

@@ -29,3 +29,9 @@ export function errorResponse(error: string, status: number): Response {
 export function failure<T>(error: string, status: number): DevtoolsOutcome<T> {
   return { error, ok: false, status };
 }
+
+export function outcomeResponse<T>(outcome: DevtoolsOutcome<T>): Response {
+  return outcome.ok
+    ? jsonResponse(outcome.value)
+    : errorResponse(outcome.error, outcome.status);
+}

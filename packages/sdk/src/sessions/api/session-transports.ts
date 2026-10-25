@@ -25,7 +25,7 @@ function toSessionApiError(body: unknown, status: number): SessionApiError {
   });
 }
 
-function transportOver(boardCall: BoardCall): SessionTransport {
+export function transportOver(boardCall: BoardCall): SessionTransport {
   return {
     async request<T>({ body, method, path, query, schema }: SessionRequest<T>) {
       try {

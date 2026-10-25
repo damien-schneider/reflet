@@ -64,6 +64,14 @@ export const DEVTOOLS_STYLES = `
   min-width: 15px; height: 15px; padding: 0 4px; border-radius: var(--rf-pill);
   background: var(--rf-accent); color: var(--rf-accent-text); font-size: 10.5px; font-weight: 600;
 }
+.dt-live { display: flex; align-items: center; gap: 2px; min-inline-size: 0; margin: 0 0 0 2px; padding: 0 0 0 4px; border: 0; border-left: 1px solid var(--rf-border); }
+.dt-live > .dt-live-dot { margin: 0 8px; }
+.dt-live-label { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px 0 8px; color: var(--rf-danger); font-size: 12px; font-weight: 600; }
+.dt-live-dot { flex: none; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--rf-text-muted); }
+.dt-live-dot[data-tone="recording"] { background: var(--rf-danger); }
+.dt-live-label .dt-live-dot { animation: dt-rec-pulse 1.6s ease-in-out infinite; }
+.dt-live-dot[data-tone="paused"] { background: #d9a23b; }
+.dt-live .dt-btn { margin: 0 4px; }
 .dt-sheet {
   --dt-enter-x: 20px;
   position: fixed; z-index: ${REFLET_Z_INDEX.widgetRoot}; top: 12px; bottom: 12px;
