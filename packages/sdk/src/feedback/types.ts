@@ -2,7 +2,7 @@ import type { ReactNode, RefObject } from "react";
 import type { TeamToolsBridge } from "../sessions/team/team-tools-bridge";
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.7.15";
+export const SDK_VERSION = "0.8.0";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [
