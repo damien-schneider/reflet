@@ -4,7 +4,14 @@ import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@ctrl-ui/react/ui/item";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { CalendarBlank, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -46,24 +53,28 @@ function LinkedFeedbackRow({
   onRemove?: () => void;
 }) {
   return (
-    <li className="group flex items-center gap-2 rounded-md p-1.5 hover:bg-accent/50">
-      <button
-        className="min-w-0 flex-1 text-left text-sm"
+    <li className="group flex items-center gap-2">
+      <Item
+        className="min-w-0 flex-1 text-left [--cui-item-padding-block:calc(var(--spacing)*1.5)] [--cui-item-padding-inline:calc(var(--spacing)*1.5)]"
         onClick={onOpen}
-        type="button"
+        render={<button type="button" />}
       >
-        <span className="line-clamp-1">{feedback.title}</span>
-        <span className="flex items-center gap-2 text-muted-foreground text-xs">
-          {feedback.organizationStatus && (
-            <TagBadge color={feedback.organizationStatus.color} size="sm">
-              {feedback.organizationStatus.name}
-            </TagBadge>
-          )}
-          <span className="tabular-nums">
-            {formatVotes(feedback.voteCount)}
-          </span>
-        </span>
-      </button>
+        <ItemContent>
+          <ItemTitle className="line-clamp-1">{feedback.title}</ItemTitle>
+          <ItemDescription>
+            <span className="flex items-center gap-2">
+              {feedback.organizationStatus && (
+                <TagBadge color={feedback.organizationStatus.color} size="sm">
+                  {feedback.organizationStatus.name}
+                </TagBadge>
+              )}
+              <Text as="span" numeric size="caption">
+                {formatVotes(feedback.voteCount)}
+              </Text>
+            </span>
+          </ItemDescription>
+        </ItemContent>
+      </Item>
       {onRemove && (
         <span className="pointer-fine:opacity-0 focus-within:opacity-100 group-hover:opacity-100">
           <Button
@@ -132,17 +143,17 @@ function LinkCandidateList({
   return (
     <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-1">
       {candidates.map((fb) => (
-        <button
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/50"
+        <Button
+          className="w-full justify-start"
           key={fb._id}
           onClick={() => onLink(fb._id)}
-          type="button"
+          variant="ghost"
         >
-          <span className="min-w-0 flex-1 truncate">{fb.title}</span>
-          <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+          <span className="min-w-0 flex-1 truncate text-left">{fb.title}</span>
+          <Text as="span" numeric size="caption" tone="muted">
             {formatVotes(fb.voteCount)}
-          </span>
-        </button>
+          </Text>
+        </Button>
       ))}
       {candidates.length === 0 && (
         <p className="py-2 text-center text-muted-foreground text-xs">

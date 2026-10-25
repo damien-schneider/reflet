@@ -2,6 +2,7 @@
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { ArrowSquareOut, Check, Copy } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -9,7 +10,6 @@ import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { generateSetupPrompt } from "reflet-cli/prompt";
-import { H3, Muted } from "@/components/ui/typography";
 
 const COPIED_RESET_MS = 2000;
 
@@ -144,17 +144,19 @@ function NoKeyPanel({
 
   if (!canManageKeys) {
     return (
-      <Muted className="rounded-lg border border-dashed p-4">
-        Setup needs a public key. Ask an organization admin to create one.
-      </Muted>
+      <div className="rounded-lg border border-dashed p-4">
+        <Text as="p" tone="muted">
+          Setup needs a public key. Ask an organization admin to create one.
+        </Text>
+      </div>
     );
   }
 
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-4">
-      <Muted className="flex-1">
+      <Text as="p" className="flex-1" tone="muted">
         Setup needs a public key, and we couldn’t create one automatically.
-      </Muted>
+      </Text>
       <ButtonLink
         render={<Link href={`/dashboard/${orgSlug}/project/api-keys`} />}
         variant="surface"
@@ -188,9 +190,9 @@ export function FeedbackCollectorCard({
     <section aria-labelledby="feedback-collector-heading" className="space-y-4">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <H3 id="feedback-collector-heading" variant="card">
+          <Heading id="feedback-collector-heading" level={3}>
             Feedback collector
-          </H3>
+          </Heading>
           <div className="flex items-center gap-2">
             <ButtonLink
               render={<Link href="/sdk-demo" rel="noopener" target="_blank" />}
@@ -216,10 +218,10 @@ export function FeedbackCollectorCard({
             </ButtonLink>
           </div>
         </div>
-        <Muted className="max-w-xl text-pretty">
+        <Text as="p" className="max-w-xl text-pretty" tone="muted">
           A floating button in your app. Each report carries the screenshot, the
           console and the element the user pointed at.
-        </Muted>
+        </Text>
       </div>
 
       {publicKey ? (

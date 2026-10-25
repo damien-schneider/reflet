@@ -20,6 +20,7 @@ import {
 } from "@ctrl-ui/react/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   NumberField,
   NumberFieldDecrement,
@@ -36,13 +37,12 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { Minus, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { type ChangeEvent, useState } from "react";
-import { Label } from "@/components/ui/label";
-import { Muted } from "@/components/ui/typography";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
 type WidgetWithSettings = Doc<"widgets"> & {
@@ -233,9 +233,9 @@ export function WidgetSettingsDialog({
           <div className="flex items-center justify-between gap-4">
             <div>
               <Label htmlFor="show-launcher">Show launcher</Label>
-              <Muted className="text-caption" id="show-launcher-hint">
+              <Text as="p" id="show-launcher-hint" size="caption" tone="muted">
                 Display the chat bubble on the page.
-              </Muted>
+              </Text>
             </div>
             <Switch
               aria-describedby="show-launcher-hint"
@@ -249,9 +249,9 @@ export function WidgetSettingsDialog({
           <div className="flex items-center justify-between gap-4">
             <div>
               <Label htmlFor="auto-open">Open automatically</Label>
-              <Muted className="text-caption" id="auto-open-hint">
+              <Text as="p" id="auto-open-hint" size="caption" tone="muted">
                 Open the chat as soon as the page loads.
-              </Muted>
+              </Text>
             </div>
             <Switch
               aria-describedby="auto-open-hint"

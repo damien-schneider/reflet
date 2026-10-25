@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { DocsLink } from "@/components/docs/docs-page";
-import { InlineCode } from "@/components/ui/typography";
 import { BASE_URL, type EndpointDefinition, param } from "./endpoint-data";
 
 const RATE_LIMITED = (
@@ -13,8 +13,8 @@ const SIGNED_USER_ACCESS = (
   <>
     Public or secret key, plus a{" "}
     <DocsLink href="#user-token">signed user token</DocsLink> in{" "}
-    <InlineCode>X-User-Token</InlineCode>. Without one the request fails with{" "}
-    <InlineCode>401</InlineCode>.
+    <MarkdownInlineCode>X-User-Token</MarkdownInlineCode>. Without one the
+    request fails with <MarkdownInlineCode>401</MarkdownInlineCode>.
   </>
 );
 
@@ -29,8 +29,8 @@ const CREATE_FEEDBACK: EndpointDefinition = {
     <>
       Public or secret key; a public key can post to a private organization too.
       A user token, signed or not, credits the post to that user and adds their
-      upvote. <InlineCode>internal: true</InlineCode> needs the secret key.{" "}
-      {RATE_LIMITED}
+      upvote. <MarkdownInlineCode>internal: true</MarkdownInlineCode> needs the
+      secret key. {RATE_LIMITED}
     </>
   ),
   body: `{
@@ -44,13 +44,16 @@ const CREATE_FEEDBACK: EndpointDefinition = {
   method: "POST",
   note: (
     <>
-      Responds with <InlineCode>201</InlineCode> and{" "}
-      <InlineCode>isApproved: false</InlineCode>: every new item waits for
-      automatic triage, which publishes it shortly unless the board requires
-      approval or the item looks like spam. Until then only the secret key reads
-      it. Publish or reject it yourself with the secret key:{" "}
-      <InlineCode>POST /api/v1/admin/feedback/publication</InlineCode> with{" "}
-      <InlineCode>{`{ "feedbackId", "state": "approved" | "rejected" }`}</InlineCode>
+      Responds with <MarkdownInlineCode>201</MarkdownInlineCode> and{" "}
+      <MarkdownInlineCode>isApproved: false</MarkdownInlineCode>: every new item
+      waits for automatic triage, which publishes it shortly unless the board
+      requires approval or the item looks like spam. Until then only the secret
+      key reads it. Publish or reject it yourself with the secret key:{" "}
+      <MarkdownInlineCode>
+        POST /api/v1/admin/feedback/publication
+      </MarkdownInlineCode>{" "}
+      with{" "}
+      <MarkdownInlineCode>{`{ "feedbackId", "state": "approved" | "rejected" }`}</MarkdownInlineCode>
       . Rejecting archives the item, so it leaves every read until someone
       restores it.
     </>
@@ -125,7 +128,7 @@ const ADD_COMMENT: EndpointDefinition = {
   method: "POST",
   note: (
     <>
-      Responds with <InlineCode>201</InlineCode>.
+      Responds with <MarkdownInlineCode>201</MarkdownInlineCode>.
     </>
   ),
   params: [
@@ -189,11 +192,11 @@ const SCREENSHOT_UPLOAD_URL: EndpointDefinition = {
   access: <>Public or secret key. {RATE_LIMITED}</>,
   description: (
     <>
-      Get a one-time URL to upload a screenshot. <InlineCode>POST</InlineCode>{" "}
-      the image bytes to it with the image’s{" "}
-      <InlineCode>Content-Type</InlineCode>; it answers with a{" "}
-      <InlineCode>storageId</InlineCode> to pass to{" "}
-      <DocsLink href="#save-screenshot">save</DocsLink>.
+      Get a one-time URL to upload a screenshot.{" "}
+      <MarkdownInlineCode>POST</MarkdownInlineCode> the image bytes to it with
+      the image’s <MarkdownInlineCode>Content-Type</MarkdownInlineCode>; it
+      answers with a <MarkdownInlineCode>storageId</MarkdownInlineCode> to pass
+      to <DocsLink href="#save-screenshot">save</DocsLink>.
     </>
   ),
   id: "screenshot-upload-url",
@@ -221,9 +224,9 @@ const SAVE_SCREENSHOT: EndpointDefinition = {
       PNG, JPEG, WebP, GIF or AVIF image of 10 MB or less, uploaded in the last
       30 minutes and not attached anywhere else; type and size are read from the
       upload. With a public key, only the reporter (same{" "}
-      <InlineCode>X-User-Token</InlineCode> user, or anonymous for anonymous
-      reports) can attach, within 30 minutes of creating the feedback, and at
-      most 10 screenshots per feedback item.
+      <MarkdownInlineCode>X-User-Token</MarkdownInlineCode> user, or anonymous
+      for anonymous reports) can attach, within 30 minutes of creating the
+      feedback, and at most 10 screenshots per feedback item.
     </>
   ),
   id: "save-screenshot",

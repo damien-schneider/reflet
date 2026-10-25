@@ -113,11 +113,12 @@ function TitleRow({
   return (
     <div className="flex items-center gap-3 pr-10">
       <ComposerIcon />
-      <input
+      <Input
         aria-describedby={describedBy}
         aria-invalid={composer.isTitleOverLimit || undefined}
         aria-label="Feedback title"
-        className="h-9 min-w-0 flex-1 bg-transparent font-medium text-base outline-none placeholder:text-muted-foreground disabled:opacity-60 sm:text-sm"
+        className="min-w-0 flex-1 [--cui-field-background:transparent] [--cui-field-border-width:0px] [--cui-field-font-weight:var(--font-weight-medium)] [--cui-field-padding-inline:0px] [--cui-field-shadow:none]"
+        data-focus-ring="none"
         disabled={composer.isSubmitting}
         maxLength={MAX_TITLE_LENGTH + 10}
         onChange={(e) => composer.updateForm({ title: e.target.value })}

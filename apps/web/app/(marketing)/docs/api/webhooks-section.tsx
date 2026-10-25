@@ -1,3 +1,4 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsLink,
@@ -8,7 +9,6 @@ import {
   DocsText,
 } from "@/components/docs/docs-page";
 import { ReferenceTable } from "@/components/docs/reference-table";
-import { InlineCode } from "@/components/ui/typography";
 
 const EVENTS = [
   ["feedback.created", "Feedback became visible (created and approved)."],
@@ -93,18 +93,26 @@ export function WebhooksSection({ sections }: { sections: DocsSections }) {
 
       <DocsSubsection id="webhook-request" title="Request">
         <DocsText>
-          Headers: <InlineCode>Content-Type: application/json</InlineCode>,{" "}
-          <InlineCode>User-Agent: Reflet-Webhooks/1.0</InlineCode>,{" "}
-          <InlineCode>X-Reflet-Event</InlineCode>,{" "}
-          <InlineCode>X-Reflet-Delivery</InlineCode> (the same on every retry,
-          use it to dedupe) and <InlineCode>X-Reflet-Signature</InlineCode> (
-          <InlineCode>sha256=</InlineCode> followed by the hex HMAC-SHA256 of
-          the raw body, keyed with the webhook secret).
+          Headers:{" "}
+          <MarkdownInlineCode>
+            Content-Type: application/json
+          </MarkdownInlineCode>
+          ,{" "}
+          <MarkdownInlineCode>
+            User-Agent: Reflet-Webhooks/1.0
+          </MarkdownInlineCode>
+          , <MarkdownInlineCode>X-Reflet-Event</MarkdownInlineCode>,{" "}
+          <MarkdownInlineCode>X-Reflet-Delivery</MarkdownInlineCode> (the same
+          on every retry, use it to dedupe) and{" "}
+          <MarkdownInlineCode>X-Reflet-Signature</MarkdownInlineCode> (
+          <MarkdownInlineCode>sha256=</MarkdownInlineCode> followed by the hex
+          HMAC-SHA256 of the raw body, keyed with the webhook secret).
         </DocsText>
         <DocsText>
-          <InlineCode>data.feedback</InlineCode> has the same shape as{" "}
+          <MarkdownInlineCode>data.feedback</MarkdownInlineCode> has the same
+          shape as{" "}
           <DocsLink href="#get-feedback">
-            <InlineCode>GET /feedback/item</InlineCode>
+            <MarkdownInlineCode>GET /feedback/item</MarkdownInlineCode>
           </DocsLink>{" "}
           with a secret key, including the author’s email and the private
           fields.

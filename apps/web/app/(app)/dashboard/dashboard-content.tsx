@@ -7,12 +7,6 @@ import {
   isSurveyDetailRoute,
 } from "@app/(app)/dashboard/shell/dashboard-workspace";
 import { AppShellContent } from "@ctrl-ui/react/ui/app-shell";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
-import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,7 +14,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@ctrl-ui/react/ui/breadcrumb";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import Link from "next/link";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { useOrgSections } from "@/features/dashboard/components/navigation/org-navigation";

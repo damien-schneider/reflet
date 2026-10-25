@@ -4,6 +4,7 @@ import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EnvelopeSimple } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -11,7 +12,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { H1, Muted } from "@/components/ui/typography";
 import {
   AuthPageShell,
   AuthStatus,
@@ -86,12 +86,12 @@ function ForgotPasswordContent() {
 
   return (
     <AuthPageShell>
-      <H1 className="mb-2 text-center" variant="page">
+      <Heading className="mb-2 text-center" level={1} size="display">
         Reset your password
-      </H1>
-      <Muted className="mb-6 text-center">
+      </Heading>
+      <Text as="p" className="mb-6 text-center" tone="muted">
         Enter your account email and we’ll send you a reset link.
-      </Muted>
+      </Text>
 
       <form className="space-y-2" noValidate onSubmit={handleSubmit(onSubmit)}>
         <Field invalid={Boolean(errors.email)}>

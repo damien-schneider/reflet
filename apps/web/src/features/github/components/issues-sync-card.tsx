@@ -2,6 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,10 +11,9 @@ import {
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { ArrowsClockwise } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { Label } from "@/components/ui/label";
-import { Text } from "@/components/ui/typography";
 import { SettingSwitchRow } from "./setting-switch-row";
 
 const PROMOTE_TRIGGERS = [
@@ -154,15 +154,12 @@ function SyncIssuesActions({
       ) : null}
       <div aria-live="polite" className="flex items-center gap-2">
         {isSyncing ? (
-          <Text className="text-muted-foreground" variant="bodySmall">
+          <Text as="p" tone="muted">
             Syncing issues…
           </Text>
         ) : null}
         {!isSyncing && lastSyncAt ? (
-          <Text
-            className="text-muted-foreground tabular-nums"
-            variant="bodySmall"
-          >
+          <Text as="p" numeric tone="muted">
             Last synced {format(lastSyncAt, "PPp")}
           </Text>
         ) : null}
@@ -191,7 +188,7 @@ function PromoteTriggerRow({
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="min-w-0">
         <Label htmlFor="promote-trigger">Create GitHub issues</Label>
-        <Text className="text-muted-foreground" variant="bodySmall">
+        <Text as="p" tone="muted">
           When feedback becomes an issue in the connected repository
         </Text>
       </div>

@@ -2,6 +2,12 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from "@ctrl-ui/react/ui/item";
+import {
   Popover,
   PopoverContent,
   PopoverDescription,
@@ -68,12 +74,10 @@ const STATUS_TRANSITIONS: Record<SurveyStatus, StatusTransition[]> = {
 };
 
 export interface LocatedIssue extends FlowIssue {
-  /** Which step the issue is on, e.g. “Step 2 · How likely…”. */
   stepLabel?: string;
 }
 
 interface StatusActionsProps {
-  /** Errors from core `flowIssues`; any of them blocks going live. */
   blockingIssues: readonly LocatedIssue[];
   onSelectIssue: (issue: FlowIssue) => void;
   status: SurveyStatus;
@@ -158,21 +162,23 @@ function BlockingIssues({
             <li
               key={`${issue.questionId ?? "survey"}-${issue.ruleId ?? ""}-${issue.message}`}
             >
-              <button
-                className="w-full rounded-lg px-2 py-1.5 text-left text-sm hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
+              <Item
+                className="w-full text-left [--cui-item-padding-block:calc(var(--spacing)*1.5)] [--cui-item-padding-inline:calc(var(--spacing)*2)]"
                 onClick={() => {
                   setIsOpen(false);
                   onSelectIssue(issue);
                 }}
-                type="button"
+                render={<button type="button" />}
               >
-                <span className="block">{issue.message}</span>
-                {issue.stepLabel ? (
-                  <span className="block truncate text-muted-foreground text-xs">
-                    {issue.stepLabel}
-                  </span>
-                ) : null}
-              </button>
+                <ItemContent>
+                  <ItemTitle>{issue.message}</ItemTitle>
+                  {issue.stepLabel ? (
+                    <ItemDescription className="truncate">
+                      {issue.stepLabel}
+                    </ItemDescription>
+                  ) : null}
+                </ItemContent>
+              </Item>
             </li>
           ))}
         </ul>

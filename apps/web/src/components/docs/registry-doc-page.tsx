@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { ReactNode } from "react";
-
-import { InlineCode } from "@/components/ui/typography";
 import { CodeBlock } from "./code-block";
 import { ComponentPreview, InstallTabs } from "./component-preview";
 import { DocsList, DocsPage, DocsSection, DocsText } from "./docs-page";
@@ -117,8 +116,9 @@ function RegistryDocPage({
         <DocsSection id="api-reference" sections={sections}>
           <SubcomponentReference subcomponents={subcomponents} />
           <DocsText>
-            Every subcomponent also accepts <InlineCode>className</InlineCode>,
-            merged with its default classes.
+            Every subcomponent also accepts{" "}
+            <MarkdownInlineCode>className</MarkdownInlineCode>, merged with its
+            default classes.
           </DocsText>
         </DocsSection>
       )}

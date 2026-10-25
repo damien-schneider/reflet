@@ -8,9 +8,9 @@ import {
 } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { ArrowsClockwise, Warning, X } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { Text } from "@/components/ui/typography";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
 import { SettingSwitchRow } from "./setting-switch-row";
@@ -129,11 +129,7 @@ export function SyncSettingsSection({
             Sync now
           </Button>
         ) : null}
-        <Text
-          aria-live="polite"
-          className="text-muted-foreground tabular-nums"
-          variant="bodySmall"
-        >
+        <Text aria-live="polite" as="p" numeric tone="muted">
           {isSyncing ? "Syncing releases…" : null}
           {!isSyncing && lastSyncAt
             ? `Last synced ${format(lastSyncAt, "PPp")}`

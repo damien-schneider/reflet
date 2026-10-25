@@ -1,4 +1,3 @@
-import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Table,
   TableBody,
@@ -7,12 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import type { ReactNode } from "react";
 
-/**
- * name: identifier, never wraps. code: literal values or types, may wrap.
- * text: prose.
- */
 type ColumnKind = "name" | "code" | "text";
 
 interface ReferenceColumn {
@@ -30,11 +26,43 @@ interface ReferenceTableProps {
   rows: readonly ReferenceRow[];
 }
 
-const CELL_CLASS: Record<ColumnKind, string> = {
-  code: "whitespace-normal font-mono text-label text-muted-foreground [overflow-wrap:anywhere]",
-  name: "font-mono text-foreground text-label",
-  text: "min-w-48 whitespace-normal text-muted-foreground",
-};
+function ReferenceCell({
+  children,
+  kind,
+}: {
+  children: ReactNode;
+  kind: ColumnKind;
+}) {
+  if (kind === "name") {
+    return (
+      <TableCell className="align-top">
+        <Text as="code" mono size="label" tone="foreground">
+          {children}
+        </Text>
+      </TableCell>
+    );
+  }
+  if (kind === "code") {
+    return (
+      <TableCell className="whitespace-normal align-top">
+        <Text
+          as="code"
+          className="[overflow-wrap:anywhere]"
+          mono
+          size="label"
+          tone="muted"
+        >
+          {children}
+        </Text>
+      </TableCell>
+    );
+  }
+  return (
+    <TableCell className="min-w-48 whitespace-normal align-top">
+      <Text tone="muted">{children}</Text>
+    </TableCell>
+  );
+}
 
 function ReferenceTable({ columns, rows }: ReferenceTableProps) {
   return (
@@ -50,21 +78,11 @@ function ReferenceTable({ columns, rows }: ReferenceTableProps) {
         <TableBody>
           {rows.map((row) => (
             <TableRow key={row.key}>
-              {columns.map((column, index) => {
-                const cell = row.cells[index];
-                return (
-                  <TableCell
-                    className={cn("align-top", CELL_CLASS[column.kind])}
-                    key={column.label}
-                  >
-                    {column.kind !== "text" && typeof cell === "string" ? (
-                      <code>{cell}</code>
-                    ) : (
-                      cell
-                    )}
-                  </TableCell>
-                );
-              })}
+              {columns.map((column, index) => (
+                <ReferenceCell key={column.label} kind={column.kind}>
+                  {row.cells[index]}
+                </ReferenceCell>
+              ))}
             </TableRow>
           ))}
         </TableBody>

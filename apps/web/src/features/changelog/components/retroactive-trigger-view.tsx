@@ -7,6 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@ctrl-ui/react/ui/collapsible";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   Tooltip,
@@ -20,7 +21,6 @@ import {
   Lightning,
   X,
 } from "@phosphor-icons/react";
-import { Label } from "@/components/ui/label";
 import {
   GROUPING_OPTIONS,
   type GroupingStrategy,
@@ -176,7 +176,7 @@ export function TriggerView({
                   }
                 />
                 <Label
-                  className="cursor-pointer text-xs"
+                  className="cursor-pointer"
                   htmlFor="inline-skip-existing"
                 >
                   Skip existing versions

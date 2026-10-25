@@ -102,7 +102,9 @@ export function TiptapTitleEditor({
   });
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
 
     const currentText = editor.getText();
     if (value !== currentText) {
@@ -111,13 +113,11 @@ export function TiptapTitleEditor({
   }, [editor, value]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
     editor.setEditable(!disabled);
   }, [editor, disabled]);
-
-  const handleContainerClick = () => {
-    editor?.commands.focus();
-  };
 
   return (
     <div
@@ -127,7 +127,6 @@ export function TiptapTitleEditor({
         className
       )}
       data-slot="tiptap-title-editor"
-      onClick={handleContainerClick}
       style={style}
     >
       <EditorContent editor={editor} />

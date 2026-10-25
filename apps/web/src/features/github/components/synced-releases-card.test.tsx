@@ -11,36 +11,6 @@ vi.mock("@ctrl-ui/react/ui/badge", () => ({
   }) => <span data-variant={variant}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H3: ({
-    children,
-    variant,
-    className,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-  }) => (
-    <h3 className={className} data-variant={variant}>
-      {children}
-    </h3>
-  ),
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <p className={className}>{children}</p>,
-  Text: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
-}));
-
 import { SyncedReleasesSection } from "./synced-releases-card";
 
 describe("SyncedReleasesSection", () => {
@@ -89,7 +59,6 @@ describe("SyncedReleasesSection", () => {
       },
     ];
     render(<SyncedReleasesSection releases={releases} />);
-    // tagName appears both as primary name and as secondary
     const tags = screen.getAllByText("v3.0.0");
     expect(tags.length).toBeGreaterThanOrEqual(1);
   });
@@ -143,7 +112,6 @@ describe("SyncedReleasesSection", () => {
       tagName: `v${i}.0.0`,
     }));
     render(<SyncedReleasesSection releases={releases} />);
-    // Only 5 shown, with "+3 more" indicator
     expect(screen.getByText("Release 0")).toBeInTheDocument();
     expect(screen.getByText("Release 4")).toBeInTheDocument();
     expect(screen.queryByText("Release 5")).toBeNull();

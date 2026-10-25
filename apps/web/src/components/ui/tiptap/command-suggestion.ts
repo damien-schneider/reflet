@@ -15,33 +15,12 @@ import {
 } from "./command-items";
 import { CommandList } from "./command-list";
 
-// Z-index for slash menu popup - must be higher than dialogs (z-50 = 50) to work inside them
 export const SLASH_MENU_Z_INDEX = 100;
 
-// Data attribute used by base-ui dialog to identify dialog content
-const DIALOG_CONTENT_SELECTOR = '[data-slot="dialog-content"]';
+const MODAL_SURFACE_SELECTOR = '[role="dialog"], [role="alertdialog"]';
 
-/**
- * Find the appropriate element to append the tippy popup to.
- * If the editor is inside a dialog, returns the dialog content element.
- * Otherwise returns document.body.
- *
- * This is critical for modal dialogs which block pointer events on elements
- * outside the dialog. By appending inside the dialog, clicks work properly.
- */
 export function findAppendTarget(editorElement: Element | null): Element {
-  if (!editorElement) {
-    return document.body;
-  }
-
-  // Check if we're inside a dialog by looking for the dialog content element
-  const dialogContent = editorElement.closest(DIALOG_CONTENT_SELECTOR);
-
-  if (dialogContent) {
-    return dialogContent;
-  }
-
-  return document.body;
+  return editorElement?.closest(MODAL_SURFACE_SELECTOR) ?? document.body;
 }
 
 export interface SuggestionConfig {

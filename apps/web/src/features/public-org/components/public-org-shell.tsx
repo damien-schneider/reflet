@@ -3,6 +3,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { PageScrollContext } from "@ctrl-ui/react/ui/page-layout";
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import {
   ChatCircle,
   FileText,
@@ -17,7 +18,6 @@ import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
@@ -219,7 +219,7 @@ export function PublicOrgShell({
       {publicPlanFeatures?.hideBranding === false && (
         <footer className="py-8">
           <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground">
-            <TypographyText variant="bodySmall">
+            <Text as="p">
               Powered by{" "}
               <Link
                 className="font-display font-medium text-brand-text text-lg underline underline-offset-4 hover:text-brand-text/80"
@@ -229,7 +229,7 @@ export function PublicOrgShell({
               >
                 Reflet
               </Link>
-            </TypographyText>
+            </Text>
           </div>
         </footer>
       )}

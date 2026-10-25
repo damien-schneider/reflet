@@ -125,7 +125,9 @@ function attachResizeHandles(
   };
 
   const moveResize = (clientX: number, clientY: number) => {
-    if (!activeHandle) return;
+    if (!activeHandle) {
+      return;
+    }
 
     const diffX = (clientX - startX) * activeHandle.xDir;
     const diffY = (clientY - startY) * activeHandle.yDir;
@@ -137,7 +139,9 @@ function attachResizeHandles(
   };
 
   const endResize = () => {
-    if (!activeHandle) return;
+    if (!activeHandle) {
+      return;
+    }
     activeHandle = null;
     container.removeAttribute("data-resizing");
 
@@ -155,7 +159,6 @@ function attachResizeHandles(
     });
   };
 
-  // Mouse handlers
   const onMouseMove = (e: MouseEvent) => {
     moveResize(e.clientX, e.clientY);
   };
@@ -174,7 +177,6 @@ function attachResizeHandles(
     document.addEventListener("mouseup", onMouseUp);
   };
 
-  // Touch handlers
   const onTouchMove = (e: TouchEvent) => {
     e.preventDefault();
     const touch = e.touches[0];
@@ -257,7 +259,9 @@ export function createImageNodeView({
 
   return {
     destroy: () => {
-      if (!eventHandlers) return;
+      if (!eventHandlers) {
+        return;
+      }
       document.removeEventListener("mousemove", eventHandlers.onMouseMove);
       document.removeEventListener("mouseup", eventHandlers.onMouseUp);
       document.removeEventListener("touchmove", eventHandlers.onTouchMove);
@@ -266,7 +270,9 @@ export function createImageNodeView({
     },
     dom: container,
     update: (updatedNode) => {
-      if (updatedNode.type.name !== "image") return false;
+      if (updatedNode.type.name !== "image") {
+        return false;
+      }
 
       const attrs = getImageAttrs(updatedNode.attrs);
 

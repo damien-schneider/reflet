@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { NativeSelect } from "@ctrl-ui/react/ui/native-select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Trash } from "@phosphor-icons/react";
 import { QUESTION_TYPES, takesAnswer } from "@reflet/survey-core";
 import { useId } from "react";
-import { Label } from "@/components/ui/label";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import { AutosavedField } from "@/features/surveys/components/flow/inspector/autosaved-field";
 import { LogicSection } from "@/features/surveys/components/flow/inspector/logic-section";

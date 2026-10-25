@@ -22,24 +22,6 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H1: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    variant?: string;
-  }) => <h1 className={className}>{children}</h1>,
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
-}));
-
 vi.mock("./lib/auth-validation", () => ({
   titleVariants: {
     animate: { opacity: 1 },

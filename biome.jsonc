@@ -44,12 +44,6 @@
       }
     },
     {
-      "includes": ["**/components/ui/**/*"],
-      "linter": {
-        "enabled": false
-      }
-    },
-    {
       "includes": ["**/*.svg"],
       "linter": {
         "rules": {

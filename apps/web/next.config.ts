@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "@phosphor-icons/react",
       "@tabler/icons-react",
-      "recharts",
       "motion",
       "motion/react",
       "@dnd-kit/core",

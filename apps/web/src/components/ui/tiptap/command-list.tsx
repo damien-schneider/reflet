@@ -1,14 +1,19 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
-  type Ref,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+  Command,
+  CommandItem,
+  CommandItemContent,
+  CommandItemDescription,
+  CommandItemTitle,
+  CommandList as CommandListbox,
+} from "@ctrl-ui/react/ui/command";
+import { type Ref, useImperativeHandle, useState } from "react";
 import type { CommandListHandle, CommandListProps } from "./command-items";
+
+const revealOption = (node: HTMLElement | null) => {
+  node?.scrollIntoView({ block: "nearest" });
+};
 
 export function CommandList({
   items,
@@ -17,26 +22,11 @@ export function CommandList({
 }: CommandListProps & { ref?: Ref<CommandListHandle> }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [previousItems, setPreviousItems] = useState(items);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   if (previousItems !== items) {
     setPreviousItems(items);
     setSelectedIndex(0);
   }
-
-  useEffect(() => {
-    const menu = menuRef.current;
-    const active = menu?.querySelector<HTMLElement>('[data-active="true"]');
-    if (!(menu && active)) {
-      return;
-    }
-    const activeBottom = active.offsetTop + active.offsetHeight;
-    if (active.offsetTop < menu.scrollTop) {
-      menu.scrollTop = active.offsetTop;
-    } else if (activeBottom > menu.scrollTop + menu.clientHeight) {
-      menu.scrollTop = activeBottom - menu.clientHeight;
-    }
-  }, [selectedIndex]);
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }): boolean => {
@@ -72,48 +62,42 @@ export function CommandList({
     return null;
   }
 
+  const selectByTitle = (title: string) => {
+    const index = items.findIndex((item) => item.title === title);
+    if (index !== -1) {
+      setSelectedIndex(index);
+    }
+  };
+
   return (
-    <div
-      aria-label="Insert block"
-      className="relative max-h-72 w-72 overflow-y-auto p-1"
-      data-control-family="popup"
-      data-popup-part="surface"
-      data-popup-static=""
-      data-slot="slash-command-menu"
-      ref={menuRef}
-      role="group"
+    <Command
+      className="w-72"
+      onValueChange={selectByTitle}
+      shouldFilter={false}
+      value={items[selectedIndex]?.title ?? ""}
     >
-      {items.map((item, index) => {
-        const Icon = item.icon;
-        return (
-          <Button
-            active={selectedIndex === index}
-            className="h-auto w-full justify-start py-1.5 text-left"
-            key={item.title}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              command(item);
-            }}
-            onMouseDown={(event) => {
-              event.preventDefault();
-            }}
-            onMouseMove={() => setSelectedIndex(index)}
-            tabIndex={-1}
-            variant="ghost"
-          >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
-              <Icon aria-hidden="true" className="size-4" />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-medium">{item.title}</span>
-              <span className="block truncate text-muted-foreground text-xs">
-                {item.description}
-              </span>
-            </span>
-          </Button>
-        );
-      })}
-    </div>
+      <CommandListbox label="Insert block">
+        {items.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <CommandItem
+              key={item.title}
+              onMouseDown={(event) => event.preventDefault()}
+              onSelect={() => command(item)}
+              ref={index === selectedIndex ? revealOption : undefined}
+              value={item.title}
+            >
+              <Icon aria-hidden="true" />
+              <CommandItemContent>
+                <CommandItemTitle>{item.title}</CommandItemTitle>
+                <CommandItemDescription>
+                  {item.description}
+                </CommandItemDescription>
+              </CommandItemContent>
+            </CommandItem>
+          );
+        })}
+      </CommandListbox>
+    </Command>
   );
 }

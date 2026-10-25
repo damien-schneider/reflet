@@ -89,7 +89,7 @@ export default function ShippedCardClient({
             <CheckCircle aria-hidden weight="fill" />
             Shipped
           </Badge>
-          <CardTitle className="text-balance text-2xl">
+          <CardTitle className="text-balance [--cui-card-title-font-size:var(--text-heading-2)]">
             &ldquo;{meta.title}&rdquo;
           </CardTitle>
           <CardDescription>

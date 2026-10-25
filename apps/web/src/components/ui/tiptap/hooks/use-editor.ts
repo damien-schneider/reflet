@@ -88,7 +88,9 @@ export function useTiptapMarkdownEditor(
     },
     onSuccess: (result: MediaUploadResult) => {
       const ed = editorRef.current;
-      if (!ed) return;
+      if (!ed) {
+        return;
+      }
 
       if (result.type === "image") {
         ed.chain().focus().setImage({ src: result.url }).run();
@@ -154,7 +156,9 @@ export function useTiptapMarkdownEditor(
   }, [editor]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
 
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
@@ -168,7 +172,9 @@ export function useTiptapMarkdownEditor(
   }, [editor]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
     const currentMarkdown = getMarkdown(editor.storage);
     if (value !== currentMarkdown) {
       editor.commands.setContent(value, { emitUpdate: false });
@@ -176,7 +182,9 @@ export function useTiptapMarkdownEditor(
   }, [editor, value]);
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
     editor.setEditable(editable && !disabled);
   }, [editor, editable, disabled]);
 

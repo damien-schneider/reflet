@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Card,
   CardAction,
@@ -8,15 +7,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
-import { Text } from "@ctrl-ui/react/ui/typography";
-import { useSyncExternalStore } from "react";
-import { Bar, BarChart, Cell, XAxis } from "recharts";
 import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+  Chart,
+  ChartLegend,
+  ChartLegendItem,
+  ChartPlot,
+} from "@ctrl-ui/react/ui/chart";
+import { barChart } from "@ctrl-ui/react/ui/chart-cartesian";
+import type { ChartColor } from "@ctrl-ui/react/ui/chart-colors";
+import { Text } from "@ctrl-ui/react/ui/typography";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { useSyncExternalStore } from "react";
 import { formatUptime } from "../lib/status-meta";
 
 interface DayData {
@@ -35,54 +36,61 @@ const UP_THRESHOLD = 99.5;
 const DEGRADED_THRESHOLD = 95;
 const PARTIAL_THRESHOLD = 90;
 
-const chartConfig = {
-  degraded: { color: "var(--warning)", label: "Degraded" },
-  down: { color: "var(--destructive)", label: "Down" },
-  "no-data": { color: "var(--muted-foreground)", label: "No data" },
-  partial: {
-    color: "color-mix(in oklab, var(--warning) 60%, var(--destructive))",
-    label: "Partial outage",
-  },
-  up: { color: "var(--success)", label: "Operational" },
-  uptime: { label: "Uptime" },
-} satisfies ChartConfig;
-
 const UPTIME_BANDS = [
-  { className: "bg-success", key: "up", range: `≥ ${UP_THRESHOLD}%` },
   {
-    className: "bg-warning",
+    color: "var(--success)",
+    key: "up",
+    label: "Operational",
+    range: `≥ ${UP_THRESHOLD}%`,
+  },
+  {
+    color: "var(--warning)",
     key: "degraded",
+    label: "Degraded",
     range: `≥ ${DEGRADED_THRESHOLD}%`,
   },
   {
-    className: "bg-[color-mix(in_oklab,var(--warning)_60%,var(--destructive))]",
+    color: "color-mix(in oklab, var(--warning) 60%, var(--destructive))",
     key: "partial",
+    label: "Partial outage",
     range: `≥ ${PARTIAL_THRESHOLD}%`,
   },
   {
-    className: "bg-destructive",
+    color: "var(--destructive)",
     key: "down",
+    label: "Down",
     range: `< ${PARTIAL_THRESHOLD}%`,
   },
-  { className: "bg-muted-foreground", key: "no-data", range: "" },
-] as const;
+  {
+    color: "var(--muted-foreground)",
+    key: "no-data",
+    label: "No data",
+    range: "",
+  },
+] as const satisfies readonly {
+  color: ChartColor;
+  key: string;
+  label: string;
+  range: string;
+}[];
 
-type UptimeBand = (typeof UPTIME_BANDS)[number]["key"];
+type UptimeBand = (typeof UPTIME_BANDS)[number];
 
 const getBand = (uptime: number | null): UptimeBand => {
+  const [up, degraded, partial, down, noData] = UPTIME_BANDS;
   if (uptime === null) {
-    return "no-data";
+    return noData;
   }
   if (uptime >= UP_THRESHOLD) {
-    return "up";
+    return up;
   }
   if (uptime >= DEGRADED_THRESHOLD) {
-    return "degraded";
+    return degraded;
   }
   if (uptime >= PARTIAL_THRESHOLD) {
-    return "partial";
+    return partial;
   }
-  return "down";
+  return down;
 };
 
 const formatDay = (value: unknown): string => {
@@ -105,21 +113,16 @@ const readUtcToday = () => toIsoDay(Date.now());
 
 export function UptimeLegend() {
   return (
-    <ul
-      aria-label="Uptime legend"
-      className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-muted-foreground"
-    >
-      {UPTIME_BANDS.map((band) => (
-        <li className="flex items-center gap-1.5" key={band.key}>
-          <span
-            aria-hidden
-            className={cn("size-2.5 rounded-[3px]", band.className)}
-          />
-          <span>{chartConfig[band.key].label}</span>
-          {band.range && <span className="tabular-nums">{band.range}</span>}
-        </li>
-      ))}
-    </ul>
+    <Chart>
+      <ChartLegend aria-label="Uptime legend">
+        {UPTIME_BANDS.map((band) => (
+          <ChartLegendItem color={band.color} key={band.key}>
+            {band.label}
+            {band.range && <span className="tabular-nums">{band.range}</span>}
+          </ChartLegendItem>
+        ))}
+      </ChartLegend>
+    </Chart>
   );
 }
 
@@ -150,6 +153,28 @@ export function UptimeBar({
     computedUptime === null
       ? `No uptime data in the last ${totalDays} days.`
       : `${formatUptime(computedUptime)} uptime over the last ${totalDays} days. Use the arrow keys to inspect each day.`;
+  const definition = barChart({
+    data: chartData,
+    fill: "solid",
+    formatValue: (_uptime, day) =>
+      day.raw === null ? "No data" : `${formatUptime(day.raw)} uptime`,
+    formatX: formatDay,
+    grid: false,
+    radius: 3,
+    series: [
+      {
+        color: (day) => getBand(day.raw).color,
+        key: "uptime",
+        label: "Uptime",
+      },
+    ],
+    x: "date",
+    xScale: {
+      axis: false,
+      scale: () => scaleBand().paddingInner(0.15).paddingOuter(0),
+    },
+    yScale: { axis: false },
+  });
 
   return (
     <Card>
@@ -164,41 +189,14 @@ export function UptimeBar({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <ChartContainer className="h-8 w-full" config={chartConfig}>
-          <BarChart
-            barCategoryGap={1}
-            data={chartData}
-            desc={summary}
-            margin={{ bottom: 0, left: 0, right: 0, top: 0 }}
-            title={`Daily uptime, last ${totalDays} days`}
-          >
-            <XAxis dataKey="date" hide />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  formatter={(_value, _name, item) => {
-                    const raw: unknown = item.payload?.raw;
-                    return typeof raw === "number"
-                      ? `${formatUptime(raw)} uptime`
-                      : "No data";
-                  }}
-                  hideIndicator
-                  labelFormatter={formatDay}
-                  nameKey="uptime"
-                />
-              }
-              cursor={false}
-            />
-            <Bar dataKey="uptime" radius={[3, 3, 3, 3]}>
-              {chartData.map((entry) => (
-                <Cell
-                  fill={`var(--color-${getBand(entry.raw)})`}
-                  key={entry.date}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ChartContainer>
+        <Chart>
+          <ChartPlot
+            ariaDescription={summary}
+            ariaLabel={`Daily uptime, last ${totalDays} days`}
+            definition={definition}
+            height={40}
+          />
+        </Chart>
         <div className="mt-2 flex items-center justify-between text-caption text-muted-foreground">
           <span>
             <span className="tabular-nums">{totalDays}</span> days ago

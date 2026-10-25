@@ -3,6 +3,7 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,6 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowSquareOut } from "@phosphor-icons/react";
-import { Label } from "@/components/ui/label";
 import { RELEASE_PLEASE_TAG_PREFIX, type WizardConfig } from "../wizard-config";
 
 interface ConfigureStepProps {
@@ -59,7 +59,7 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
         <div className="flex items-start gap-4">
           <div className="space-y-1">
             <Label
-              className="text-muted-foreground text-xs"
+              className="[--cui-label-root-foreground:var(--muted-foreground)]"
               htmlFor="version-prefix"
             >
               Prefix
@@ -224,7 +224,7 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
         <>
           <div className="space-y-1">
             <Label
-              className="text-muted-foreground text-xs"
+              className="[--cui-label-root-foreground:var(--muted-foreground)]"
               htmlFor="sync-direction"
             >
               Direction

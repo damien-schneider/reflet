@@ -1,6 +1,6 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
 import { SETUP_PROMPT } from "reflet-cli/prompt";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import { CopyBlock } from "@/components/docs/copy-block";
 import {
@@ -11,7 +11,6 @@ import {
 } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PropsTable } from "@/components/docs/props-table";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 import { SECTIONS } from "./sections";
 import { DevtoolsSection, SessionsSection } from "./team-sections";
@@ -211,9 +210,11 @@ function GoodToKnow() {
       <li>
         Component names and source locations come from React’s debug data.
         Development and preview builds give you{" "}
-        <InlineCode>src/billing/invoice-row.tsx:42:7</InlineCode>. Production
-        builds strip that, so reports fall back to the component stack and the
-        selector.
+        <MarkdownInlineCode>
+          src/billing/invoice-row.tsx:42:7
+        </MarkdownInlineCode>
+        . Production builds strip that, so reports fall back to the component
+        stack and the selector.
       </li>
       <li>
         Screenshots are rendered from the DOM. Cross-origin images without CORS
@@ -226,8 +227,8 @@ function GoodToKnow() {
       <li>
         The markup of a picked element is scrubbed before it leaves the browser:
         typed-in values, emails and token-shaped strings are replaced. Mark a
-        subtree with <InlineCode>data-reflet-redact</InlineCode> to keep its
-        contents out of reports entirely.
+        subtree with <MarkdownInlineCode>data-reflet-redact</MarkdownInlineCode>{" "}
+        to keep its contents out of reports entirely.
       </li>
       <li>
         Report context is only visible to members of your organization, not to
@@ -242,7 +243,8 @@ function GoodToKnow() {
         A public key can send 30 reports per minute, shared by every visitor.
         Screenshot uploads don’t count toward that, and a report takes at most
         10 screenshots. Past the limit the API answers{" "}
-        <InlineCode>429</InlineCode> and the panel shows the error.
+        <MarkdownInlineCode>429</MarkdownInlineCode> and the panel shows the
+        error.
       </li>
     </DocsList>
   );
@@ -265,34 +267,37 @@ export default function FloatingFeedbackPage() {
         <InstallCommand command="npx reflet-cli init" />
         <DocsText>
           Non-interactive, for scripts and agents:{" "}
-          <InlineCode>
+          <MarkdownInlineCode>
             npx reflet-cli init --public-key fb_pub_xxx --yes
-          </InlineCode>
+          </MarkdownInlineCode>
           . Check an existing setup with{" "}
-          <InlineCode>npx reflet-cli doctor</InlineCode>.
+          <MarkdownInlineCode>npx reflet-cli doctor</MarkdownInlineCode>.
         </DocsText>
       </DocsSection>
 
       <DocsSection id="manual-setup" sections={SECTIONS}>
         <DocsText>
           Mount it once, as the last child of your app shell. The entry ships
-          its own <InlineCode>&quot;use client&quot;</InlineCode> directive, so
-          a Next.js layout can stay a Server Component.
+          its own{" "}
+          <MarkdownInlineCode>&quot;use client&quot;</MarkdownInlineCode>{" "}
+          directive, so a Next.js layout can stay a Server Component.
         </DocsText>
         <CodeBlock code={MANUAL_SNIPPET} />
         <DocsText>
           With Vite, read the key from{" "}
-          <InlineCode>import.meta.env.VITE_REFLET_PUBLIC_KEY</InlineCode>{" "}
+          <MarkdownInlineCode>
+            import.meta.env.VITE_REFLET_PUBLIC_KEY
+          </MarkdownInlineCode>{" "}
           instead, and render the widget next to{" "}
-          <InlineCode>&lt;App /&gt;</InlineCode>.
+          <MarkdownInlineCode>&lt;App /&gt;</MarkdownInlineCode>.
         </DocsText>
       </DocsSection>
 
       <DocsSection id="agent-setup" sections={SECTIONS}>
         <DocsText>
           Paste this into Claude Code, Cursor or any agent working in the repo.
-          It’s the same text <InlineCode>npx reflet-cli prompt</InlineCode>{" "}
-          prints.
+          It’s the same text{" "}
+          <MarkdownInlineCode>npx reflet-cli prompt</MarkdownInlineCode> prints.
         </DocsText>
         <CopyBlock content={SETUP_PROMPT} label="Setup prompt" />
       </DocsSection>

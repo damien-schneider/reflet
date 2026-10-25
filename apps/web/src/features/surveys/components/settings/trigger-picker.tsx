@@ -1,6 +1,14 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldItem,
+  FieldLabel,
+  FieldTitle,
+} from "@ctrl-ui/react/ui/field";
+import { Radio, RadioGroup } from "@ctrl-ui/react/ui/radio-group";
 import {
   Code,
   Cursor,
@@ -10,7 +18,6 @@ import {
   Timer,
 } from "@phosphor-icons/react";
 import { TRIGGER_TYPES, type TriggerType } from "@reflet/survey-core";
-import { useId } from "react";
 import {
   TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
@@ -26,77 +33,45 @@ const TRIGGER_ICON_MAP = {
 } as const;
 
 interface TriggerPickerProps {
-  density?: "comfortable" | "compact";
   labelledBy: string;
   onChange: (type: TriggerType) => void;
   value: TriggerType;
 }
 
 export function TriggerPicker({
-  density = "comfortable",
   labelledBy,
   value,
   onChange,
 }: TriggerPickerProps) {
-  const name = useId();
-  const compact = density === "compact";
-
   return (
-    <div
-      aria-labelledby={labelledBy}
-      className={cn(
-        compact
-          ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
-          : "flex flex-col gap-2"
-      )}
-      role="radiogroup"
-    >
-      {TRIGGER_TYPES.map((type) => {
-        const Icon = TRIGGER_ICON_MAP[type];
-        const isSelected = value === type;
+    <Field>
+      <RadioGroup
+        aria-labelledby={labelledBy}
+        className="grid w-full grid-cols-1 sm:grid-cols-2"
+        onValueChange={onChange}
+        value={value}
+      >
+        {TRIGGER_TYPES.map((type) => {
+          const Icon = TRIGGER_ICON_MAP[type];
 
-        return (
-          <label
-            className={cn(
-              "flex cursor-pointer gap-3 rounded-lg border text-left hover:bg-accent/50",
-              "has-checked:border-primary has-checked:bg-primary/5",
-              "has-focus-visible:outline-2 has-focus-visible:outline-ring has-focus-visible:outline-offset-2",
-              compact ? "items-center px-3 py-2.5" : "items-start p-3"
-            )}
-            key={type}
-          >
-            <input
-              checked={isSelected}
-              className="sr-only"
-              name={name}
-              onChange={() => onChange(type)}
-              type="radio"
-              value={type}
-            />
-            <Icon
-              aria-hidden
-              className={cn(
-                "size-4 shrink-0",
-                !compact && "mt-0.5",
-                isSelected ? "text-primary" : "text-muted-foreground"
-              )}
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block font-medium text-sm">
-                {TRIGGER_LABELS[type]}
-              </span>
-              <span
-                className={cn(
-                  "mt-0.5 block text-pretty text-muted-foreground",
-                  compact ? "text-xs" : "text-sm"
-                )}
-              >
-                {TRIGGER_DESCRIPTIONS[type].description}
-              </span>
-            </span>
-          </label>
-        );
-      })}
-    </div>
+          return (
+            <FieldItem key={type}>
+              <FieldLabel variant="card">
+                <Radio value={type} />
+                <FieldContent>
+                  <FieldTitle className="flex items-center gap-2">
+                    <Icon aria-hidden />
+                    {TRIGGER_LABELS[type]}
+                  </FieldTitle>
+                  <FieldDescription>
+                    {TRIGGER_DESCRIPTIONS[type].description}
+                  </FieldDescription>
+                </FieldContent>
+              </FieldLabel>
+            </FieldItem>
+          );
+        })}
+      </RadioGroup>
+    </Field>
   );
 }

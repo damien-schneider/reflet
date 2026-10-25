@@ -73,16 +73,6 @@ vi.mock("@ctrl-ui/react/ui/select", () => ({
   SelectValue: () => null,
 }));
 
-vi.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
-
 vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
@@ -104,36 +94,6 @@ vi.mock("@ctrl-ui/react/ui/switch", () => ({
       type="button"
     />
   ),
-}));
-
-vi.mock("@/components/ui/typography", () => ({
-  H3: ({
-    children,
-    variant,
-    className,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-  }) => (
-    <h3 className={className} data-variant={variant}>
-      {children}
-    </h3>
-  ),
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <p className={className}>{children}</p>,
-  Text: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
 }));
 
 import { IssuesSyncSection } from "./issues-sync-card";

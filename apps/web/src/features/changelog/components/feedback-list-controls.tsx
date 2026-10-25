@@ -1,8 +1,16 @@
 "use client";
 
+import {
+  Autocomplete,
+  AutocompleteContent,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteInputGroup,
+  AutocompleteItem,
+  AutocompleteList,
+} from "@ctrl-ui/react/ui/autocomplete";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
-import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
+import { InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Check, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { FeedbackStatusBadge } from "./feedback-status-badge";
@@ -54,14 +62,16 @@ export function LinkedFeedbackList({
   );
 }
 
+interface SearchResult {
+  _id: Id<"feedback">;
+  status: string;
+  title: string;
+}
+
 interface FeedbackSearchInputProps {
   onLink: (feedbackId: Id<"feedback">) => void;
   searchQuery: string;
-  searchResults: Array<{
-    _id: Id<"feedback">;
-    title: string;
-    status: string;
-  }>;
+  searchResults: SearchResult[];
   setSearchQuery: (query: string) => void;
 }
 
@@ -71,55 +81,42 @@ export function FeedbackSearchInput({
   searchResults,
   onLink,
 }: FeedbackSearchInputProps) {
-  const hasQuery = searchQuery.trim().length > 0;
-
   return (
-    <div className="relative">
-      <InputGroup size="sm">
+    <Autocomplete
+      filter={null}
+      items={searchResults.slice(0, MAX_SEARCH_RESULTS)}
+      itemToStringValue={(item: SearchResult) => item.title}
+      onValueChange={setSearchQuery}
+      value={searchQuery}
+    >
+      <AutocompleteInputGroup size="sm">
         <InputGroupAddon>
-          <MagnifyingGlass
-            aria-hidden="true"
-            className="size-3.5 text-muted-foreground"
-          />
+          <MagnifyingGlass aria-hidden="true" className="size-3.5" />
         </InputGroupAddon>
-        <Input
+        <AutocompleteInput
           aria-label="Search feedback to link"
-          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search feedback to link…"
-          type="search"
-          value={searchQuery}
         />
-      </InputGroup>
-      {hasQuery && (
-        <div
-          className="absolute right-0 left-0 z-20 mt-1 max-h-40 overflow-y-auto p-1"
-          data-control-family="popup"
-          data-popup-part="surface"
-          data-popup-static=""
-        >
-          {searchResults.length === 0 ? (
-            <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              No feedback matches “{searchQuery.trim()}”.
-            </p>
-          ) : (
-            searchResults.slice(0, MAX_SEARCH_RESULTS).map((item) => (
-              <Button
-                className="w-full justify-start text-left"
-                key={item._id}
-                onClick={() => onLink(item._id)}
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                <span className="min-w-0 flex-1 truncate" title={item.title}>
-                  {item.title}
-                </span>
-                <FeedbackStatusBadge status={item.status} />
-              </Button>
-            ))
+      </AutocompleteInputGroup>
+      <AutocompleteContent>
+        <AutocompleteEmpty>
+          No feedback matches “{searchQuery.trim()}”.
+        </AutocompleteEmpty>
+        <AutocompleteList>
+          {(item: SearchResult) => (
+            <AutocompleteItem
+              key={item._id}
+              onClick={() => onLink(item._id)}
+              value={item}
+            >
+              <span className="min-w-0 flex-1 truncate" title={item.title}>
+                {item.title}
+              </span>
+              <FeedbackStatusBadge status={item.status} />
+            </AutocompleteItem>
           )}
-        </div>
-      )}
-    </div>
+        </AutocompleteList>
+      </AutocompleteContent>
+    </Autocomplete>
   );
 }

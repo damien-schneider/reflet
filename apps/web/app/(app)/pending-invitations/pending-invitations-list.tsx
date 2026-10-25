@@ -10,13 +10,13 @@ import {
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
 import { AuthPageShell } from "@/features/auth/components/auth-page-shell";
 import { OrgAvatar } from "@/features/organizations/components/org-avatar";
 import { useRememberOrganization } from "@/features/organizations/hooks/use-active-organization";
@@ -71,12 +71,12 @@ export function PendingInvitationsList() {
   return (
     <AuthPageShell className="max-w-lg">
       <div className="mb-8 text-center">
-        <H1 className="mb-2" variant="page">
+        <Heading className="mb-2" level={1} size="display">
           Pending invitations
-        </H1>
-        <Muted className="text-pretty">
+        </Heading>
+        <Text as="p" className="text-pretty" tone="muted">
           Accept an invitation to join that organization’s workspace.
-        </Muted>
+        </Text>
       </div>
 
       {error && (
@@ -86,7 +86,9 @@ export function PendingInvitationsList() {
       )}
 
       {invitations.length === 0 ? (
-        <Muted className="text-center">No pending invitations left.</Muted>
+        <Text as="p" className="text-center" tone="muted">
+          No pending invitations left.
+        </Text>
       ) : (
         <ul className="space-y-4">
           {invitations.map((invitation) => (

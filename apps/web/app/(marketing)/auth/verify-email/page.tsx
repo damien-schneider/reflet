@@ -2,11 +2,11 @@
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Muted } from "@/components/ui/typography";
 import {
   AuthPageShell,
   AuthStatus,
@@ -22,7 +22,9 @@ function VerifyingState() {
   return (
     <AuthPageShell className="flex flex-col items-center gap-4">
       <Spinner size="lg" />
-      <Muted>Verifying your email…</Muted>
+      <Text as="p" tone="muted">
+        Verifying your email…
+      </Text>
     </AuthPageShell>
   );
 }

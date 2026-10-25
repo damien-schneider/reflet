@@ -1,10 +1,9 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import { DocsPage, DocsSection, DocsText } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PropsTable } from "@/components/docs/props-table";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -95,7 +94,7 @@ export default function SdkInstallationPage() {
         <DocsText>
           For secure SSO, sign the user on your server with your secret key and
           pass the resulting token to the client as{" "}
-          <InlineCode>userToken</InlineCode>.
+          <MarkdownInlineCode>userToken</MarkdownInlineCode>.
         </DocsText>
         <CodeBlock code={SIGNING} />
       </DocsSection>

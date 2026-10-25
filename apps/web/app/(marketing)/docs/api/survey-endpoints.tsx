@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { DocsLink } from "@/components/docs/docs-page";
-import { InlineCode } from "@/components/ui/typography";
 import { BASE_URL, type EndpointDefinition, param } from "./endpoint-data";
 
 const SURVEY_ACCESS = (
@@ -29,10 +29,10 @@ const ELIGIBLE_SURVEYS: EndpointDefinition = {
     <>
       List every survey this respondent may see right now: active, inside its
       schedule, under its response cap, allowed by its display frequency and
-      sampled in. Surveys with the <InlineCode>manual</InlineCode> trigger are
-      included too; show them only when your app asks for them. Your client arms
-      the triggers. The <DocsLink href="/docs/sdk/surveys">SDK</DocsLink> and
-      the{" "}
+      sampled in. Surveys with the{" "}
+      <MarkdownInlineCode>manual</MarkdownInlineCode> trigger are included too;
+      show them only when your app asks for them. Your client arms the triggers.
+      The <DocsLink href="/docs/sdk/surveys">SDK</DocsLink> and the{" "}
       <DocsLink href="/docs/widget/feedback-widget#surveys">
         feedback widget
       </DocsLink>{" "}
@@ -43,21 +43,25 @@ const ELIGIBLE_SURVEYS: EndpointDefinition = {
   method: "GET",
   note: (
     <>
-      Questions come sorted by <InlineCode>order</InlineCode>, and{" "}
-      <InlineCode>endings</InlineCode> and <InlineCode>display</InlineCode>{" "}
-      always have values. <InlineCode>triggerConfig.pageUrl</InlineCode> holds
-      comma- or newline-separated patterns with <InlineCode>*</InlineCode>{" "}
-      wildcards: a pattern starting with <InlineCode>/</InlineCode> matches the
-      path, anything else the full URL, and an empty value matches every page.{" "}
-      <InlineCode>sampleRate</InlineCode> is a percentage from 0 to 100,{" "}
-      <InlineCode>delayMs</InlineCode> applies to{" "}
-      <InlineCode>time_delay</InlineCode> and <InlineCode>eventName</InlineCode>{" "}
-      to <InlineCode>event</InlineCode>. To find the next step, the first rule
-      in <InlineCode>logic</InlineCode> that matches the question’s own answer
-      wins, then <InlineCode>next</InlineCode>, then the following question,
-      then the first ending. Jumps only go forward. A{" "}
-      <InlineCode>statement</InlineCode> shows a message and never takes an
-      answer.
+      Questions come sorted by <MarkdownInlineCode>order</MarkdownInlineCode>,
+      and <MarkdownInlineCode>endings</MarkdownInlineCode> and{" "}
+      <MarkdownInlineCode>display</MarkdownInlineCode> always have values.{" "}
+      <MarkdownInlineCode>triggerConfig.pageUrl</MarkdownInlineCode> holds
+      comma- or newline-separated patterns with{" "}
+      <MarkdownInlineCode>*</MarkdownInlineCode> wildcards: a pattern starting
+      with <MarkdownInlineCode>/</MarkdownInlineCode> matches the path, anything
+      else the full URL, and an empty value matches every page.{" "}
+      <MarkdownInlineCode>sampleRate</MarkdownInlineCode> is a percentage from 0
+      to 100, <MarkdownInlineCode>delayMs</MarkdownInlineCode> applies to{" "}
+      <MarkdownInlineCode>time_delay</MarkdownInlineCode> and{" "}
+      <MarkdownInlineCode>eventName</MarkdownInlineCode> to{" "}
+      <MarkdownInlineCode>event</MarkdownInlineCode>. To find the next step, the
+      first rule in <MarkdownInlineCode>logic</MarkdownInlineCode> that matches
+      the question’s own answer wins, then{" "}
+      <MarkdownInlineCode>next</MarkdownInlineCode>, then the following
+      question, then the first ending. Jumps only go forward. A{" "}
+      <MarkdownInlineCode>statement</MarkdownInlineCode> shows a message and
+      never takes an answer.
     </>
   ),
   params: [RESPONDENT_ID_PARAM],
@@ -116,9 +120,9 @@ const ACTIVE_SURVEY: EndpointDefinition = {
     <>
       Get the first survey from{" "}
       <DocsLink href="#eligible-surveys">eligible surveys</DocsLink> that
-      matches the filters, in the same shape, or <InlineCode>null</InlineCode>{" "}
-      when none does. Prefer the eligible list when your client arms several
-      triggers.
+      matches the filters, in the same shape, or{" "}
+      <MarkdownInlineCode>null</MarkdownInlineCode> when none does. Prefer the
+      eligible list when your client arms several triggers.
     </>
   ),
   id: "active-survey",
@@ -172,11 +176,11 @@ const START_RESPONSE: EndpointDefinition = {
   description: (
     <>
       Start a response when the survey appears. Starting counts as showing the
-      survey for its display frequency. Returns <InlineCode>400</InlineCode>{" "}
-      when the survey isn’t active, is outside its schedule, has reached its
-      response cap, was already shown to this respondent or leaves them out of
-      its sample. Shares a <DocsLink href="#rate-limiting">rate limit</DocsLink>{" "}
-      with dismissing.
+      survey for its display frequency. Returns{" "}
+      <MarkdownInlineCode>400</MarkdownInlineCode> when the survey isn’t active,
+      is outside its schedule, has reached its response cap, was already shown
+      to this respondent or leaves them out of its sample. Shares a{" "}
+      <DocsLink href="#rate-limiting">rate limit</DocsLink> with dismissing.
     </>
   ),
   id: "start-response",
@@ -208,23 +212,23 @@ const SUBMIT_ANSWER: EndpointDefinition = {
     <>
       Save one answer while the response is in progress. Answering the same
       question again replaces the earlier answer, and{" "}
-      <InlineCode>null</InlineCode> deletes it. Values are checked against the
-      question: a whole number in range for NPS (0–10) and ratings, a boolean
-      for yes/no, a listed choice for single choice, distinct listed choices for
-      multiple choice, and text within the length limit. When the question
-      allows “Other”, one unlisted choice is accepted as the respondent’s own
-      text.
+      <MarkdownInlineCode>null</MarkdownInlineCode> deletes it. Values are
+      checked against the question: a whole number in range for NPS (0–10) and
+      ratings, a boolean for yes/no, a listed choice for single choice, distinct
+      listed choices for multiple choice, and text within the length limit. When
+      the question allows “Other”, one unlisted choice is accepted as the
+      respondent’s own text.
     </>
   ),
   id: "submit-answer",
   method: "POST",
   note: (
     <>
-      Returns <InlineCode>{`{ "answerId": null }`}</InlineCode> after a{" "}
-      <InlineCode>null</InlineCode> value. Invalid answers return{" "}
-      <InlineCode>400</InlineCode>, e.g.{" "}
-      <InlineCode>{`{ "error": "Pick a score from 0 to 10." }`}</InlineCode>, as
-      do statements and responses that are already completed or abandoned.
+      Returns <MarkdownInlineCode>{`{ "answerId": null }`}</MarkdownInlineCode>{" "}
+      after a <MarkdownInlineCode>null</MarkdownInlineCode> value. Invalid
+      answers return <MarkdownInlineCode>400</MarkdownInlineCode>, e.g.{" "}
+      <MarkdownInlineCode>{`{ "error": "Pick a score from 0 to 10." }`}</MarkdownInlineCode>
+      , as do statements and responses that are already completed or abandoned.
     </>
   ),
   params: [
@@ -255,11 +259,12 @@ const COMPLETE_RESPONSE: EndpointDefinition = {
     <>
       Finish the response. Reflet walks the flow with the saved answers, deletes
       answers left on a branch the respondent backed out of, stores the ending
-      reached and sends the <InlineCode>survey.response.completed</InlineCode>{" "}
+      reached and sends the{" "}
+      <MarkdownInlineCode>survey.response.completed</MarkdownInlineCode>{" "}
       <DocsLink href="#webhooks">webhook</DocsLink>. Returns{" "}
-      <InlineCode>400</InlineCode> when a required question on that path has no
-      answer. Completing again returns the same ending. Once completed responses
-      reach the survey’s cap, the survey closes.
+      <MarkdownInlineCode>400</MarkdownInlineCode> when a required question on
+      that path has no answer. Completing again returns the same ending. Once
+      completed responses reach the survey’s cap, the survey closes.
     </>
   ),
   id: "complete-response",

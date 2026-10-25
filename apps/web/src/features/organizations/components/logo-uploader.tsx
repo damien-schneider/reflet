@@ -10,11 +10,11 @@ import {
   useDropzoneContext,
 } from "@ctrl-ui/react/ui/dropzone";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { Image as ImageIcon, Trash, Upload } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useState } from "react";
 import { useImageUpload } from "@/components/ui/tiptap/use-image-upload";
-import { Muted } from "@/components/ui/typography";
 
 interface LogoUploaderProps {
   currentLogo?: string | null;
@@ -55,7 +55,9 @@ function DropzoneBody({
     return (
       <div className="flex flex-col items-center gap-2">
         <Spinner size="lg" />
-        <Muted>Uploading…</Muted>
+        <Text as="p" tone="muted">
+          Uploading…
+        </Text>
       </div>
     );
   }
@@ -72,7 +74,9 @@ function DropzoneBody({
             src={currentLogo}
           />
         </div>
-        <Muted className="text-caption">Click or drag to replace</Muted>
+        <Text as="p" size="caption" tone="muted">
+          Click or drag to replace
+        </Text>
       </div>
     );
   }
@@ -87,12 +91,12 @@ function DropzoneBody({
         )}
       </div>
       <div className="text-center">
-        <Muted className="font-medium">
+        <Text as="p" tone="muted" weight="medium">
           {isDragActive ? "Drop to upload" : "Click or drag to upload"}
-        </Muted>
-        <Muted className="text-caption">
+        </Text>
+        <Text as="p" size="caption" tone="muted">
           PNG, JPG, SVG or WebP, up to {MAX_SIZE_MB} MB
-        </Muted>
+        </Text>
       </div>
     </div>
   );

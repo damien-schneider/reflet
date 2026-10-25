@@ -71,8 +71,6 @@ export function AuthSocialProviders({ redirectTo }: AuthSocialProvidersProps) {
 
 export function AuthDivider() {
   return (
-    <FieldSeparator className="mb-6 text-xs">
-      Or continue with email
-    </FieldSeparator>
+    <FieldSeparator className="mb-6">Or continue with email</FieldSeparator>
   );
 }

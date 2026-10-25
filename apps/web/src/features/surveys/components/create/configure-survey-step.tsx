@@ -7,6 +7,7 @@ import {
   DialogFooter,
 } from "@ctrl-ui/react/ui/dialog";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowLeft } from "@phosphor-icons/react";
@@ -21,11 +22,9 @@ import type {
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
-import { Label } from "@/components/ui/label";
 import { TriggerPicker } from "@/features/surveys/components/settings/trigger-picker";
 import { convexErrorMessage } from "@/lib/convex-error-message";
 
-/** Everything a new survey starts with, whether from scratch, a template or an AI draft. */
 export interface SurveyBlueprint {
   description: string;
   endings?: SurveyEnding[];
@@ -133,7 +132,6 @@ export function ConfigureSurveyStep({
               When should this survey appear?
             </span>
             <TriggerPicker
-              density="compact"
               labelledBy={`${formId}-trigger`}
               onChange={setTriggerType}
               value={triggerType}

@@ -21,11 +21,10 @@
     margin-bottom: -12px;
   }
   :where(.feature-selector-button) {
-    --cui-button-padding-inline: 8px;
     flex-direction: column;
     gap: 10px;
     align-items: center;
-    padding-block: 14px;
+    padding: 14px 8px;
     text-align: center;
     border-top: 0;
   }

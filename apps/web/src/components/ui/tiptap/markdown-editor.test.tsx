@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the Tiptap components and hooks before importing the component
 const mockCommands = {
   setContent: vi.fn(),
 };
@@ -38,7 +37,6 @@ vi.mock("@tiptap/react", () => ({
   useEditor: vi.fn(() => mockEditor),
 }));
 
-// Mock Tiptap extensions
 vi.mock("@tiptap/starter-kit", () => ({
   default: {
     configure: () => ({}),
@@ -78,7 +76,6 @@ vi.mock("tiptap-markdown", () => ({
   },
 }));
 
-// Mock the custom extensions
 vi.mock("./command-suggestion", () => ({
   createSlashCommandExtension: () => ({}),
   SlashCommand: {},
@@ -128,14 +125,12 @@ vi.mock("./hooks/use-editor", () => ({
   useTiptapMarkdownEditor: vi.fn(() => mockHookReturn),
 }));
 
-// Mock the Convex hooks
 vi.mock("convex/react", () => ({
   useMutation: () => vi.fn().mockResolvedValue("mock-url"),
   useQuery: () => null,
 }));
 
 import { useTiptapMarkdownEditor } from "./hooks/use-editor";
-// Import component after mocks
 import { TiptapMarkdownEditor } from "./markdown-editor";
 
 const mockUseTiptapEditor = useTiptapMarkdownEditor as ReturnType<typeof vi.fn>;
@@ -150,7 +145,6 @@ describe("TiptapMarkdownEditor", () => {
       <TiptapMarkdownEditor onChange={() => {}} value="Hello **world**" />
     );
 
-    // Check for the container class
     const container = document.querySelector(
       '[data-slot="tiptap-markdown-editor"]'
     );
@@ -166,7 +160,6 @@ describe("TiptapMarkdownEditor", () => {
       />
     );
 
-    // Check for the editor using getAllByTestId since EditorContent renders
     const editors = screen.getAllByTestId("editor-content");
     expect(editors.length).toBeGreaterThan(0);
     expect(editors[0]).toBeInTheDocument();
@@ -195,7 +188,6 @@ describe("TiptapMarkdownEditor", () => {
     const container = document.querySelector(
       '[data-slot="tiptap-markdown-editor"]'
     );
-    // The className is merged with base classes via cn()
     expect(container).toHaveClass("custom-class");
     expect(container).toHaveClass("my-custom-bg");
   });
@@ -205,16 +197,11 @@ describe("TiptapMarkdownEditor", () => {
       <TiptapMarkdownEditor onChange={() => {}} value="Select this text" />
     );
 
-    // Verify the editor container exists with the data-slot attribute
-    // Selection styling in styles.css targets .tiptap-markdown-editor ::selection
-    // The ProseMirror element inside gets this class via editorProps.attributes
     const container = document.querySelector(
       '[data-slot="tiptap-markdown-editor"]'
     );
     expect(container).toBeInTheDocument();
 
-    // The ProseMirror element would have the class, but since we mock EditorContent,
-    // we verify the container structure is correct
     expect(container).toHaveClass("border-input");
     expect(container).toHaveClass("rounded-lg");
   });
@@ -366,31 +353,6 @@ describe("TiptapMarkdownEditor", () => {
       });
       render(<TiptapMarkdownEditor onChange={() => {}} value="content" />);
       expect(screen.getByText("Uploading image…")).toBeInTheDocument();
-    });
-  });
-
-  describe("container click", () => {
-    it("focuses editor on container click when editable", () => {
-      render(
-        <TiptapMarkdownEditor editable onChange={() => {}} value="content" />
-      );
-      const container = document.querySelector(
-        '[data-slot="tiptap-markdown-editor"]'
-      );
-      container?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      expect(mockFocus).toHaveBeenCalled();
-    });
-
-    it("does not focus editor on container click when disabled", () => {
-      mockFocus.mockClear();
-      render(
-        <TiptapMarkdownEditor disabled onChange={() => {}} value="content" />
-      );
-      const container = document.querySelector(
-        '[data-slot="tiptap-markdown-editor"]'
-      );
-      container?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      expect(mockFocus).not.toHaveBeenCalled();
     });
   });
 });

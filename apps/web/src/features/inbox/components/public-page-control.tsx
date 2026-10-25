@@ -2,6 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -13,7 +14,6 @@ import {
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowSquareOut, Globe } from "@phosphor-icons/react";
 import Link from "next/link";
-import { Label } from "@/components/ui/label";
 
 interface PublicPageControlProps {
   onToggle: (enabled: boolean) => void;

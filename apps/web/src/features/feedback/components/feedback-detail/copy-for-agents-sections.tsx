@@ -150,7 +150,7 @@ export function ExternalAgentsSection({
     <>
       <DropdownMenuSeparator />
       <DropdownMenuGroup>
-        <DropdownMenuLabel className="text-xs">{label}</DropdownMenuLabel>
+        <DropdownMenuLabel>{label}</DropdownMenuLabel>
         {agents.map((agent) => (
           <DropdownMenuItem key={agent.id} onClick={() => onAction(agent)}>
             <ItemIcon copied={copiedId === agent.id} icon={agent.icon} />

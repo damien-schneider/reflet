@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Tabs } from "@base-ui/react/tabs";
 import { Layers, MessageCircle, Send } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { FeedbackPreview } from "@/features/homepage/components/experience/features/feedback-preview";
@@ -43,44 +43,43 @@ export function FeatureExplorer({ children }: { children: ReactNode }) {
   const [interacted, setInteracted] = useState(false);
   const selected = FEATURE_PREVIEWS[selectedIndex];
   return (
-    <div className="feature-explorer" data-interacted={interacted}>
+    <Tabs.Root
+      className="feature-explorer"
+      data-interacted={interacted}
+      onValueChange={(value) => {
+        if (typeof value === "number") {
+          setInteracted(true);
+          setSelectedIndex(value);
+        }
+      }}
+      orientation="vertical"
+      value={selectedIndex}
+    >
       <div className="feature-explorer-copy">
         {children}
-        <FeatureChoices
-          onSelect={(index) => {
-            setInteracted(true);
-            setSelectedIndex(index);
-          }}
-          selectedIndex={selectedIndex}
-        />
+        <FeatureChoices />
         <p aria-live="polite" className="feature-mobile-description">
           {selected.description}
         </p>
       </div>
-      <FeaturePreview selectedIndex={selectedIndex} />
-    </div>
+      <FeaturePreview />
+    </Tabs.Root>
   );
 }
 
-interface FeatureChoicesProps {
-  onSelect: (index: number) => void;
-  selectedIndex: number;
-}
-
-function FeatureChoices({ selectedIndex, onSelect }: FeatureChoicesProps) {
+function FeatureChoices() {
   return (
-    <fieldset aria-label="Explore Reflet features" className="feature-selector">
+    <Tabs.List
+      aria-label="Explore Reflet features"
+      className="feature-selector"
+    >
       {FEATURE_PREVIEWS.map((feature, index) => (
-        <Button
-          active={index === selectedIndex}
-          aria-controls="feature-preview"
+        <Tabs.Tab
           aria-label={feature.title}
-          aria-pressed={index === selectedIndex}
           className="feature-selector-button"
           data-feature={feature.id}
           key={feature.id}
-          onClick={() => onSelect(index)}
-          variant="ghost"
+          value={index}
         >
           <span className="feature-selector-icon">
             <feature.icon aria-hidden="true" size={18} />
@@ -92,30 +91,29 @@ function FeatureChoices({ selectedIndex, onSelect }: FeatureChoicesProps) {
             </strong>
             <span>{feature.description}</span>
           </span>
-        </Button>
+        </Tabs.Tab>
       ))}
-    </fieldset>
+    </Tabs.List>
   );
 }
 
-function FeaturePreview({ selectedIndex }: { selectedIndex: number }) {
+function FeaturePreview() {
   return (
     <section
       aria-label="Interactive feature preview"
       className="feature-preview-stage"
-      id="feature-preview"
     >
       {FEATURE_PREVIEWS.map((feature, index) => (
-        <div
-          aria-hidden={index !== selectedIndex}
+        <Tabs.Panel
           className="feature-preview-body"
-          data-active={index === selectedIndex}
           data-feature={feature.id}
-          inert={index !== selectedIndex}
+          hidden={false}
+          keepMounted
           key={feature.id}
+          value={index}
         >
           <feature.component />
-        </div>
+        </Tabs.Panel>
       ))}
     </section>
   );

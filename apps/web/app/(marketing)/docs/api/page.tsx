@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsLink,
@@ -10,7 +10,6 @@ import {
   DocsText,
 } from "@/components/docs/docs-page";
 import { ReferenceTable } from "@/components/docs/reference-table";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 import { BASE_URL } from "./endpoint-data";
 import { EndpointsSection } from "./endpoints-section";
@@ -110,9 +109,10 @@ function AuthenticationSection() {
   return (
     <DocsSection id="authentication" sections={SECTIONS}>
       <DocsText>
-        Send your key in the <InlineCode>Authorization</InlineCode> header on
-        every request, whichever key it is. The key also picks the organization,
-        so no endpoint takes an organization ID.
+        Send your key in the{" "}
+        <MarkdownInlineCode>Authorization</MarkdownInlineCode> header on every
+        request, whichever key it is. The key also picks the organization, so no
+        endpoint takes an organization ID.
       </DocsText>
       <CodeBlock code="Authorization: Bearer fb_pub_your_public_key" />
       <ReferenceTable columns={KEY_COLUMNS} rows={KEY_ROWS} />
@@ -126,18 +126,18 @@ function AuthenticationSection() {
       <DocsSubsection id="user-token" title="User token">
         <DocsText>
           To act as one of your users, add their token in{" "}
-          <InlineCode>X-User-Token</InlineCode>. Voting, commenting and
-          subscribing need a token signed on your server; see{" "}
+          <MarkdownInlineCode>X-User-Token</MarkdownInlineCode>. Voting,
+          commenting and subscribing need a token signed on your server; see{" "}
           <DocsLink href="/docs/sdk/installation#user-signing">
             server-side user signing
           </DocsLink>
           . An unsigned token, like the one the SDK builds from its{" "}
-          <InlineCode>user</InlineCode> option, only credits new feedback and
-          survey responses to that user. It never changes a user’s saved name or
-          email. Once a signed token is used for a user ID, unsigned tokens for
-          that ID are ignored. For users last identified by a signed token
-          before this protection shipped, it applies from their next signed
-          request.
+          <MarkdownInlineCode>user</MarkdownInlineCode> option, only credits new
+          feedback and survey responses to that user. It never changes a user’s
+          saved name or email. Once a signed token is used for a user ID,
+          unsigned tokens for that ID are ignored. For users last identified by
+          a signed token before this protection shipped, it applies from their
+          next signed request.
         </DocsText>
         <CodeBlock
           code={`Authorization: Bearer fb_pub_your_public_key
@@ -162,7 +162,8 @@ export default function ApiReferencePage() {
         <DocsText>
           Every path below is relative to this URL. It’s the same one the SDK
           and CLI call by default. Self-hosting? Use your own Convex
-          deployment’s <InlineCode>.convex.site</InlineCode> URL instead.
+          deployment’s <MarkdownInlineCode>.convex.site</MarkdownInlineCode> URL
+          instead.
         </DocsText>
       </DocsSection>
 
@@ -177,17 +178,18 @@ export default function ApiReferencePage() {
           answers or completions per minute and request 300 screenshot upload
           URLs per minute; each limit is separate. A secret key shares 300
           writes per minute across all of these. While a key is over a limit,
-          those requests return <InlineCode>429</InlineCode>. Saving a
-          screenshot isn’t rate limited, but a public key can attach at most 10
-          screenshots per feedback item. Reads, votes and subscriptions aren’t
-          rate limited, and responses carry no rate-limit headers.
+          those requests return <MarkdownInlineCode>429</MarkdownInlineCode>.
+          Saving a screenshot isn’t rate limited, but a public key can attach at
+          most 10 screenshots per feedback item. Reads, votes and subscriptions
+          aren’t rate limited, and responses carry no rate-limit headers.
         </DocsText>
       </DocsSection>
 
       <DocsSection id="errors" sections={SECTIONS}>
         <DocsText>
-          Every error response is JSON with an <InlineCode>error</InlineCode>{" "}
-          field describing the issue.
+          Every error response is JSON with an{" "}
+          <MarkdownInlineCode>error</MarkdownInlineCode> field describing the
+          issue.
         </DocsText>
         <CodeBlock
           code={`{

@@ -9,6 +9,7 @@ import {
 } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -16,7 +17,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { H1, Muted } from "@/components/ui/typography";
 import {
   AuthPageShell,
   AuthStatus,
@@ -121,12 +121,12 @@ function ResetPasswordContent() {
 
   return (
     <AuthPageShell>
-      <H1 className="mb-2 text-center" variant="page">
+      <Heading className="mb-2 text-center" level={1} size="display">
         Choose a new password
-      </H1>
-      <Muted className="mb-6 text-center">
+      </Heading>
+      <Text as="p" className="mb-6 text-center" tone="muted">
         You’ll use it the next time you sign in.
-      </Muted>
+      </Text>
 
       <form className="space-y-2" noValidate onSubmit={handleSubmit(onSubmit)}>
         <Field invalid={Boolean(errors.password)}>
@@ -141,7 +141,7 @@ function ResetPasswordContent() {
           {errors.password ? (
             <FieldError match>{errors.password.message}</FieldError>
           ) : (
-            <FieldDescription className="min-h-[1lh] text-caption">
+            <FieldDescription className="min-h-[1lh] [--cui-field-description-font-size:var(--text-caption)]">
               {PASSWORD_LENGTH_MESSAGE}.
             </FieldDescription>
           )}

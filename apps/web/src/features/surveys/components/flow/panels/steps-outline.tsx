@@ -2,6 +2,8 @@
 
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Item } from "@ctrl-ui/react/ui/item";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import {
   ArrowDown,
   ArrowUp,
@@ -23,7 +25,6 @@ import { reachableInsertAnchor } from "@/features/surveys/components/flow/flow-e
 import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons";
 import { type FlowStepRef, selectedFlowStepAtom } from "@/store/surveys";
 
-/** The accessible, keyboard-first view of the flow: every step in order, with reordering. */
 export function StepsOutline({ className }: { className: string }) {
   const { actions, model } = useFlowEditor();
   const selectStep = useSelectFlowStep();
@@ -136,17 +137,12 @@ function OutlineItem({
   const issueSummary = issues.map((issue) => issue.message).join(" ");
 
   return (
-    <li
-      className={cn(
-        "group flex items-center gap-1 rounded-lg pe-1",
-        isSelected ? "bg-muted" : "hover:bg-muted/60"
-      )}
-    >
-      <button
+    <li className="group flex items-center gap-1">
+      <Item
         aria-current={isSelected ? "step" : undefined}
-        className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg ps-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-ring"
+        className="min-w-0 flex-1 flex-nowrap text-left [--cui-item-gap:calc(var(--spacing)*2)] [--cui-item-padding-block:calc(var(--spacing)*2)] [--cui-item-padding-inline:calc(var(--spacing)*2)]"
         onClick={() => selectStep(step, { reveal: true })}
-        type="button"
+        render={<button type="button" />}
       >
         {number === undefined ? null : (
           <span className="w-4 shrink-0 text-end text-muted-foreground text-xs tabular-nums">
@@ -157,7 +153,9 @@ function OutlineItem({
           aria-hidden
           className="size-4 shrink-0 text-muted-foreground"
         />
-        <span className="truncate">{label}</span>
+        <Text as="span" className="min-w-0 flex-1 truncate" size="body">
+          {label}
+        </Text>
         {issues.length > 0 ? (
           <span
             className={cn(
@@ -171,7 +169,7 @@ function OutlineItem({
             </span>
           </span>
         ) : null}
-      </button>
+      </Item>
       {actions ? (
         <span
           className={cn(

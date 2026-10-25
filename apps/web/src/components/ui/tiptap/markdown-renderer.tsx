@@ -97,7 +97,9 @@ export function MarkdownRenderer({
             return {
               dom: container,
               update: (updatedNode) => {
-                if (updatedNode.type.name !== "image") return false;
+                if (updatedNode.type.name !== "image") {
+                  return false;
+                }
                 if (img.src !== updatedNode.attrs.src) {
                   img.style.display = "block";
                   errorPlaceholder.style.display = "none";
@@ -127,7 +129,9 @@ export function MarkdownRenderer({
   });
 
   useEffect(() => {
-    if (!editor) return;
+    if (!editor) {
+      return;
+    }
 
     const currentMarkdown = getMarkdown(editor.storage);
     if (content !== currentMarkdown) {

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock tippy.js
 vi.mock("tippy.js", () => ({
   default: vi.fn(() => [
     {
@@ -11,7 +10,6 @@ vi.mock("tippy.js", () => ({
   ]),
 }));
 
-// Mock @tiptap/core
 vi.mock("@tiptap/core", () => ({
   Extension: {
     create: vi.fn((config: Record<string, unknown>) => ({
@@ -28,7 +26,6 @@ vi.mock("@tiptap/core", () => ({
   },
 }));
 
-// Mock @tiptap/react
 vi.mock("@tiptap/react", () => {
   const ReactRenderer = vi.fn().mockImplementation(function (
     this: Record<string, unknown>
@@ -41,12 +38,10 @@ vi.mock("@tiptap/react", () => {
   return { ReactRenderer };
 });
 
-// Mock @tiptap/suggestion
 vi.mock("@tiptap/suggestion", () => ({
   default: vi.fn(() => ({})),
 }));
 
-// Mock command-items
 vi.mock("./command-items", () => ({
   createSlashCommands: vi.fn((onImage?: () => void, onVideo?: () => void) => {
     const items = [
@@ -63,7 +58,6 @@ vi.mock("./command-items", () => ({
   }),
 }));
 
-// Mock command-list
 vi.mock("./command-list", () => ({
   CommandList: () => null,
 }));
@@ -91,17 +85,21 @@ describe("command-suggestion", () => {
       el.remove();
     });
 
-    it("returns dialog content when editor is inside a dialog", async () => {
-      const { findAppendTarget } = await import("./command-suggestion");
-      const dialog = document.createElement("div");
-      dialog.setAttribute("data-slot", "dialog-content");
-      const editor = document.createElement("div");
-      dialog.appendChild(editor);
-      document.body.appendChild(dialog);
+    it.each(["dialog", "alertdialog"])(
+      "returns the %s surface when the editor is inside one",
+      async (role) => {
+        const { findAppendTarget } = await import("./command-suggestion");
+        const surface = document.createElement("div");
+        surface.setAttribute("role", role);
+        surface.setAttribute("data-slot", "content");
+        const editor = document.createElement("div");
+        surface.appendChild(editor);
+        document.body.appendChild(surface);
 
-      expect(findAppendTarget(editor)).toBe(dialog);
-      dialog.remove();
-    });
+        expect(findAppendTarget(editor)).toBe(surface);
+        surface.remove();
+      }
+    );
   });
 
   describe("SLASH_MENU_Z_INDEX", () => {
@@ -135,19 +133,16 @@ describe("command-suggestion", () => {
 
   describe("suggestion render lifecycle", () => {
     it("handles the full render lifecycle: onStart, onUpdate, onKeyDown, onExit", async () => {
-      // We test the suggestion object indirectly through the Extension
       const { createSlashCommandExtension } = await import(
         "./command-suggestion"
       );
       const ext = createSlashCommandExtension({});
 
-      // The suggestion is inside ext.options.suggestion
       const suggestion = ext.options?.suggestion;
       if (!suggestion) {
         return;
       }
 
-      // Test items filtering
       if (suggestion.items) {
         const items = suggestion.items({ editor: {} as never, query: "head" });
         expect(
@@ -155,7 +150,6 @@ describe("command-suggestion", () => {
         ).toBe(true);
       }
 
-      // Test command execution
       if (suggestion.command) {
         const mockRun = vi.fn();
         const mockItem = {
@@ -291,7 +285,6 @@ describe("command-suggestion", () => {
 
       const renderResult = suggestion.render();
 
-      // Start first
       renderResult.onStart({
         clientRect: () => new DOMRect(),
         command: vi.fn(),
@@ -304,7 +297,6 @@ describe("command-suggestion", () => {
       const mockInstance = (ReactRenderer as ReturnType<typeof vi.fn>).mock
         .results[0]?.value;
 
-      // Update
       renderResult.onUpdate({
         clientRect: () => new DOMRect(10, 10, 100, 20),
         command: vi.fn(),

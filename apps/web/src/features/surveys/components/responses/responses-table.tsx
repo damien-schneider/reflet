@@ -6,6 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableRowLink,
 } from "@ctrl-ui/react/ui/table";
 import { Text } from "@ctrl-ui/react/ui/typography";
 import { format, formatDistanceToNow } from "date-fns";
@@ -46,20 +47,21 @@ export function ResponsesTable({
         </TableHeader>
         <TableBody>
           {responses.map((response) => (
-            <TableRow className="relative cursor-pointer" key={response._id}>
+            <TableRow key={response._id}>
               <TableCell className="max-w-56">
-                <button
-                  className="block max-w-full truncate text-left font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:rounded-sm focus-visible:after:outline-2 focus-visible:after:outline-ring"
+                <TableRowLink
+                  className="block max-w-full truncate"
                   onClick={() => onOpenResponse(response)}
                   title={respondentDisplayName(response.respondent)}
-                  type="button"
                 >
-                  {respondentDisplayName(response.respondent)}
-                </button>
+                  <Text weight="medium">
+                    {respondentDisplayName(response.respondent)}
+                  </Text>
+                </TableRowLink>
                 {response.respondent.name && response.respondent.email ? (
-                  <span className="block truncate text-muted-foreground text-xs">
+                  <Text className="block truncate" size="label" tone="muted">
                     {response.respondent.email}
-                  </span>
+                  </Text>
                 ) : null}
               </TableCell>
               <TableCell>

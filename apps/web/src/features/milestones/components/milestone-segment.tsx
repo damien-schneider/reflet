@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@base-ui/react/button";
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
@@ -113,7 +114,7 @@ export function MilestoneSegment({
 
   const segment = (
     <div className={cn("group/seg relative", className)}>
-      <button
+      <Button
         aria-expanded={isActive}
         aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})${overdueSuffix}`}
         className={cn(
@@ -130,7 +131,6 @@ export function MilestoneSegment({
             "color-mix(in oklab, var(--segment-fill) 31%, transparent)",
           ...style,
         }}
-        type="button"
       >
         <svg
           aria-hidden="true"
@@ -188,7 +188,7 @@ export function MilestoneSegment({
           initial={false}
           transition={indicatorTransition}
         />
-      </button>
+      </Button>
 
       {isOverdue && (
         <span

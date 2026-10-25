@@ -1,6 +1,15 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardLink,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { FilePlus, Sparkle } from "@phosphor-icons/react";
 import { type ReactNode, useId } from "react";
 import { FlowGlyph } from "@/features/surveys/components/create/flow-glyph";
@@ -22,19 +31,15 @@ export function TemplateGallery({
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <GalleryCard
+        <StartCard
           description="An empty flow you build step by step."
-          icon={
-            <FilePlus aria-hidden className="size-5 text-muted-foreground" />
-          }
-          isDashed
+          icon={<FilePlus aria-hidden className="text-muted-foreground" />}
           onClick={onStartFromScratch}
           title="Start from scratch"
         />
-        <GalleryCard
+        <StartCard
           description="Say what you want to learn. AI drafts the questions and branches."
-          icon={<Sparkle aria-hidden className="size-5 text-primary" />}
-          isDashed
+          icon={<Sparkle aria-hidden className="text-primary" />}
           onClick={onDescribe}
           title="Describe it"
         />
@@ -80,40 +85,55 @@ interface GalleryCardProps {
   description: string;
   footer?: string;
   icon: ReactNode;
-  isDashed?: boolean;
   onClick: () => void;
   title: string;
+}
+
+function StartCard({
+  description,
+  icon,
+  onClick,
+  title,
+}: Omit<GalleryCardProps, "footer">) {
+  return (
+    <Button
+      className="w-full items-start justify-start whitespace-normal text-left [--cui-button-foreground:var(--foreground)] [--cui-button-icon:calc(var(--spacing)*5)] [--cui-button-padding-block:calc(var(--spacing)*4)] [--cui-button-padding-inline:calc(var(--spacing)*4)]"
+      layout="tile"
+      onClick={onClick}
+      variant="dashed"
+    >
+      {icon}
+      <span>{title}</span>
+      <Text size="label" tone="muted" weight="normal">
+        {description}
+      </Text>
+    </Button>
+  );
 }
 
 function GalleryCard({
   description,
   footer,
   icon,
-  isDashed = false,
   onClick,
   title,
 }: GalleryCardProps) {
   return (
-    <button
-      className={cn(
-        "flex w-full flex-col items-start gap-1.5 rounded-xl border p-4 text-left",
-        "transition-colors duration-150 hover:border-foreground/25 hover:bg-muted/40 motion-reduce:transition-none",
-        "focus-visible:outline-2 focus-visible:outline-ring",
-        isDashed && "border-dashed"
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      <span className="flex h-10 items-center">{icon}</span>
-      <span className="font-medium text-sm">{title}</span>
-      <span className="text-pretty text-muted-foreground text-xs">
-        {description}
-      </span>
+    <Card className="w-full" size="sm">
+      <CardHeader>
+        <span className="flex h-10 items-center">{icon}</span>
+        <CardTitle>
+          <CardLink onClick={onClick}>{title}</CardLink>
+        </CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
       {footer ? (
-        <span className="mt-auto pt-1 text-muted-foreground text-xs tabular-nums">
-          {footer}
-        </span>
+        <CardFooter className="mt-auto">
+          <Text as="span" numeric size="caption" tone="muted">
+            {footer}
+          </Text>
+        </CardFooter>
       ) : null}
-    </button>
+    </Card>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Label } from "@ctrl-ui/react/ui/label";
 import { NativeSelect } from "@ctrl-ui/react/ui/native-select";
 import {
   type QuestionConfig,
@@ -9,7 +10,6 @@ import {
   textMaxChars,
 } from "@reflet/survey-core";
 import { useId } from "react";
-import { Label } from "@/components/ui/label";
 import { AutosavedField } from "@/features/surveys/components/flow/inspector/autosaved-field";
 import { ChoicesEditor } from "@/features/surveys/components/flow/inspector/choices-editor";
 import type { QuestionPatch } from "@/features/surveys/components/flow/use-update-question";

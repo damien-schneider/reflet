@@ -1,15 +1,10 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Chart, ChartPlot } from "@ctrl-ui/react/ui/chart";
+import { areaChart } from "@ctrl-ui/react/ui/chart-cartesian";
 import { ArrowDown, ArrowUp, ChartLineUp } from "@phosphor-icons/react";
 import { format, parseISO } from "date-fns";
 import type { ReactNode } from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { AnalyticsCardTitle } from "@/features/surveys/components/analytics/analytics-card-title";
 import {
   formatDuration,
@@ -17,11 +12,6 @@ import {
   type SurveyAnalytics,
   weekOverWeekChange,
 } from "@/features/surveys/components/analytics/analytics-summary";
-
-const chartConfig = {
-  completed: { color: "var(--chart-1)", label: "Completed" },
-  started: { color: "var(--chart-2)", label: "Started" },
-} satisfies ChartConfig;
 
 export function OverviewCard({ analytics }: { analytics: SurveyAnalytics }) {
   const { responsesByDay } = analytics;
@@ -35,6 +25,19 @@ export function OverviewCard({ analytics }: { analytics: SurveyAnalytics }) {
   );
   const firstDay = responsesByDay.at(0);
   const lastDay = responsesByDay.at(-1);
+  const definition = areaChart({
+    data: responsesByDay,
+    fill: "solid",
+    formatX: (date) =>
+      typeof date === "string" ? format(parseISO(date), "EEE, MMM d") : "",
+    series: [
+      { color: "var(--chart-2)", key: "started", label: "Started" },
+      { color: "var(--chart-1)", key: "completed", label: "Completed" },
+    ],
+    x: "date",
+    xScale: { axis: false },
+    yScale: { axis: false },
+  });
 
   return (
     <Card>
@@ -59,49 +62,13 @@ export function OverviewCard({ analytics }: { analytics: SurveyAnalytics }) {
             Last 30 days: {startedLast30Days} started, {completedLast30Days}{" "}
             completed
           </figcaption>
-          <ChartContainer
-            className="aspect-auto h-32 w-full"
-            config={chartConfig}
-          >
-            <AreaChart
-              data={responsesByDay}
-              margin={{ bottom: 0, left: 0, right: 0, top: 4 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" hide />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    indicator="dot"
-                    labelFormatter={(_, payload) => {
-                      const date = payload.at(0)?.payload?.date;
-                      return typeof date === "string"
-                        ? format(parseISO(date), "EEE, MMM d")
-                        : null;
-                    }}
-                  />
-                }
-              />
-              <Area
-                dataKey="started"
-                fill="var(--color-started)"
-                fillOpacity={0.12}
-                isAnimationActive={false}
-                stroke="var(--color-started)"
-                strokeWidth={2}
-                type="monotone"
-              />
-              <Area
-                dataKey="completed"
-                fill="var(--color-completed)"
-                fillOpacity={0.16}
-                isAnimationActive={false}
-                stroke="var(--color-completed)"
-                strokeWidth={2}
-                type="monotone"
-              />
-            </AreaChart>
-          </ChartContainer>
+          <Chart>
+            <ChartPlot
+              ariaLabel="Started and completed responses per day"
+              definition={definition}
+              height={128}
+            />
+          </Chart>
           {firstDay && lastDay ? (
             <div
               aria-hidden

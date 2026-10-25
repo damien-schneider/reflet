@@ -23,15 +23,11 @@ export function PublicFeedbackVoting({
       aria-pressed={hasVoted}
       layout="tile"
       onClick={onVote}
-      style={
-        hasVoted
-          ? {
-              backgroundColor: `${primaryColor}15`,
-              borderColor: primaryColor,
-              color: primaryColor,
-            }
-          : undefined
-      }
+      style={{
+        "--cui-button-active-background": `oklch(from ${primaryColor} l c h / 0.08)`,
+        "--cui-button-active-foreground": primaryColor,
+        "--cui-button-active-hover-background": `oklch(from ${primaryColor} l c h / 0.1)`,
+      }}
       variant="surface"
     >
       <CaretUp className="h-5 w-5" />

@@ -74,13 +74,14 @@ export function AuthHelperText({ mode, onResetMode }: AuthHelperTextProps) {
           >
             <p className="text-muted-foreground text-sm">
               {mode === "signIn" ? "Not you?" : "Already have an account?"}{" "}
-              <button
-                className="font-medium text-brand-text hover:underline"
+              <Button
                 onClick={onResetMode}
-                type="button"
+                size="md"
+                tone="primary"
+                variant="link"
               >
                 Use a different email
-              </button>
+              </Button>
             </p>
           </m.div>
         )}

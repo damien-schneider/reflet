@@ -1,9 +1,9 @@
 "use client";
 
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { useEffect, useId, useRef, useState } from "react";
-import { Label } from "@/components/ui/label";
 
 const SAVE_DELAY_MS = 600;
 

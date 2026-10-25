@@ -141,7 +141,6 @@ describe("TiptapTitleEditor", () => {
     const onChange = vi.fn();
     render(<TiptapTitleEditor onChange={onChange} value="" />);
 
-    // Simulate editor update
     if (useEditorCallback?.onUpdate) {
       const mockEd = { getText: () => "typed text" };
       (useEditorCallback.onUpdate as (arg: { editor: unknown }) => void)({
@@ -245,18 +244,6 @@ describe("TiptapTitleEditor", () => {
     }
   });
 
-  it("focuses editor when container is clicked", () => {
-    render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
-
-    const container = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    if (container) {
-      container.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      expect(mockFocus).toHaveBeenCalled();
-    }
-  });
-
   it("passes autoFocus to useEditor config", () => {
     render(<TiptapTitleEditor autoFocus onChange={vi.fn()} value="" />);
     expect(useEditorCallback).toMatchObject({ autofocus: true });
@@ -266,7 +253,6 @@ describe("TiptapTitleEditor", () => {
     render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
 
     if (useEditorCallback?.extensions) {
-      // The component should configure StarterKit to disable block elements
       expect(useEditorCallback.extensions).toBeDefined();
     }
   });

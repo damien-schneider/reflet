@@ -14,39 +14,50 @@ vi.mock("@phosphor-icons/react", () => ({
   Plus: () => <svg data-testid="plus-icon" />,
 }));
 
-// Mock the popover to render inline for testing
-vi.mock("@ctrl-ui/react/ui/popover", () => ({
-  Popover: ({
-    children,
-  }: {
-    children: React.ReactNode;
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
-  }) => <div data-testid="popover-root">{children}</div>,
-  PopoverContent: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-testid="popover-content">
-      {children}
-    </div>
-  ),
-  PopoverTrigger: ({
-    children,
-    ...props
-  }: {
-    children?: React.ReactNode;
-    className?: string;
-    type?: "reset" | "button" | "submit";
-  }) => (
-    <button data-testid="popover-trigger" type="button" {...props}>
-      {children}
-    </button>
-  ),
-}));
+vi.mock("@ctrl-ui/react/ui/popover", async () => {
+  const { cloneElement } = await import("react");
+  return {
+    Popover: ({
+      children,
+    }: {
+      children: React.ReactNode;
+      open?: boolean;
+      onOpenChange?: (open: boolean) => void;
+    }) => <div data-testid="popover-root">{children}</div>,
+    PopoverContent: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => (
+      <div className={className} data-testid="popover-content">
+        {children}
+      </div>
+    ),
+    PopoverTrigger: ({
+      children,
+      render: triggerRender,
+      ...props
+    }: {
+      children?: React.ReactNode;
+      className?: string;
+      render?: React.ReactElement;
+      type?: "reset" | "button" | "submit";
+    }) =>
+      triggerRender ? (
+        cloneElement(
+          triggerRender,
+          { "data-testid": "popover-trigger", ...props },
+          children
+        )
+      ) : (
+        <button data-testid="popover-trigger" type="button" {...props}>
+          {children}
+        </button>
+      ),
+  };
+});
 
 vi.mock("@/components/ui/emoji-picker", () => ({
   EmojiPicker: ({
@@ -112,8 +123,11 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     onClick,
     disabled,
+    iconOnly: _iconOnly,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    iconOnly?: boolean;
+  }) => (
     <button disabled={disabled} onClick={onClick} type="button" {...props}>
       {children}
     </button>
@@ -129,6 +143,7 @@ const defaultProps = {
   onOpenChange: vi.fn(),
   open: true,
   organizationId: "org123" as Id<"organizations">,
+  trigger: "inline" as const,
 };
 
 describe("MilestoneFormPopover", () => {
@@ -140,6 +155,18 @@ describe("MilestoneFormPopover", () => {
     render(<MilestoneFormPopover {...defaultProps} open={false} />);
 
     expect(screen.getByTestId("popover-root")).toBeInTheDocument();
+  });
+
+  it("labels the add trigger with its time horizon in both layouts", () => {
+    const { rerender } = render(<MilestoneFormPopover {...defaultProps} />);
+    expect(
+      screen.getByRole("button", { name: "Add milestone to Now" })
+    ).toBeInTheDocument();
+
+    rerender(<MilestoneFormPopover {...defaultProps} trigger="block" />);
+    expect(
+      screen.getByRole("button", { name: "Add milestone to Now" })
+    ).toBeInTheDocument();
   });
 
   it("should show emoji picker, name input, and color picker when open", () => {

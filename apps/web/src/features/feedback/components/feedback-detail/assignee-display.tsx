@@ -57,9 +57,7 @@ export function AssigneeDisplay({
           <>
             <Avatar className="size-3.5">
               <AvatarImage src={assignee.image ?? undefined} />
-              <AvatarFallback className="text-micro">
-                {assignee.name?.charAt(0) ?? "?"}
-              </AvatarFallback>
+              <AvatarFallback>{assignee.name?.charAt(0) ?? "?"}</AvatarFallback>
             </Avatar>
             <span
               className="truncate"
@@ -86,7 +84,7 @@ export function AssigneeDisplay({
             <DropdownMenuRadioItem key={member.userId} value={member.userId}>
               <Avatar className="h-5 w-5">
                 <AvatarImage src={member.user?.image ?? undefined} />
-                <AvatarFallback className="text-micro">
+                <AvatarFallback>
                   {member.user?.name?.charAt(0) ?? "?"}
                 </AvatarFallback>
               </Avatar>

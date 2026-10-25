@@ -2,7 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
-import { Text } from "@/components/ui/typography";
+import { Text } from "@ctrl-ui/react/ui/typography";
 
 const VISIBLE_RELEASES = 5;
 
@@ -37,7 +37,7 @@ export function SyncedReleasesSection({ releases }: SyncedReleasesCardProps) {
 
   if (releases.length === 0) {
     return (
-      <Text className="text-pretty text-muted-foreground" variant="bodySmall">
+      <Text as="p" className="text-pretty" tone="muted">
         No releases synced yet. Publish a release on GitHub or sync now to
         import it.
       </Text>
@@ -57,13 +57,20 @@ export function SyncedReleasesSection({ releases }: SyncedReleasesCardProps) {
               key={release._id}
             >
               <div className="min-w-0">
-                <Text className="truncate font-medium" title={title}>
+                <Text
+                  as="p"
+                  className="truncate"
+                  size="body-lg"
+                  title={title}
+                  weight="medium"
+                >
                   {title}
                 </Text>
                 <Text
-                  className="truncate text-muted-foreground"
+                  as="p"
+                  className="truncate"
                   title={release.tagName}
-                  variant="bodySmall"
+                  tone="muted"
                 >
                   {release.tagName}
                 </Text>
@@ -88,10 +95,7 @@ export function SyncedReleasesSection({ releases }: SyncedReleasesCardProps) {
         })}
       </ul>
       {hiddenCount > 0 ? (
-        <Text
-          className="text-center text-muted-foreground tabular-nums"
-          variant="bodySmall"
-        >
+        <Text as="p" className="text-center" numeric tone="muted">
           {hiddenCount} more {hiddenCount === 1 ? "release" : "releases"}
         </Text>
       ) : null}

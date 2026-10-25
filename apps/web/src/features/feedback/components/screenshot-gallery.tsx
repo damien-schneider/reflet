@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -10,6 +11,7 @@ import {
 } from "@ctrl-ui/react/ui/alert-dialog";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Card, CardLink } from "@ctrl-ui/react/ui/card";
 import {
   Dialog,
   DialogBody,
@@ -79,76 +81,77 @@ function ScreenshotTile({
   const displayUrl = screenshot.annotatedUrl ?? screenshot.url;
 
   return (
-    <li className="group relative overflow-hidden rounded-md border">
-      {displayUrl ? (
-        <button
-          aria-label={`Preview ${screenshot.filename}`}
-          className="block w-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-          onClick={() =>
-            onPreview({ filename: screenshot.filename, url: displayUrl })
-          }
-          type="button"
-        >
-          <Image
-            alt=""
-            className={`aspect-video w-full object-cover ${IMAGE_OUTLINE}`}
-            height={180}
-            src={displayUrl}
-            unoptimized
-            width={320}
-          />
-        </button>
-      ) : (
-        <div className="flex aspect-video items-center justify-center bg-muted">
-          <Camera aria-hidden className="size-6 text-muted-foreground" />
-          <span className="sr-only">Image unavailable</span>
-        </div>
-      )}
-      <div className="pointer-events-none pointer-coarse:pointer-events-auto absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-foreground/60 to-transparent p-2 opacity-0 pointer-coarse:opacity-100 transition-opacity duration-(--duration-fast) group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-        <Badge size="sm">{screenshot.captureSource}</Badge>
-        <div className="flex gap-1">
-          {displayUrl && (
+    <li className="group">
+      <Card className="relative overflow-hidden [--cui-card-gap:0px] [--cui-card-padding-block:0px]">
+        {displayUrl ? (
+          <CardLink
+            aria-label={`Preview ${screenshot.filename}`}
+            className="block w-full"
+            onClick={() =>
+              onPreview({ filename: screenshot.filename, url: displayUrl })
+            }
+          >
+            <Image
+              alt=""
+              className={cn("aspect-video w-full object-cover", IMAGE_OUTLINE)}
+              height={180}
+              src={displayUrl}
+              unoptimized
+              width={320}
+            />
+          </CardLink>
+        ) : (
+          <div className="flex aspect-video items-center justify-center bg-muted">
+            <Camera aria-hidden className="size-6 text-muted-foreground" />
+            <span className="sr-only">Image unavailable</span>
+          </div>
+        )}
+        <div className="pointer-events-none pointer-coarse:pointer-events-auto absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-foreground/60 to-transparent p-2 opacity-0 pointer-coarse:opacity-100 transition-opacity duration-(--duration-fast) group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
+          <Badge size="sm">{screenshot.captureSource}</Badge>
+          <div className="flex gap-1">
+            {displayUrl && (
+              <Tooltip>
+                <TooltipTrigger
+                  aria-label={`Download ${screenshot.filename}`}
+                  render={
+                    <ButtonLink
+                      className={OVERLAY_BUTTON_KNOBS}
+                      download={screenshot.filename}
+                      href={displayUrl}
+                      iconOnly
+                      size="xs"
+                      variant="quiet"
+                    />
+                  }
+                >
+                  <DownloadSimple />
+                </TooltipTrigger>
+                <TooltipContent>Download</TooltipContent>
+              </Tooltip>
+            )}
             <Tooltip>
               <TooltipTrigger
-                aria-label={`Download ${screenshot.filename}`}
+                aria-label={`Delete ${screenshot.filename}`}
                 render={
-                  <ButtonLink
+                  <Button
                     className={OVERLAY_BUTTON_KNOBS}
-                    download={screenshot.filename}
-                    href={displayUrl}
                     iconOnly
+                    onClick={() => onDelete(screenshot)}
                     size="xs"
                     variant="quiet"
                   />
                 }
               >
-                <DownloadSimple />
+                <Trash />
               </TooltipTrigger>
-              <TooltipContent>Download</TooltipContent>
+              <TooltipContent>Delete screenshot</TooltipContent>
             </Tooltip>
-          )}
-          <Tooltip>
-            <TooltipTrigger
-              aria-label={`Delete ${screenshot.filename}`}
-              render={
-                <Button
-                  className={OVERLAY_BUTTON_KNOBS}
-                  iconOnly
-                  onClick={() => onDelete(screenshot)}
-                  size="xs"
-                  variant="quiet"
-                />
-              }
-            >
-              <Trash />
-            </TooltipTrigger>
-            <TooltipContent>Delete screenshot</TooltipContent>
-          </Tooltip>
+          </div>
         </div>
-      </div>
-      <p className="truncate px-2 py-1 text-muted-foreground text-xs">
-        {formatDistanceToNow(screenshot.createdAt, { addSuffix: true })}
-      </p>
+        <p className="truncate px-2 py-1 text-muted-foreground text-xs">
+          {formatDistanceToNow(screenshot.createdAt, { addSuffix: true })}
+        </p>
+      </Card>
     </li>
   );
 }
@@ -374,7 +377,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
             <DialogBody>
               <Image
                 alt={preview.filename}
-                className={`w-full rounded-md ${IMAGE_OUTLINE}`}
+                className={cn("w-full rounded-md", IMAGE_OUTLINE)}
                 height={600}
                 src={preview.url}
                 unoptimized

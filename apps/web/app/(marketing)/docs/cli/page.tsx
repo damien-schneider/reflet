@@ -1,6 +1,6 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
 import { AGENT_PROMPT } from "reflet-cli/agent-prompt";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import { CopyBlock } from "@/components/docs/copy-block";
 import {
@@ -13,7 +13,6 @@ import {
 } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
 import { ReferenceTable } from "@/components/docs/reference-table";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 import { COMMAND_GROUPS, RECIPES } from "./cli-docs-data";
 
@@ -78,13 +77,14 @@ function WorkflowSection() {
     <DocsSection id="workflow" sections={SECTIONS}>
       <DocsText>
         Run it once in the repository the feedback is about. It writes the queue
-        workflow to <InlineCode>.agents/skills/reflet/</InlineCode> (Codex,
-        omp), <InlineCode>.claude/skills/reflet/</InlineCode> and{" "}
-        <InlineCode>.claude/commands/reflet.md</InlineCode>. After that,{" "}
-        <InlineCode>/reflet</InlineCode> in Claude Code,{" "}
-        <InlineCode>$reflet</InlineCode> in Codex or a plain ask in any other
-        agent works the queue until it’s empty. Pass a feedback id to scope the
-        run to one item.
+        workflow to{" "}
+        <MarkdownInlineCode>.agents/skills/reflet/</MarkdownInlineCode> (Codex,
+        omp), <MarkdownInlineCode>.claude/skills/reflet/</MarkdownInlineCode>{" "}
+        and <MarkdownInlineCode>.claude/commands/reflet.md</MarkdownInlineCode>.
+        After that, <MarkdownInlineCode>/reflet</MarkdownInlineCode> in Claude
+        Code, <MarkdownInlineCode>$reflet</MarkdownInlineCode> in Codex or a
+        plain ask in any other agent works the queue until it’s empty. Pass a
+        feedback id to scope the run to one item.
       </DocsText>
       <InstallCommand command="npx reflet-cli agent install" />
       <InstallCommand command="npx reflet-cli screenshot download <feedbackId>" />
@@ -96,10 +96,10 @@ function CommandsSection() {
   return (
     <DocsSection id="commands" sections={SECTIONS}>
       <DocsText>
-        <InlineCode>reflet &lt;resource&gt;</InlineCode> lists a resource’s
-        actions with their flags. Pass booleans as{" "}
-        <InlineCode>--public true</InlineCode> and dates as ISO strings or epoch
-        milliseconds.
+        <MarkdownInlineCode>reflet &lt;resource&gt;</MarkdownInlineCode> lists a
+        resource’s actions with their flags. Pass booleans as{" "}
+        <MarkdownInlineCode>--public true</MarkdownInlineCode> and dates as ISO
+        strings or epoch milliseconds.
       </DocsText>
       <div className="flex flex-col gap-8">
         {COMMAND_GROUPS.map((group) => (
@@ -123,10 +123,11 @@ export default function CliDocsPage() {
     <DocsPage
       description={
         <>
-          <InlineCode>reflet</InlineCode> exposes the whole admin API as shell
-          commands, so any coding agent that can run a terminal can pick up
-          feedback, fix it and close the loop. Output is JSON whenever it’s
-          piped or given <InlineCode>--json</InlineCode>.
+          <MarkdownInlineCode>reflet</MarkdownInlineCode> exposes the whole
+          admin API as shell commands, so any coding agent that can run a
+          terminal can pick up feedback, fix it and close the loop. Output is
+          JSON whenever it’s piped or given{" "}
+          <MarkdownInlineCode>--json</MarkdownInlineCode>.
         </>
       }
       sections={SECTIONS}
@@ -139,7 +140,8 @@ export default function CliDocsPage() {
             Dashboard → Project → Agents &amp; CLI
           </strong>
           , then store it once. It’s saved to{" "}
-          <InlineCode>~/.reflet/config.json</InlineCode>, readable only by you.
+          <MarkdownInlineCode>~/.reflet/config.json</MarkdownInlineCode>,
+          readable only by you.
         </DocsText>
         <InstallCommand command="npx reflet-cli login --api-key fb_sec_…" />
         <InstallCommand command="npx reflet-cli feedback next --json" />
@@ -150,10 +152,11 @@ export default function CliDocsPage() {
       <DocsSection id="agent-loop" sections={SECTIONS}>
         <DocsText>
           What that skill contains, for an agent that reads no skill files.{" "}
-          <InlineCode>npx reflet-cli prompt agent</InlineCode> prints the same
-          text. Merging a PR that says <InlineCode>Closes #issue</InlineCode> or{" "}
-          <InlineCode>fixes reflet:&lt;id&gt;</InlineCode> marks the feedback
-          completed through the GitHub integration.
+          <MarkdownInlineCode>npx reflet-cli prompt agent</MarkdownInlineCode>{" "}
+          prints the same text. Merging a PR that says{" "}
+          <MarkdownInlineCode>Closes #issue</MarkdownInlineCode> or{" "}
+          <MarkdownInlineCode>fixes reflet:&lt;id&gt;</MarkdownInlineCode> marks
+          the feedback completed through the GitHub integration.
         </DocsText>
         <CopyBlock content={AGENT_PROMPT} label="Agent prompt" />
       </DocsSection>
@@ -187,7 +190,7 @@ export default function CliDocsPage() {
             <DocsLink href="/docs/widget/floating-feedback">
               Widget setup
             </DocsLink>
-            : <InlineCode>npx reflet-cli init</InlineCode>.
+            : <MarkdownInlineCode>npx reflet-cli init</MarkdownInlineCode>.
           </li>
         </DocsList>
       </DocsSection>

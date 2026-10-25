@@ -111,10 +111,10 @@ function getContainerClassName({
     return cn("w-full", disabled && "cursor-not-allowed opacity-50", className);
   }
   return cn(
-    "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base md:text-sm",
+    "rounded-lg border border-input bg-transparent px-2.5 py-2 text-base md:text-sm dark:bg-input/30",
     isInteractive &&
-      "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-    disabled && "bg-input/50 dark:bg-input/80 cursor-not-allowed opacity-50",
+      "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+    disabled && "cursor-not-allowed bg-input/50 opacity-50 dark:bg-input/80",
     className
   );
 }
@@ -172,12 +172,6 @@ export function TiptapMarkdownEditor({
 
   const isInteractive = editable && !disabled;
 
-  const handleContainerClick = () => {
-    if (isInteractive) {
-      editor?.commands.focus();
-    }
-  };
-
   const showFooter = !minimal || isUploading || Boolean(maxLength);
 
   return (
@@ -189,8 +183,6 @@ export function TiptapMarkdownEditor({
         minimal,
       })}
       data-slot="tiptap-markdown-editor"
-      onClick={handleContainerClick}
-      role="presentation"
     >
       <div className="relative">
         <EditorContent editor={editor} />

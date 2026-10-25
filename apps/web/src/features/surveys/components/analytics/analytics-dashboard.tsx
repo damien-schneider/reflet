@@ -9,12 +9,12 @@ import {
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Heading } from "@ctrl-ui/react/ui/typography";
 import { ChartBar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { takesAnswer } from "@reflet/survey-core";
 import { useQuery } from "convex/react";
-import { H3 } from "@/components/ui/typography";
 import { DropOffFunnel } from "@/features/surveys/components/analytics/drop-off-funnel";
 import { EndingsCard } from "@/features/surveys/components/analytics/endings-card";
 import { NpsCard } from "@/features/surveys/components/analytics/nps-card";
@@ -94,7 +94,9 @@ export function AnalyticsDashboard({ surveyId }: AnalyticsDashboardProps) {
           aria-labelledby="question-results-heading"
           className="flex flex-col gap-4"
         >
-          <H3 id="question-results-heading">Results by question</H3>
+          <Heading id="question-results-heading" level={3} size="heading-2">
+            Results by question
+          </Heading>
           <div className="grid gap-4 lg:grid-cols-2">
             {answerableStats.map((stat) => (
               <QuestionResultCard key={stat.questionId} stat={stat} />

@@ -145,24 +145,6 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
   },
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
-  Text: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    variant?: string;
-  }) => <span className={className}>{children}</span>,
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   Check: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="check-icon" />

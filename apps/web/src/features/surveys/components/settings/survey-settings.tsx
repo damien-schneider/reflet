@@ -10,11 +10,11 @@ import {
 import { Input } from "@ctrl-ui/react/ui/input";
 import { NativeSelect } from "@ctrl-ui/react/ui/native-select";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Heading } from "@ctrl-ui/react/ui/typography";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { SURVEY_POSITIONS, type SurveyPosition } from "@reflet/survey-core";
 import { useMutation } from "convex/react";
 import { type FormEvent, type ReactNode, useState } from "react";
-import { H3 } from "@/components/ui/typography";
 import { AudienceFields } from "@/features/surveys/components/settings/audience-fields";
 import { TriggerFields } from "@/features/surveys/components/settings/trigger-fields";
 import { TriggerPicker } from "@/features/surveys/components/settings/trigger-picker";
@@ -50,7 +50,9 @@ function SettingsSection({
   return (
     <section aria-labelledby={id} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <H3 id={id}>{title}</H3>
+        <Heading id={id} level={3} size="heading-2">
+          {title}
+        </Heading>
         <p className="text-pretty text-muted-foreground text-sm">
           {description}
         </p>
@@ -133,7 +135,6 @@ export function SurveySettings({ survey }: { survey: SettingsSurvey }) {
         title="Trigger"
       >
         <TriggerPicker
-          density="compact"
           labelledBy="settings-trigger"
           onChange={(triggerType) => updateDraft({ triggerType })}
           value={draft.triggerType}

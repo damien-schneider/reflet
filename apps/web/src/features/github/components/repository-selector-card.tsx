@@ -13,6 +13,7 @@ import {
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import {
   ArrowsClockwise,
   GitBranch,
@@ -22,7 +23,6 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Text } from "@/components/ui/typography";
 
 type SearchableRepository = Repository & { searchText: string };
 
@@ -96,7 +96,13 @@ export function RepositorySelectorSection({
             aria-hidden="true"
             className="size-4 shrink-0 text-muted-foreground"
           />
-          <Text className="truncate font-medium" title={repositoryFullName}>
+          <Text
+            as="p"
+            className="truncate"
+            size="body-lg"
+            title={repositoryFullName}
+            weight="medium"
+          >
             {repositoryFullName}
           </Text>
         </div>

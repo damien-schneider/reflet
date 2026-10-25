@@ -2,10 +2,10 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowDown, ArrowUp, Plus, X } from "@phosphor-icons/react";
 import { useId } from "react";
-import { Label } from "@/components/ui/label";
 import { useAutosavedText } from "@/features/surveys/components/flow/inspector/autosaved-field";
 
 interface ChoicesEditorProps {

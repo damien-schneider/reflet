@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsLink,
@@ -10,7 +10,6 @@ import {
   DocsText,
 } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -98,12 +97,14 @@ export default function InstallationPage() {
       <DocsSection id="installed-files" sections={SECTIONS}>
         <DocsText>
           Each command adds one component file to your{" "}
-          <InlineCode>components/ui/</InlineCode> directory, adds the{" "}
-          <InlineCode>--tag-*</InlineCode> color tokens to your CSS, and
-          installs the packages the component needs:{" "}
-          <InlineCode>motion</InlineCode>, <InlineCode>clsx</InlineCode>,{" "}
-          <InlineCode>tailwind-merge</InlineCode> and, for the feedback cards,{" "}
-          <InlineCode>@phosphor-icons/react</InlineCode>.
+          <MarkdownInlineCode>components/ui/</MarkdownInlineCode> directory,
+          adds the <MarkdownInlineCode>--tag-*</MarkdownInlineCode> color tokens
+          to your CSS, and installs the packages the component needs:{" "}
+          <MarkdownInlineCode>motion</MarkdownInlineCode>,{" "}
+          <MarkdownInlineCode>clsx</MarkdownInlineCode>,{" "}
+          <MarkdownInlineCode>tailwind-merge</MarkdownInlineCode> and, for the
+          feedback cards,{" "}
+          <MarkdownInlineCode>@phosphor-icons/react</MarkdownInlineCode>.
         </DocsText>
         <CodeBlock code={FILE_TREE} title="Project tree" />
       </DocsSection>
@@ -120,8 +121,8 @@ export default function InstallationPage() {
           These components are presentational: they take data through props and
           don’t call any backend. To show live Reflet data, fetch it with{" "}
           <DocsLink href="/docs/sdk/react-hooks">Reflet SDK hooks</DocsLink>{" "}
-          such as <InlineCode>useFeedbackList()</InlineCode> and pass the items
-          in.
+          such as <MarkdownInlineCode>useFeedbackList()</MarkdownInlineCode> and
+          pass the items in.
         </DocsText>
       </DocsSection>
     </DocsPage>

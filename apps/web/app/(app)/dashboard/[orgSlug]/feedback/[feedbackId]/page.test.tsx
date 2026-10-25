@@ -274,18 +274,6 @@ vi.mock("@ctrl-ui/react/ui/select", () => ({
   }) => <span data-testid="select-value">{children}</span>,
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H1: ({ children }: { children: React.ReactNode; variant?: string }) => (
-    <h1>{children}</h1>
-  ),
-  H2: ({ children }: { children: React.ReactNode; variant?: string }) => (
-    <h2>{children}</h2>
-  ),
-  Muted: ({ children }: { children: React.ReactNode }) => (
-    <span data-testid="muted">{children}</span>
-  ),
-}));
-
 import FeedbackDetailPage from "./page";
 
 describe("FeedbackDetailPage", () => {

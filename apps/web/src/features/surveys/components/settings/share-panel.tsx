@@ -2,17 +2,17 @@
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Heading } from "@ctrl-ui/react/ui/typography";
 import { ArrowSquareOut, Check, Robot } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import Link from "next/link";
 import { type ReactNode, useState, useSyncExternalStore } from "react";
 import { CopyButton } from "@/components/copy-button";
-import { Label } from "@/components/ui/label";
-import { H3 } from "@/components/ui/typography";
 import { CodeSnippet } from "@/features/surveys/components/settings/code-snippet";
 import {
   type OrgPublicKey,
@@ -59,9 +59,9 @@ function ShareBlock({
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <H3 id={id} variant="card">
+        <Heading id={id} level={3}>
           {title}
-        </H3>
+        </Heading>
         <p className="text-pretty text-muted-foreground text-sm">
           {description}
         </p>

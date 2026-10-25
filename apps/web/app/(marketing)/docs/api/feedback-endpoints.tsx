@@ -1,12 +1,12 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { DocsLink } from "@/components/docs/docs-page";
-import { InlineCode } from "@/components/ui/typography";
 import { BASE_URL, type EndpointDefinition, param } from "./endpoint-data";
 
 const READ_ACCESS = (
   <>
     Public or secret key. A public key only reads a public organization; a
-    private one answers <InlineCode>403</InlineCode> unless you use the secret
-    key.
+    private one answers <MarkdownInlineCode>403</MarkdownInlineCode> unless you
+    use the secret key.
   </>
 );
 
@@ -14,16 +14,20 @@ const PRIVATE_FIELDS_ACCESS = (
   <>
     {READ_ACCESS} With the secret key the response also includes internal
     feedback, feedback still awaiting publication, and the private fields{" "}
-    <InlineCode>context</InlineCode>, <InlineCode>assigneeId</InlineCode>,{" "}
-    <InlineCode>claimedBy</InlineCode>,{" "}
-    <InlineCode>githubIssueNumber</InlineCode>,{" "}
-    <InlineCode>githubHtmlUrl</InlineCode>, <InlineCode>isInternal</InlineCode>,{" "}
-    <InlineCode>publication</InlineCode> (<InlineCode>internal</InlineCode>,{" "}
-    <InlineCode>pending</InlineCode>, <InlineCode>approved</InlineCode> or{" "}
-    <InlineCode>rejected</InlineCode>) and{" "}
-    <InlineCode>syncedFromGithub</InlineCode>. Add a{" "}
+    <MarkdownInlineCode>context</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>assigneeId</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>claimedBy</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>githubIssueNumber</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>githubHtmlUrl</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>isInternal</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>publication</MarkdownInlineCode> (
+    <MarkdownInlineCode>internal</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>pending</MarkdownInlineCode>,{" "}
+    <MarkdownInlineCode>approved</MarkdownInlineCode> or{" "}
+    <MarkdownInlineCode>rejected</MarkdownInlineCode>) and{" "}
+    <MarkdownInlineCode>syncedFromGithub</MarkdownInlineCode>. Add a{" "}
     <DocsLink href="#user-token">signed user token</DocsLink> to fill{" "}
-    <InlineCode>hasVoted</InlineCode>.
+    <MarkdownInlineCode>hasVoted</MarkdownInlineCode>.
   </>
 );
 
@@ -107,7 +111,7 @@ const GET_FEEDBACK: EndpointDefinition = {
   access: (
     <>
       {PRIVATE_FIELDS_ACCESS} A signed user token also fills{" "}
-      <InlineCode>isSubscribed</InlineCode>.
+      <MarkdownInlineCode>isSubscribed</MarkdownInlineCode>.
     </>
   ),
   description: "Get one feedback item.",
@@ -165,7 +169,7 @@ const LIST_COMMENTS: EndpointDefinition = {
   access: (
     <>
       {READ_ACCESS} With the secret key, authors include their{" "}
-      <InlineCode>email</InlineCode>.
+      <MarkdownInlineCode>email</MarkdownInlineCode>.
     </>
   ),
   description:

@@ -2,6 +2,7 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { DialogBody, DialogFooter } from "@ctrl-ui/react/ui/dialog";
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { ArrowLeft } from "@phosphor-icons/react";
@@ -10,7 +11,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { SurveyDraft } from "@reflet/backend/convex/surveys/lib/ai_draft_schema";
 import { useAction } from "convex/react";
 import { type FormEvent, useId, useState } from "react";
-import { Label } from "@/components/ui/label";
 import { convexErrorMessage } from "@/lib/convex-error-message";
 
 interface DescribeSurveyStepProps {

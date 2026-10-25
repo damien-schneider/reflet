@@ -35,8 +35,6 @@ function createSubmitExtension(onSubmit: () => void) {
   });
 }
 
-// --- Image NodeView types ---
-
 export function createExtensions(options: CreateExtensionsOptions) {
   const { placeholder, maxLength, onImageUpload, onVideoUpload, onSubmit } =
     options;
@@ -109,10 +107,14 @@ export function createEditorProps(
       _slice: unknown,
       moved: boolean
     ) => {
-      if (moved) return false;
+      if (moved) {
+        return false;
+      }
 
       const files = event.dataTransfer?.files;
-      if (!files?.length) return false;
+      if (!files?.length) {
+        return false;
+      }
 
       const file = files[0];
       if (file?.type.startsWith("image/") || file?.type.startsWith("video/")) {
@@ -125,7 +127,9 @@ export function createEditorProps(
     },
     handlePaste: (_view: unknown, event: ClipboardEvent) => {
       const items = event.clipboardData?.items;
-      if (!items) return false;
+      if (!items) {
+        return false;
+      }
 
       for (const item of items) {
         if (item.type.startsWith("image/") || item.type.startsWith("video/")) {

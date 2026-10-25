@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { DotsThreeVertical, Gear, Power, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
@@ -23,7 +24,6 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
-import { Muted, Text } from "@/components/ui/typography";
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";
 
@@ -120,11 +120,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Text
-              className="mb-2 font-medium"
-              id={embedLabelId}
-              variant="bodySmall"
-            >
+            <Text as="p" className="mb-2" id={embedLabelId} weight="medium">
               Embed code
             </Text>
             <figure aria-labelledby={embedLabelId} className="relative">
@@ -139,9 +135,9 @@ export function WidgetCard({ widget }: WidgetCardProps) {
                 />
               </div>
             </figure>
-            <Muted className="mt-1 text-xs">
+            <Text as="p" className="mt-1" size="caption" tone="muted">
               Add this script tag to your site’s HTML.
-            </Muted>
+            </Text>
           </div>
 
           {widget.settings ? (

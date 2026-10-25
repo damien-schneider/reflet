@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { format, formatDistanceToNow } from "date-fns";
 
 interface CommentAvatarProps {
@@ -17,9 +18,7 @@ export function CommentAvatar({ image, isReply, name }: CommentAvatarProps) {
   return (
     <Avatar className={cn("shrink-0", isReply ? "size-6" : "size-8")}>
       <AvatarImage alt="" src={image} />
-      <AvatarFallback className="text-xs">
-        {name.charAt(0).toUpperCase() || "?"}
-      </AvatarFallback>
+      <AvatarFallback>{name.charAt(0).toUpperCase() || "?"}</AvatarFallback>
     </Avatar>
   );
 }
@@ -28,15 +27,10 @@ export function CommentTimestamp({ createdAt }: { createdAt: number }) {
   const date = new Date(createdAt);
   return (
     <Tooltip>
-      <TooltipTrigger
-        render={
-          <time
-            className="text-muted-foreground text-xs tabular-nums"
-            dateTime={date.toISOString()}
-          />
-        }
-      >
-        {formatDistanceToNow(date, { addSuffix: true })}
+      <TooltipTrigger render={<time dateTime={date.toISOString()} />}>
+        <Text as="span" numeric size="caption" tone="muted">
+          {formatDistanceToNow(date, { addSuffix: true })}
+        </Text>
       </TooltipTrigger>
       <TooltipContent>{format(date, "PPP 'at' p")}</TooltipContent>
     </Tooltip>

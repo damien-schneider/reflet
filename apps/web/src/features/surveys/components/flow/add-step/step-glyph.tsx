@@ -81,17 +81,10 @@ const GLYPHS: Record<QuestionType, GlyphShape> = {
   },
 };
 
-/** A small dotted mark that tells question types apart at a glance. */
-export function StepGlyph({
-  className,
-  type,
-}: {
-  className?: string;
-  type: QuestionType;
-}) {
+export function StepGlyph({ type }: { type: QuestionType }) {
   const glyph = GLYPHS[type];
   return (
-    <svg aria-hidden className={className} fill="none" viewBox="0 0 28 28">
+    <svg aria-hidden fill="none" viewBox="0 0 28 28">
       <path
         d={glyph.trail}
         opacity={0.28}

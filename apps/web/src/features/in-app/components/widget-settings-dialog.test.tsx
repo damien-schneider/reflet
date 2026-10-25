@@ -80,16 +80,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
-
 vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
@@ -137,16 +127,6 @@ vi.mock("@ctrl-ui/react/ui/switch", () => ({
       type="button"
     />
   ),
-}));
-
-vi.mock("@/components/ui/typography", () => ({
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
 }));
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";

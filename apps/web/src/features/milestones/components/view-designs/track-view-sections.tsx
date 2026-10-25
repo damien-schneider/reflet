@@ -15,11 +15,6 @@ import type { MilestonesViewProps } from "../milestones-view";
 const ZONE_GROWTH_FACTOR = 1.12;
 const PANEL_EASE = [0.2, 0, 0, 1] as const;
 
-const ADD_TRIGGER_INLINE =
-  "flex w-8 shrink-0 items-center justify-center self-stretch rounded-sm text-sm text-muted-foreground/60 transition-colors hover:bg-muted-foreground/10 hover:text-foreground";
-const ADD_TRIGGER_BLOCK =
-  "flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/30 border-dashed text-lg text-muted-foreground/60 transition-colors hover:border-muted-foreground/60 hover:text-foreground";
-
 export type TrackMilestone = ComponentProps<
   typeof MilestoneSegment
 >["milestone"];
@@ -29,7 +24,7 @@ export interface TrackLayoutProps {
   activeMilestoneId: Id<"milestones"> | null;
   addPopoverProps: (
     horizon: TimeHorizon
-  ) => ComponentProps<typeof MilestoneFormPopover>;
+  ) => Omit<ComponentProps<typeof MilestoneFormPopover>, "trigger">;
   groupedMilestones: Map<TimeHorizon, TrackMilestone[]>;
   isAdmin: boolean;
   onToggle: (milestoneId: Id<"milestones">) => void;
@@ -104,10 +99,7 @@ function TrackZone({
       )}
 
       {isAdmin && !isEmpty && (
-        <MilestoneFormPopover
-          {...addPopoverProps(horizon)}
-          triggerClassName={ADD_TRIGGER_INLINE}
-        />
+        <MilestoneFormPopover {...addPopoverProps(horizon)} trigger="inline" />
       )}
 
       {isEmpty && (
@@ -115,7 +107,7 @@ function TrackZone({
           {isAdmin ? (
             <MilestoneFormPopover
               {...addPopoverProps(horizon)}
-              triggerClassName={ADD_TRIGGER_BLOCK}
+              trigger="block"
             />
           ) : (
             <div className="h-10 w-full rounded-sm bg-muted/20" />
@@ -229,10 +221,7 @@ function MobileHorizonSection({
         ))}
 
         {isAdmin && (
-          <MilestoneFormPopover
-            {...addPopoverProps(horizon)}
-            triggerClassName={ADD_TRIGGER_BLOCK}
-          />
+          <MilestoneFormPopover {...addPopoverProps(horizon)} trigger="block" />
         )}
       </div>
     </section>

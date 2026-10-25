@@ -10,6 +10,7 @@ import {
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -17,7 +18,6 @@ import type { FunctionReturnType } from "convex/server";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { use } from "react";
-import { Muted } from "@/components/ui/typography";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { FeedbackMetadataBar } from "@/features/feedback/components/feedback-detail/feedback-metadata-bar";
 import { useCreateGithubIssue } from "@/features/github/hooks/use-create-github-issue";
@@ -202,11 +202,11 @@ function FeedbackComments({
                 <span className="font-medium">
                   {comment.author?.name ?? "Anonymous"}
                 </span>
-                <Muted>
+                <Text as="p" tone="muted">
                   {formatDistanceToNow(comment.createdAt, {
                     addSuffix: true,
                   })}
-                </Muted>
+                </Text>
               </div>
             </CardHeader>
             <CardContent>
@@ -217,7 +217,9 @@ function FeedbackComments({
       ) : (
         <Card>
           <CardContent className="text-center">
-            <Muted>No comments yet.</Muted>
+            <Text as="p" tone="muted">
+              No comments yet.
+            </Text>
           </CardContent>
         </Card>
       )}

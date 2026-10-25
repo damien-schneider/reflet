@@ -1,10 +1,13 @@
+import {
+  MarkdownBlockquote,
+  MarkdownInlineCode,
+} from "@ctrl-ui/react/ui/markdown-elements";
 import { Table, TableCell, TableHead } from "@ctrl-ui/react/ui/table";
 import type { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
 
 import { HeadingAnchor } from "@/components/heading-anchor";
-import { Blockquote, InlineCode } from "@/components/ui/typography";
 import { headingSlug } from "@/lib/heading-slug";
 
 const linkClassName =
@@ -32,12 +35,14 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         </Link>
       );
     },
-    blockquote: ({ children }) => <Blockquote>{children}</Blockquote>,
+    blockquote: ({ children }) => (
+      <MarkdownBlockquote>{children}</MarkdownBlockquote>
+    ),
     code: ({ children, className }) =>
       className ? (
         <code className={className}>{children}</code>
       ) : (
-        <InlineCode>{children}</InlineCode>
+        <MarkdownInlineCode>{children}</MarkdownInlineCode>
       ),
     h1: ({ children }) => (
       <h1 className="mt-12 mb-6 text-balance text-display">{children}</h1>

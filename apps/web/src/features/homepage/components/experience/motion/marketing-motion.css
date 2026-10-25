@@ -9,7 +9,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   :where(.feature-explorer[data-interacted="true"])
-    :where(.feature-preview-body[data-active="true"]) {
+    :where(.feature-preview-body:not([inert])) {
     animation: marketing-panel-arrive var(--marketing-panel-duration)
       var(--marketing-ease) backwards;
   }

@@ -87,23 +87,25 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
 }));
 
 vi.mock("@ctrl-ui/react/ui/sidebar", () => ({
-  useSidebar: () => ({ isMobile: false, state: "expanded" }),
+  SidebarMenu: ({ children }: { children: React.ReactNode }) => (
+    <ul>{children}</ul>
+  ),
+  SidebarMenuButton: ({
+    children,
+    disabled,
+  }: {
+    children?: React.ReactNode;
+    disabled?: boolean;
+    [key: string]: unknown;
+  }) => (
+    <button disabled={disabled} type="button">
+      {children}
+    </button>
+  ),
+  SidebarMenuItem: ({ children }: { children: React.ReactNode }) => (
+    <li>{children}</li>
+  ),
 }));
-
-vi.mock("@ctrl-ui/react/ui/tooltip", async () => {
-  const { cloneElement } = await import("react");
-  return {
-    Tooltip: ({ children }: { children: React.ReactNode }) => children,
-    TooltipContent: () => null,
-    TooltipTrigger: ({
-      children,
-      render,
-    }: {
-      children: React.ReactNode;
-      render: React.ReactElement;
-    }) => cloneElement(render, undefined, children),
-  };
-});
 
 vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({

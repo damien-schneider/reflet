@@ -11,11 +11,11 @@ import {
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { Check, GithubLogo, Warning } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Muted, Text } from "@/components/ui/typography";
 
 const ADMIN_ONLY_COPY =
   "Only admins can connect GitHub. Ask an admin in your organization to connect it.";
@@ -50,18 +50,20 @@ export function GitHubConnectionSection({
       <div className="flex flex-col items-start gap-3">
         <div className="flex items-center gap-2">
           <Warning aria-hidden="true" className="size-5 text-warning-text" />
-          <Text className="font-medium">GitHub connection lost</Text>
+          <Text as="p" size="body-lg" weight="medium">
+            GitHub connection lost
+          </Text>
           <Badge size="sm" variant="outline">
             Disconnected
           </Badge>
         </div>
-        <Muted className="text-pretty">
+        <Text as="p" className="text-pretty" tone="muted">
           The teammate who connected GitHub left this organization, so syncing
           has stopped.{" "}
           {isAdmin
             ? "Reconnect GitHub with your account to resume."
             : "Ask an admin to reconnect GitHub."}
-        </Muted>
+        </Text>
         {isAdmin ? (
           <ConnectGitHubActions
             anotherAccountHref={anotherAccountHref}
@@ -92,7 +94,13 @@ export function GitHubConnectionSection({
               className="size-8 shrink-0 text-muted-foreground"
             />
           )}
-          <Text className="truncate font-medium" title={accountLogin}>
+          <Text
+            as="p"
+            className="truncate"
+            size="body-lg"
+            title={accountLogin}
+            weight="medium"
+          >
             {accountLogin ?? "GitHub account"}
           </Text>
           <Badge color="green" size="sm">
@@ -112,12 +120,12 @@ export function GitHubConnectionSection({
 
   return (
     <div className="flex flex-col items-start gap-3">
-      <Muted className="text-pretty">
+      <Text as="p" className="text-pretty" tone="muted">
         GitHub isn’t connected yet.{" "}
         {isAdmin
           ? "Connect it to sync releases and issues with a repository."
           : ADMIN_ONLY_COPY}
-      </Muted>
+      </Text>
       {isAdmin ? (
         <ConnectGitHubActions
           anotherAccountHref={anotherAccountHref}

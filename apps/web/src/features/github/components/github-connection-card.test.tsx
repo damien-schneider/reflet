@@ -84,44 +84,6 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H3: ({
-    children,
-    variant,
-    className,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-  }) => (
-    <h3 className={className} data-variant={variant}>
-      {children}
-    </h3>
-  ),
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <p className={className}>{children}</p>,
-  Text: ({
-    children,
-    variant,
-    className,
-    title,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-    title?: string;
-  }) => (
-    <span className={className} data-variant={variant} title={title}>
-      {children}
-    </span>
-  ),
-}));
-
 import { GitHubConnectionSection } from "./github-connection-card";
 
 describe("GitHubConnectionSection", () => {

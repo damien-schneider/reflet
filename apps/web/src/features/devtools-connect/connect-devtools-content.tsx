@@ -2,13 +2,13 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { BASE64URL_SHA256 } from "@reflet/backend/convex/devtools/constants";
 import { isAllowedRedirectUri } from "@reflet/backend/convex/devtools/redirect_uri";
 import { useAction, useQuery } from "convex/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
 import { AuthPageShell } from "@/features/auth/components/auth-page-shell";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 import {
@@ -118,7 +118,9 @@ function ConnectTarget({ request }: { request: ConnectRequest }) {
   if (target.kind === "signedOut") {
     return (
       <AuthPageShell>
-        <Muted className="text-center">{copy.signIn}</Muted>
+        <Text as="p" className="text-center" tone="muted">
+          {copy.signIn}
+        </Text>
         <UnifiedAuthForm redirectTo={authReturnPath(request)} />
       </AuthPageShell>
     );
@@ -196,12 +198,12 @@ function ConsentView({
 
   return (
     <ConnectShell>
-      <H1 className="mb-2" variant="page">
+      <Heading className="mb-2" level={1} size="display">
         {copy.title}
-      </H1>
-      <Muted className="mb-6 text-pretty">
+      </Heading>
+      <Text as="p" className="mb-6 text-pretty" tone="muted">
         {copy.consent({ organizationName, serverOrigin: request.serverOrigin })}
-      </Muted>
+      </Text>
       <p
         className="mb-4 min-h-[1lh] text-destructive-text text-sm"
         role="alert"
@@ -239,10 +241,12 @@ function ConnectNotice({
 }) {
   return (
     <ConnectShell>
-      <H1 className="mb-2" variant="page">
+      <Heading className="mb-2" level={1} size="display">
         {CONNECT_COPY[client].title}
-      </H1>
-      <Muted>{message}</Muted>
+      </Heading>
+      <Text as="p" tone="muted">
+        {message}
+      </Text>
     </ConnectShell>
   );
 }
@@ -251,7 +255,11 @@ function ConnectProgress({ label }: { label?: string }) {
   return (
     <div className="flex flex-col items-center gap-4">
       <Spinner size="lg" />
-      {label && <Muted aria-live="polite">{label}</Muted>}
+      {label && (
+        <Text aria-live="polite" as="p" tone="muted">
+          {label}
+        </Text>
+      )}
     </div>
   );
 }

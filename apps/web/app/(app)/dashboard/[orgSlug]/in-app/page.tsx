@@ -19,6 +19,7 @@ import {
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   PageBody,
   PageHeader,
@@ -27,13 +28,12 @@ import {
 } from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FormEvent, use, useState } from "react";
-import { Label } from "@/components/ui/label";
-import { H3, Muted } from "@/components/ui/typography";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
 import {
@@ -214,10 +214,12 @@ export default function WidgetsPage({
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
-              <H3 id="live-chat-heading" variant="card">
+              <Heading id="live-chat-heading" level={3}>
                 Live chat
-              </H3>
-              <Muted>A chat window your visitors can open on any page.</Muted>
+              </Heading>
+              <Text as="p" tone="muted">
+                A chat window your visitors can open on any page.
+              </Text>
             </div>
             <CreateLiveChatDialog organizationId={org._id} />
           </div>

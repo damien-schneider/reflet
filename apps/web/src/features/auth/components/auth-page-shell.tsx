@@ -1,7 +1,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import type { Icon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { H1, Muted } from "@/components/ui/typography";
 
 export function AuthPageShell({
   children,
@@ -50,10 +50,12 @@ export function AuthStatus({
       >
         <StatusIcon aria-hidden className="size-7" weight="duotone" />
       </div>
-      <H1 className="mb-2" variant="page">
+      <Heading className="mb-2" level={1} size="display">
         {title}
-      </H1>
-      <Muted className="mb-6 text-pretty">{children}</Muted>
+      </Heading>
+      <Text as="p" className="mb-6 text-pretty" tone="muted">
+        {children}
+      </Text>
       {actions && <div className="flex flex-col gap-3">{actions}</div>}
     </AuthPageShell>
   );

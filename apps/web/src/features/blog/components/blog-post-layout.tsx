@@ -1,3 +1,4 @@
+import { MarkdownRoot } from "@ctrl-ui/react/ui/markdown-elements";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
 import type { BlogPostMeta } from "@/lib/blog";
@@ -78,7 +79,7 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
           </p>
         </header>
 
-        <div>{children}</div>
+        <MarkdownRoot>{children}</MarkdownRoot>
 
         {meta.tags.length > 0 ? (
           <footer className="mt-14 border-(--marketing-hairline) border-t pt-8">

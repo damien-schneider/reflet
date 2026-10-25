@@ -7,13 +7,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@ctrl-ui/react/ui/select";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Tooltip,
@@ -29,12 +22,7 @@ import { useState } from "react";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import type { TimeHorizon } from "@/lib/milestone-constants";
-import {
-  isTimeHorizon,
-  TIME_HORIZON_CONFIG,
-  TIME_HORIZONS,
-} from "@/lib/milestone-constants";
-
+import { TIME_HORIZON_CONFIG } from "@/lib/milestone-constants";
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 interface MilestoneFormPopoverProps {
@@ -43,19 +31,16 @@ interface MilestoneFormPopoverProps {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   organizationId: Id<"organizations">;
-  /** When true, show a time horizon selector in the form */
-  showHorizonPicker?: boolean;
-  triggerClassName?: string;
+  trigger: "inline" | "block";
 }
 
 export function MilestoneFormPopover({
   organizationId,
   defaultTimeHorizon,
-  showHorizonPicker = false,
   open,
   onOpenChange,
   onCreated,
-  triggerClassName,
+  trigger,
 }: MilestoneFormPopoverProps) {
   const createMilestone = useMutation(api.organizations.milestones.create);
 
@@ -63,8 +48,6 @@ export function MilestoneFormPopover({
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState<string | undefined>();
   const [color, setColor] = useState<TagColor>("blue");
-  const [timeHorizon, setTimeHorizon] =
-    useState<TimeHorizon>(defaultTimeHorizon);
   const [targetDate, setTargetDate] = useState<number | undefined>();
 
   const handleSubmit = async () => {
@@ -81,12 +64,11 @@ export function MilestoneFormPopover({
         name: trimmedName,
         organizationId,
         targetDate,
-        timeHorizon: showHorizonPicker ? timeHorizon : defaultTimeHorizon,
+        timeHorizon: defaultTimeHorizon,
       });
       setName("");
       setEmoji(undefined);
       setColor("blue");
-      setTimeHorizon(defaultTimeHorizon);
       setTargetDate(undefined);
       onCreated?.();
       onOpenChange(false);
@@ -98,18 +80,31 @@ export function MilestoneFormPopover({
 
   const horizonLabel = TIME_HORIZON_CONFIG[defaultTimeHorizon].label;
   const addLabel = `Add milestone to ${horizonLabel}`;
+  const triggerButton =
+    trigger === "inline" ? (
+      <Button
+        aria-label={addLabel}
+        className="h-auto w-8 shrink-0 self-stretch"
+        iconOnly
+        size="sm"
+        variant="quiet"
+      />
+    ) : (
+      <Button
+        aria-label={addLabel}
+        className="w-full"
+        size="lg"
+        variant="dashed"
+      />
+    );
 
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
       <Tooltip>
         <TooltipTrigger
           render={
-            <PopoverTrigger
-              aria-label={addLabel}
-              className={triggerClassName}
-              type="button"
-            >
-              <Plus aria-hidden className="size-3.5" />
+            <PopoverTrigger render={triggerButton}>
+              <Plus aria-hidden />
             </PopoverTrigger>
           }
         />
@@ -137,28 +132,6 @@ export function MilestoneFormPopover({
           </div>
 
           <NotionColorPicker onChange={(c) => setColor(c)} value={color} />
-
-          {showHorizonPicker && (
-            <Select
-              onValueChange={(val) => {
-                if (val && isTimeHorizon(val)) {
-                  setTimeHorizon(val);
-                }
-              }}
-              value={timeHorizon}
-            >
-              <SelectTrigger aria-label="Time horizon">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIME_HORIZONS.map((h) => (
-                  <SelectItem key={h} value={h}>
-                    {TIME_HORIZON_CONFIG[h].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
 
           <MilestoneDatePicker onChange={setTargetDate} value={targetDate} />
 

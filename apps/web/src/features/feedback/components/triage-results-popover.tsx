@@ -5,6 +5,7 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
   PopoverContent,
+  PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
@@ -73,8 +74,8 @@ export function ResultsPopover({
         <CaretRight aria-hidden className="size-3 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80" padding="none">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <PopoverTitle className="flex items-center gap-1.5 text-sm">
+        <PopoverHeader className="flex items-center justify-between">
+          <PopoverTitle className="flex items-center gap-1.5">
             <Sparkle
               aria-hidden
               className="size-3.5 text-primary"
@@ -85,7 +86,7 @@ export function ResultsPopover({
           <Button onClick={handleDismiss} size="xs" variant="ghost">
             Dismiss
           </Button>
-        </div>
+        </PopoverHeader>
         <ScrollArea viewportClassName="max-h-64">
           <ul className="divide-y">
             {recentItems?.map((item: TriagedItem) => {
@@ -94,7 +95,7 @@ export function ResultsPopover({
               );
 
               return (
-                <li className="px-3 py-2.5" key={item._id}>
+                <li className="px-4 py-2.5" key={item._id}>
                   <p
                     className="truncate font-medium text-sm"
                     title={item.title}
@@ -118,12 +119,12 @@ export function ResultsPopover({
             })}
           </ul>
           {recentItems?.length === 0 && (
-            <p className="px-3 py-4 text-center text-muted-foreground text-sm">
+            <p className="p-4 text-center text-muted-foreground text-sm">
               No items were tagged in this run.
             </p>
           )}
           {recentItems === undefined && (
-            <div aria-busy="true" className="space-y-3 p-3">
+            <div aria-busy="true" className="space-y-3 px-4 py-3">
               {RESULT_SKELETON_WIDTHS.map((width) => (
                 <div className="space-y-1.5" key={width}>
                   <Skeleton className={cn("h-4", width)} />

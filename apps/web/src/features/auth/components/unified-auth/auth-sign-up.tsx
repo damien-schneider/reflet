@@ -1,7 +1,7 @@
 "use client";
 
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
-import { H1, Muted } from "@/components/ui/typography";
 import type { AuthMode } from "./hooks/use-auth-form";
 import { titleVariants } from "./lib/auth-validation";
 
@@ -37,10 +37,12 @@ export function AuthHeader({ mode }: AuthHeaderProps) {
             key={mode ?? "initial"}
             variants={titleVariants}
           >
-            <H1 className="mb-2" variant="page">
+            <Heading className="mb-2" level={1} size="display">
               {getTitle(mode)}
-            </H1>
-            <Muted>{getDescription(mode)}</Muted>
+            </Heading>
+            <Text as="p" tone="muted">
+              {getDescription(mode)}
+            </Text>
           </m.div>
         </AnimatePresence>
       </LazyMotion>

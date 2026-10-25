@@ -3,12 +3,12 @@
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
-import { Muted } from "@/components/ui/typography";
 import { AutomationSection } from "@/features/changelog/components/release-settings/automation-section";
 import { ManualSyncSection } from "@/features/changelog/components/release-settings/manual-sync-section";
 import type { ChangelogSettings } from "@/features/changelog/components/release-settings/types";
@@ -148,11 +148,11 @@ export function ChangelogSettingsTab({
                 />
                 <div>
                   <h3 className="font-medium text-sm">GitHub sync wizard</h3>
-                  <Muted className="text-xs">
+                  <Text as="p" size="caption" tone="muted">
                     {isSyncConfigured
                       ? "Re-run the guided setup."
                       : "Set up GitHub release sync step by step."}
-                  </Muted>
+                  </Text>
                 </div>
               </div>
               <Button
@@ -197,10 +197,10 @@ export function ChangelogSettingsTab({
               />
               <div>
                 <h3 className="font-medium text-sm">GitHub sync</h3>
-                <Muted className="text-xs">
+                <Text as="p" size="caption" tone="muted">
                   Connect a GitHub repository to sync releases and generate
                   notes with AI.
-                </Muted>
+                </Text>
               </div>
             </div>
             <ButtonLink

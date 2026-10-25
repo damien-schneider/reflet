@@ -37,9 +37,7 @@ function MemberAvatar({ member }: { member: TeamMember }) {
   return (
     <Avatar className="size-5">
       <AvatarImage alt="" src={member.image} />
-      <AvatarFallback className="text-micro">
-        {getInitials(member.name, member.email)}
-      </AvatarFallback>
+      <AvatarFallback>{getInitials(member.name, member.email)}</AvatarFallback>
     </Avatar>
   );
 }

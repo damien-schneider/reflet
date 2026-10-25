@@ -1,7 +1,7 @@
 "use client";
 
 import type { FlowKnobStyle } from "@ctrl-ui/react/knob-contracts/flow-knobs";
-import { cn } from "@ctrl-ui/react/lib/cn";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   FlowEdge,
   FlowEdgeLabel,
@@ -85,18 +85,17 @@ export function StepEdge({
         <AddStepPopover
           anchor={insertAnchorFor(model, connection)}
           trigger={
-            <button
+            <Button
               aria-label={`Add a step ${placement}`}
-              className={cn(
-                "grid size-5 place-items-center rounded-full border bg-card text-muted-foreground shadow-(--reflet-control-shadow)",
-                "transition-colors duration-150 hover:border-foreground/30 hover:text-foreground motion-reduce:transition-none",
-                "focus-visible:outline-2 focus-visible:outline-ring"
-              )}
-              type="button"
+              className="[--cui-button-foreground:var(--muted-foreground)] [--cui-button-height:calc(var(--spacing)*5)] [--cui-button-icon:calc(var(--spacing)*3)]"
+              iconOnly
+              shape="circle"
+              size="xs"
+              variant="surface"
             />
           }
         >
-          <Plus aria-hidden className="size-3" weight="bold" />
+          <Plus aria-hidden weight="bold" />
         </AddStepPopover>
       </FlowEdgeLabel>
     </>

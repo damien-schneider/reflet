@@ -46,7 +46,7 @@ export function ErrorPage({
     >
       <Empty>
         <EmptyHeader>
-          <EmptyMedia className="text-destructive-text">
+          <EmptyMedia className="[--cui-empty-media-foreground:var(--destructive-text)]">
             <Warning weight="fill" />
           </EmptyMedia>
           <EmptyTitle>

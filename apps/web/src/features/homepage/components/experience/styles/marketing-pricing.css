@@ -22,7 +22,7 @@
   min-width: 92px;
 }
 :where(.marketing-billing-toggle button[aria-pressed="true"]) {
-  color: var(--foreground);
+  --cui-button-foreground: var(--foreground);
 }
 :where(.marketing-billing-indicator) {
   position: absolute;

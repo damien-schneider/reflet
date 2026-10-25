@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,7 +11,6 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Tag } from "@phosphor-icons/react";
-import { Label } from "@/components/ui/label";
 import type { ChangelogSettingsUpdate, VersionIncrement } from "./types";
 
 const INCREMENT_OPTIONS: { label: string; value: VersionIncrement }[] = [
@@ -55,9 +55,7 @@ export const VersioningSection = ({
 
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label className="text-xs" htmlFor="settings-version-prefix">
-            Version prefix
-          </Label>
+          <Label htmlFor="settings-version-prefix">Version prefix</Label>
           <Input
             className="mt-1"
             defaultValue={versionPrefix ?? "v"}
@@ -69,9 +67,7 @@ export const VersioningSection = ({
           />
         </div>
         <div className="flex-1">
-          <Label className="text-xs" htmlFor="settings-default-increment">
-            Default increment
-          </Label>
+          <Label htmlFor="settings-default-increment">Default increment</Label>
           <Select
             defaultValue={versionIncrement ?? "patch"}
             disabled={!isAdmin || isSaving}

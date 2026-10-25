@@ -1,6 +1,6 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { CodeBlock } from "@/components/docs/code-block";
 import { DocsList, DocsSection, DocsText } from "@/components/docs/docs-page";
-import { InlineCode } from "@/components/ui/typography";
 import { SECTIONS } from "./sections";
 
 const DEVTOOLS_ROUTE_SNIPPET = `// Next.js: app/api/reflet-devtools/[...path]/route.ts
@@ -33,11 +33,12 @@ export function DevtoolsSection() {
         route. To reach the board, click Connect to Reflet in the panel footer
         and approve your dev server on reflet.app: it keeps a revocable token
         outside your repository. You can also set{" "}
-        <InlineCode>REFLET_SECRET_KEY</InlineCode> on the server instead. Set{" "}
-        <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
-        <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
-        <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
-        for the editor links.
+        <MarkdownInlineCode>REFLET_SECRET_KEY</MarkdownInlineCode> on the server
+        instead. Set <MarkdownInlineCode>REFLET_EDITOR</MarkdownInlineCode> to{" "}
+        <MarkdownInlineCode>cursor</MarkdownInlineCode>,{" "}
+        <MarkdownInlineCode>zed</MarkdownInlineCode>,{" "}
+        <MarkdownInlineCode>windsurf</MarkdownInlineCode> or{" "}
+        <MarkdownInlineCode>webstorm</MarkdownInlineCode> for the editor links.
       </DocsText>
       <CodeBlock code={DEVTOOLS_ROUTE_SNIPPET} />
     </DocsSection>
@@ -58,9 +59,10 @@ export function SessionsSection() {
       </DocsText>
       <DocsText>
         On your dev server, sessions live in the devtools Sessions tab. On a
-        deployed app, open any page with <InlineCode>?reflet-team</InlineCode>,
-        sign in with Reflet and approve the app: members of your organization
-        get the same tools, your users never see them.
+        deployed app, open any page with{" "}
+        <MarkdownInlineCode>?reflet-team</MarkdownInlineCode>, sign in with
+        Reflet and approve the app: members of your organization get the same
+        tools, your users never see them.
       </DocsText>
       <DocsList>
         <li>
@@ -69,21 +71,23 @@ export function SessionsSection() {
         </li>
         <li>
           The page must allow the microphone. A{" "}
-          <InlineCode>Permissions-Policy</InlineCode> header with{" "}
-          <InlineCode>microphone=()</InlineCode> blocks it; use{" "}
-          <InlineCode>microphone=(self)</InlineCode>.
+          <MarkdownInlineCode>Permissions-Policy</MarkdownInlineCode> header
+          with <MarkdownInlineCode>microphone=()</MarkdownInlineCode> blocks it;
+          use <MarkdownInlineCode>microphone=(self)</MarkdownInlineCode>.
         </li>
         <li>
-          With a <InlineCode>Content-Security-Policy</InlineCode>, “Several
-          people are talking” needs{" "}
-          <InlineCode>wss://api.mistral.ai</InlineCode> in{" "}
-          <InlineCode>connect-src</InlineCode>. Without it, the session still
-          records, without telling voices apart.
+          With a{" "}
+          <MarkdownInlineCode>Content-Security-Policy</MarkdownInlineCode>,
+          “Several people are talking” needs{" "}
+          <MarkdownInlineCode>wss://api.mistral.ai</MarkdownInlineCode> in{" "}
+          <MarkdownInlineCode>connect-src</MarkdownInlineCode>. Without it, the
+          session still records, without telling voices apart.
         </li>
         <li>
           Pause stops all collection. Keystrokes are never recorded, form fields
           appear empty in screenshots, and password fields and{" "}
-          <InlineCode>data-reflet-redact</InlineCode> elements are left out.
+          <MarkdownInlineCode>data-reflet-redact</MarkdownInlineCode> elements
+          are left out.
         </li>
         <li>
           Voice is transcribed by ElevenLabs Scribe through OpenRouter with zero

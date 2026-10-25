@@ -1,10 +1,9 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import { DocsCardGrid } from "@/components/docs/docs-card-grid";
 import { DocsList, DocsPage, DocsSection } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -65,7 +64,8 @@ export default function SdkOverviewPage() {
       description={
         <>
           The official SDK for bringing Reflet feedback into your application.
-          Published on npm as <InlineCode>reflet-sdk</InlineCode>.
+          Published on npm as{" "}
+          <MarkdownInlineCode>reflet-sdk</MarkdownInlineCode>.
         </>
       }
       sections={SECTIONS}

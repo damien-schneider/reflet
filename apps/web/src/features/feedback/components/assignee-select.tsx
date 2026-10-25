@@ -79,7 +79,7 @@ function MemberAvatar({ member }: { member: Member }) {
   return (
     <Avatar className="size-5">
       <AvatarImage alt="" src={member.user?.image ?? undefined} />
-      <AvatarFallback className="text-micro">
+      <AvatarFallback>
         {memberName(member).charAt(0).toUpperCase()}
       </AvatarFallback>
     </Avatar>

@@ -9,9 +9,7 @@ export const ImageExtension = TiptapImage.extend({
       align: {
         default: "center",
         parseHTML: (element) => element.getAttribute("data-align") || "center",
-        renderHTML: (attributes) => {
-          return { "data-align": attributes.align };
-        },
+        renderHTML: (attributes) => ({ "data-align": attributes.align }),
       },
       height: {
         default: null,

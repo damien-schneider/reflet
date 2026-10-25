@@ -2,6 +2,7 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import {
   CheckCircle,
   type Icon,
@@ -18,7 +19,6 @@ import {
 import { useAction, useConvexAuth, useQuery } from "convex/react";
 import { useState, useSyncExternalStore } from "react";
 import { z } from "zod";
-import { H1, Muted } from "@/components/ui/typography";
 import {
   AuthPageShell,
   AuthStatus,
@@ -98,9 +98,9 @@ function TeamAccessGate({ request }: { request: TeamAccessRequest }) {
     });
     return (
       <AuthPageShell>
-        <Muted className="mb-4 text-center">
+        <Text as="p" className="mb-4 text-center" tone="muted">
           Sign in to Reflet to use team tools in your app.
-        </Muted>
+        </Text>
         <UnifiedAuthForm redirectTo={`/auth/team?${returnParams}`} />
       </AuthPageShell>
     );
@@ -275,17 +275,21 @@ function ConsentPrompt({
 
   return (
     <AuthPageShell className="text-center">
-      <H1 className="mb-2 text-balance break-words" variant="page">
+      <Heading
+        className="mb-2 text-balance break-words"
+        level={1}
+        size="display"
+      >
         Use Reflet team tools on {target.origin}?
-      </H1>
-      <Muted className="mb-2 text-pretty">
+      </Heading>
+      <Text as="p" className="mb-2 text-pretty" tone="muted">
         <strong>{target.organizationName}</strong>
         {userLabel ? ` · Signed in as ${userLabel}` : null}
-      </Muted>
-      <Muted className="mb-6 text-pretty">
+      </Text>
+      <Text as="p" className="mb-6 text-pretty" tone="muted">
         Record sessions on this app under your name. Nothing is shared with the
         app’s users.
-      </Muted>
+      </Text>
       <p
         className="mb-4 min-h-[1lh] text-destructive-text text-sm"
         role="alert"

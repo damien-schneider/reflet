@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import { Heading } from "@ctrl-ui/react/ui/typography";
 import {
   ArrowLeft,
   ChatCircle,
@@ -18,7 +19,6 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { TagBadge } from "@/components/tag-badge";
-import { H1 } from "@/components/ui/typography";
 import { CommentTimestamp } from "@/features/feedback/components/feedback-detail/comment-meta";
 import { PublicFeedbackVoting } from "@/features/feedback/components/public-feedback-detail/public-feedback-voting";
 
@@ -104,9 +104,9 @@ export function FeedbackHeader({
                 weight="fill"
               />
             )}
-            <H1 className="text-balance" variant="page">
+            <Heading className="text-balance" level={1} size="display">
               {title}
-            </H1>
+            </Heading>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -230,7 +230,7 @@ export function FeedbackAssigneeSelector({
               <div className="flex items-center gap-1.5">
                 <Avatar className="size-4">
                   <AvatarImage src={assignee.image ?? undefined} />
-                  <AvatarFallback className="text-micro">
+                  <AvatarFallback>
                     {assignee.name?.charAt(0) ?? "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -256,7 +256,7 @@ export function FeedbackAssigneeSelector({
               <div className="flex items-center gap-2">
                 <Avatar className="size-5">
                   <AvatarImage src={member.user?.image ?? undefined} />
-                  <AvatarFallback className="text-micro">
+                  <AvatarFallback>
                     {member.user?.name?.charAt(0) ?? "?"}
                   </AvatarFallback>
                 </Avatar>
@@ -279,9 +279,7 @@ export function FeedbackAssigneeSelector({
     <span className="flex items-center gap-1.5">
       <Avatar className="size-4">
         <AvatarImage src={assignee.image ?? undefined} />
-        <AvatarFallback className="text-micro">
-          {assignee.name?.charAt(0) ?? "?"}
-        </AvatarFallback>
+        <AvatarFallback>{assignee.name?.charAt(0) ?? "?"}</AvatarFallback>
       </Avatar>
       {assignee.name ?? "Assigned"}
     </span>

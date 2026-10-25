@@ -40,7 +40,7 @@
   }
 
   :root[data-theme="reflet"] :where([data-control-family="button"]) {
-    scale: none;
+    --cui-button-press-scale: 1;
   }
 
   :root[data-theme="reflet"]
@@ -87,10 +87,8 @@
     --cui-button-hover-shadow: none;
   }
 
-  /* Same recessed well as the tabs list: fill + inner shadow, no outline.
-     The focus ring border still appears on focus. */
   :root[data-theme="reflet"]
-  :where([data-control-family="field"][data-control="true"]) {
+    :where([data-control-family="field"][data-control="true"]) {
     --cui-field-background: var(--secondary);
     --cui-field-border-color: transparent;
     --cui-field-shadow: var(--reflet-recess);
@@ -151,30 +149,10 @@
     --cui-popup-shadow: var(--reflet-control-shadow);
   }
 
-  /* The palette is opened by keyboard many times a day: open and close it
-     without motion, backdrop and list height included. */
-  :root[data-theme="reflet"]:has(
-    [data-popup-kind="command"][data-slot="dialog-root"]
-  )
-  :where(
-    [data-control-family="popup"][data-popup-part="backdrop"],
-    [data-control-family="popup"][data-popup-part="surface"]:has(
-      > [data-popup-kind="command"]
-    ),
-    [data-popup-kind="command"][data-slot="dialog-root"]
-  ) {
-    transition: none;
-  }
-
   :root[data-theme="reflet"] :where(.recharts-surface:focus-visible) {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
     border-radius: var(--radius-control);
-  }
-
-  :root[data-theme="reflet"] :where(label:has(> input.sr-only:focus-visible)) {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
   }
 
   :root[data-theme="reflet"]
@@ -212,19 +190,17 @@
 
   :root[data-theme="reflet"]
     :where([data-control-family="sidebar"][data-slot="root"]) {
-    --sidebar-border: transparent;
+    --cui-sidebar-container-border-width: 0px;
     --cui-sidebar-menu-button-radius: var(--radius-control);
     --cui-sidebar-menu-button-foreground: var(--muted-foreground);
     --cui-sidebar-menu-button-active-background: var(--active-fill);
     --cui-sidebar-group-label-foreground: var(--muted-foreground);
   }
 
-  /* The icon rail marks where you are with a solid tile and keeps every
-     other control flat, so the active section reads first. */
   :root[data-theme="reflet"]
-  :where(
-    [data-control-family="sidebar"][data-slot="root"][data-collapsible="icon"]
-  ) {
+    :where(
+      [data-control-family="sidebar"][data-slot="root"][data-collapsible="icon"]
+    ) {
     --cui-sidebar-menu-button-active-background: var(--primary);
     --cui-sidebar-menu-button-active-foreground: var(--primary-foreground);
   }

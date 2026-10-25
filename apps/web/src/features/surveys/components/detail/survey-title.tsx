@@ -42,21 +42,21 @@ export function SurveyTitle({
 
   if (draft === null) {
     return (
-      <PageTitle className="min-w-0 text-xl">
-        <button
-          className="group inline-flex max-w-full items-center gap-2 text-left"
+      <PageTitle className="min-w-0 [--cui-page-layout-title-font-size:var(--text-heading-2)]">
+        <Button
+          className="group max-w-full [--cui-button-font-size:100%] [--cui-button-font-weight:var(--text-heading-1--font-weight)] [--cui-button-foreground:var(--foreground)]"
           onClick={() => setDraft(title)}
-          type="button"
+          variant="link"
         >
           <span className="truncate" title={title}>
             {title}
           </span>
           <PencilSimple
             aria-hidden
-            className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground"
+            className="text-muted-foreground group-hover:text-foreground"
           />
           <span className="sr-only">Rename survey</span>
-        </button>
+        </Button>
       </PageTitle>
     );
   }

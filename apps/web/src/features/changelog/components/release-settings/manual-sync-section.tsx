@@ -2,7 +2,7 @@
 
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -267,20 +267,20 @@ export const ManualSyncSection = ({
                         <Tooltip>
                           <TooltipTrigger
                             render={
-                              <a
+                              <ButtonLink
                                 aria-label={`View ${r.title} on GitHub`}
-                                className="ml-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                                className="ml-2"
                                 href={r.githubHtmlUrl}
+                                iconOnly
                                 rel="noopener noreferrer"
+                                size="xs"
                                 target="_blank"
-                              >
-                                <ArrowSquareOut
-                                  aria-hidden
-                                  className="size-4"
-                                />
-                              </a>
+                                variant="quiet"
+                              />
                             }
-                          />
+                          >
+                            <ArrowSquareOut aria-hidden />
+                          </TooltipTrigger>
                           <TooltipContent>View on GitHub</TooltipContent>
                         </Tooltip>
                       )

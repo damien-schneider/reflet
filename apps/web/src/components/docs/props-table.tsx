@@ -20,7 +20,7 @@ const DESCRIPTION = { kind: "text", label: "Description" } as const;
 function PropName({ prop }: { prop: PropDefinition }) {
   return (
     <span className="flex flex-col gap-0.5">
-      <code>{prop.name}</code>
+      <span>{prop.name}</span>
       {prop.required && (
         <span className="font-sans text-caption text-muted-foreground">
           Required

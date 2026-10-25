@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsPage,
@@ -7,7 +7,6 @@ import {
   DocsSubsection,
   DocsText,
 } from "@/components/docs/docs-page";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -107,7 +106,7 @@ export default function ReactHooksPage() {
       description={
         <>
           Hooks for data fetching, mutations and real-time updates. Wrap your
-          app in <InlineCode>RefletProvider</InlineCode> first.
+          app in <MarkdownInlineCode>RefletProvider</MarkdownInlineCode> first.
         </>
       }
       sections={SECTIONS}

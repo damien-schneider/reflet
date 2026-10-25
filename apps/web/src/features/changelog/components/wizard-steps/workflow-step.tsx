@@ -8,6 +8,16 @@ import {
   CollapsibleTrigger,
 } from "@ctrl-ui/react/ui/collapsible";
 import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldItem,
+  FieldLabel,
+  FieldTitle,
+} from "@ctrl-ui/react/ui/field";
+import { Label } from "@ctrl-ui/react/ui/label";
+import { Radio, RadioGroup } from "@ctrl-ui/react/ui/radio-group";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -27,8 +37,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
+import { useEffect, useId, useState } from "react";
 import type { Workflow } from "../wizard-config";
 
 interface BranchInfo {
@@ -108,6 +117,7 @@ export function WorkflowStep({
     api.integrations.github.repo_actions.listBranches
   );
 
+  const selectedOption = WORKFLOW_OPTIONS.find((option) => option.id === value);
   const isConnected = Boolean(
     githubConnection?.repositoryFullName && githubConnection?.installationId
   );
@@ -144,19 +154,9 @@ export function WorkflowStep({
 
   return (
     <div className="space-y-3">
-      <fieldset className="grid min-w-0 gap-2">
-        <legend className="mb-3 text-pretty text-muted-foreground text-sm">
-          How do you want to manage your releases?
-        </legend>
-        {WORKFLOW_OPTIONS.map((option) => (
-          <WorkflowCard
-            key={option.id}
-            onChange={onChange}
-            option={option}
-            selected={value === option.id}
-          />
-        ))}
-      </fieldset>
+      <WorkflowChoices onChange={onChange} value={value} />
+
+      {selectedOption && <HowItWorks steps={selectedOption.howItWorks} />}
 
       {needsGitHub && isConnected && (
         <ConnectedBranchSelector
@@ -172,90 +172,85 @@ export function WorkflowStep({
   );
 }
 
-function WorkflowCard({
-  option,
-  selected,
+function WorkflowChoices({
   onChange,
+  value,
 }: {
-  option: (typeof WORKFLOW_OPTIONS)[number];
-  selected: boolean;
   onChange: (workflow: Workflow) => void;
+  value: Workflow;
 }) {
-  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const labelId = useId();
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border transition-colors duration-(--duration-fast) has-focus-visible:ring-2 has-focus-visible:ring-ring",
-        selected ? "border-primary bg-primary/5" : "border-border"
-      )}
+    <>
+      <p className="text-pretty text-muted-foreground text-sm" id={labelId}>
+        How do you want to manage your releases?
+      </p>
+      <Field>
+        <RadioGroup
+          aria-labelledby={labelId}
+          className="w-full"
+          onValueChange={onChange}
+          value={value}
+        >
+          {WORKFLOW_OPTIONS.map((option) => (
+            <FieldItem key={option.id}>
+              <FieldLabel variant="card">
+                <Radio value={option.id} />
+                <FieldContent>
+                  <FieldTitle className="flex items-center gap-2">
+                    <option.icon aria-hidden />
+                    {option.title}
+                    {"badge" in option && option.badge && (
+                      <Badge size="sm">{option.badge}</Badge>
+                    )}
+                  </FieldTitle>
+                  <FieldDescription>{option.description}</FieldDescription>
+                </FieldContent>
+              </FieldLabel>
+            </FieldItem>
+          ))}
+        </RadioGroup>
+      </Field>
+    </>
+  );
+}
+
+function HowItWorks({ steps }: { steps: readonly string[] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible
+      className="[--cui-collapsible-trigger-font-size:var(--text-xs)] [--cui-collapsible-trigger-foreground:var(--muted-foreground)] [--cui-collapsible-trigger-padding-block:calc(var(--spacing)*2)] [--cui-collapsible-trigger-padding-inline:calc(var(--spacing)*3)]"
+      onOpenChange={setOpen}
+      open={open}
     >
-      <label className="flex cursor-pointer items-start gap-3 p-3">
-        <input
-          checked={selected}
-          className="sr-only"
-          name="release-workflow"
-          onChange={() => onChange(option.id)}
-          type="radio"
-          value={option.id}
-        />
-        <option.icon
+      <CollapsibleTrigger className="gap-1">
+        <CaretDown
           aria-hidden
           className={cn(
-            "mt-0.5 size-5 shrink-0",
-            selected ? "text-primary" : "text-muted-foreground"
+            "size-3 transition-transform duration-(--duration-base) ease-(--ease-standard)",
+            open && "rotate-180"
           )}
-          weight={selected ? "fill" : "regular"}
         />
-        <span className="block flex-1">
-          <span className="flex items-center gap-2">
-            <span className="font-medium text-sm">{option.title}</span>
-            {"badge" in option && option.badge && (
-              <Badge size="sm">{option.badge}</Badge>
-            )}
-          </span>
-          <span className="mt-0.5 block text-pretty text-muted-foreground text-xs">
-            {option.description}
-          </span>
-        </span>
-      </label>
-
-      {selected && (
-        <div className="border-t">
-          <Collapsible
-            className="[--cui-collapsible-trigger-font-size:var(--text-xs)] [--cui-collapsible-trigger-foreground:var(--muted-foreground)] [--cui-collapsible-trigger-padding-block:calc(var(--spacing)*2)] [--cui-collapsible-trigger-padding-inline:calc(var(--spacing)*3)]"
-            onOpenChange={setHowItWorksOpen}
-            open={howItWorksOpen}
-          >
-            <CollapsibleTrigger className="gap-1">
-              <CaretDown
-                aria-hidden
-                className={cn(
-                  "size-3 transition-transform duration-(--duration-base) ease-(--ease-standard)",
-                  howItWorksOpen && "rotate-180"
-                )}
-              />
-              How it works
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <ol className="space-y-1.5 px-3 pb-3">
-                {option.howItWorks.map((step, i) => (
-                  <li
-                    className="flex items-start gap-2 text-muted-foreground text-xs"
-                    key={step}
-                  >
-                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-      )}
-    </div>
+        How it works
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ol className="space-y-1.5 px-3 pb-3">
+          {steps.map((step, i) => (
+            <li
+              className="flex items-start gap-2 text-muted-foreground text-xs"
+              key={step}
+            >
+              <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
+                {i + 1}
+              </span>
+              {step}
+            </li>
+          ))}
+        </ol>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -289,7 +284,7 @@ function ConnectedBranchSelector({
           className="size-4 shrink-0 text-muted-foreground"
         />
         <div className="flex flex-1 items-center gap-2">
-          <Label className="whitespace-nowrap text-xs" htmlFor="target-branch">
+          <Label className="whitespace-nowrap" htmlFor="target-branch">
             Target branch
           </Label>
           <BranchInput

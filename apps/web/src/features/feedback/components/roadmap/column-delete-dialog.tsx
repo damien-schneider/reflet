@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@ctrl-ui/react/ui/alert-dialog";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Label } from "@ctrl-ui/react/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,7 +25,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useId, useState } from "react";
-import { Label } from "@/components/ui/label";
 import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 

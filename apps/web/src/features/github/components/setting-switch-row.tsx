@@ -1,9 +1,9 @@
 "use client";
 
+import { Label } from "@ctrl-ui/react/ui/label";
 import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import type { ReactNode } from "react";
-import { Label } from "@/components/ui/label";
-import { Text } from "@/components/ui/typography";
 
 interface SettingSwitchRowProps {
   checked: boolean;
@@ -30,11 +30,7 @@ export function SettingSwitchRow({
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0 flex-1">
         <Label htmlFor={id}>{label}</Label>
-        <Text
-          className="text-muted-foreground"
-          id={descriptionId}
-          variant="bodySmall"
-        >
+        <Text as="p" id={descriptionId} tone="muted">
           {description}
         </Text>
       </div>

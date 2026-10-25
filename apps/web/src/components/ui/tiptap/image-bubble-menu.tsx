@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Toolbar, ToolbarButton } from "@ctrl-ui/react/ui/toolbar";
 import {
   Tooltip,
   TooltipContent,
@@ -13,7 +13,6 @@ import {
   TextAlignRight,
 } from "@phosphor-icons/react";
 import type { Editor } from "@tiptap/core";
-import type * as React from "react";
 import { useEffect, useState } from "react";
 import type { ImageAlignment } from "./image-extension";
 
@@ -28,11 +27,6 @@ const ALIGNMENTS: readonly {
 ];
 
 const BUBBLE_OFFSET_Y = 40;
-
-const TOOLBAR_KEY_STEPS: Readonly<Record<string, number>> = {
-  ArrowLeft: -1,
-  ArrowRight: 1,
-};
 
 interface ImageBubbleMenuProps {
   editor: Editor;
@@ -99,44 +93,19 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
     return null;
   }
 
-  const handleToolbarKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const step = TOOLBAR_KEY_STEPS[event.key];
-    if (step === undefined) {
-      return;
-    }
-    const buttons = Array.from(
-      event.currentTarget.querySelectorAll<HTMLButtonElement>("button")
-    );
-    const currentIndex = buttons.findIndex(
-      (button) => button === document.activeElement
-    );
-    const nextIndex = (currentIndex + step + buttons.length) % buttons.length;
-    event.preventDefault();
-    buttons[nextIndex]?.focus();
-  };
-
   return (
     <div
       className="tiptap-image-bubble-menu pointer-events-auto absolute z-50 -translate-x-1/2"
       style={{ left: position.left, top: position.top }}
     >
-      <div
-        aria-label="Image alignment"
-        className="flex items-center gap-0.5 p-1"
-        data-control-family="popup"
-        data-popup-part="surface"
-        data-popup-static=""
-        onKeyDown={handleToolbarKeyDown}
-        role="toolbar"
-      >
+      <Toolbar aria-label="Image alignment" variant="floating">
         {ALIGNMENTS.map(({ icon: Icon, label, value }) => (
           <Tooltip key={value}>
             <TooltipTrigger
               aria-label={label}
               aria-pressed={currentAlign === value}
               render={
-                <Button
-                  active={currentAlign === value}
+                <ToolbarButton
                   iconOnly
                   onClick={() => {
                     editor
@@ -145,18 +114,15 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
                       .updateAttributes("image", { align: value })
                       .run();
                   }}
-                  size="sm"
-                  tabIndex={currentAlign === value ? 0 : -1}
-                  variant="ghost"
                 />
               }
             >
-              <Icon aria-hidden="true" className="size-4" />
+              <Icon aria-hidden="true" />
             </TooltipTrigger>
             <TooltipContent>{label}</TooltipContent>
           </Tooltip>
         ))}
-      </div>
+      </Toolbar>
     </div>
   );
 }

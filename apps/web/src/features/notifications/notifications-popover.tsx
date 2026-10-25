@@ -23,7 +23,7 @@ function UnreadSummary({ unreadCount }: { unreadCount: number | undefined }) {
     return <Skeleton aria-hidden="true" className="mt-1 h-3 w-20" />;
   }
   return (
-    <PopoverDescription className="text-xs">
+    <PopoverDescription>
       {unreadCount === 0 ? (
         "You’re all caught up"
       ) : (
@@ -44,7 +44,7 @@ function NotificationsHeader({
   return (
     <PopoverHeader className="flex flex-row items-center justify-between gap-3">
       <div className="min-w-0 space-y-1">
-        <PopoverTitle className="text-sm">Notifications</PopoverTitle>
+        <PopoverTitle>Notifications</PopoverTitle>
         <UnreadSummary unreadCount={unreadCount} />
       </div>
       <ButtonLink

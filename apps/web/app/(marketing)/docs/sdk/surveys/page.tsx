@@ -1,5 +1,5 @@
+import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsLink,
@@ -12,7 +12,6 @@ import {
 import { InstallCommand } from "@/components/docs/install-command";
 import { PropsTable } from "@/components/docs/props-table";
 import { ReferenceTable } from "@/components/docs/reference-table";
-import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 import {
   API_COLUMNS,
@@ -123,7 +122,7 @@ export default function SdkSurveysPage() {
         <>
           Show NPS, CSAT and custom surveys inside your React app. Build them in
           the dashboard with branching and several endings, then mount{" "}
-          <InlineCode>RefletSurveys</InlineCode> once.
+          <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> once.
         </>
       }
       sections={SECTIONS}
@@ -132,23 +131,24 @@ export default function SdkSurveysPage() {
       <DocsSection id="setup" sections={SECTIONS}>
         <InstallCommand command="npm install reflet-sdk" />
         <DocsText>
-          Mount <InlineCode>RefletSurveys</InlineCode> once inside{" "}
-          <InlineCode>RefletProvider</InlineCode>. It loads the surveys this
-          visitor is eligible for, arms their triggers and shows one survey at a
-          time in a floating card. The card lives in its own shadow root, so
-          your CSS never restyles it.
+          Mount <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> once
+          inside <MarkdownInlineCode>RefletProvider</MarkdownInlineCode>. It
+          loads the surveys this visitor is eligible for, arms their triggers
+          and shows one survey at a time in a floating card. The card lives in
+          its own shadow root, so your CSS never restyles it.
         </DocsText>
         <CodeBlock code={MOUNT_CODE} />
         <PropsTable props={SURVEYS_PROPS} />
         <DocsText>
-          Pass a signed <InlineCode>userToken</InlineCode> (see{" "}
+          Pass a signed <MarkdownInlineCode>userToken</MarkdownInlineCode> (see{" "}
           <DocsLink href="/docs/sdk/installation#user-signing">
             user signing
           </DocsLink>
-          ) or <InlineCode>user</InlineCode> to credit responses to your users
-          and recognize them across devices. Anonymous visitors get a stable ID
-          in <InlineCode>localStorage</InlineCode>, so “show once” holds across
-          visits. Not using React? The{" "}
+          ) or <MarkdownInlineCode>user</MarkdownInlineCode> to credit responses
+          to your users and recognize them across devices. Anonymous visitors
+          get a stable ID in{" "}
+          <MarkdownInlineCode>localStorage</MarkdownInlineCode>, so “show once”
+          holds across visits. Not using React? The{" "}
           <DocsLink href="/docs/widget/feedback-widget#surveys">
             feedback widget
           </DocsLink>{" "}
@@ -176,10 +176,10 @@ export default function SdkSurveysPage() {
 
       <DocsSection id="use-reflet-surveys" sections={SECTIONS}>
         <DocsText>
-          Drive <InlineCode>RefletSurveys</InlineCode> from any component inside
-          the provider: send custom events, open a manual survey from a button,
-          or close the survey on screen. Calls made before surveys have loaded
-          are queued and replayed.
+          Drive <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> from any
+          component inside the provider: send custom events, open a manual
+          survey from a button, or close the survey on screen. Calls made before
+          surveys have loaded are queued and replayed.
         </DocsText>
         <CodeBlock code={SIGNALS_CODE} />
         <ReferenceTable columns={API_COLUMNS} rows={SURVEYS_API_ROWS} />
@@ -188,10 +188,11 @@ export default function SdkSurveysPage() {
       <DocsSection id="callbacks" sections={SECTIONS}>
         <DocsText>
           Forward survey activity to your analytics. Answers arrive one at a
-          time as the respondent moves on. <InlineCode>endingId</InlineCode> is
-          the ending their answers led to.{" "}
-          <InlineCode>onSurveyDismiss</InlineCode> fires only when someone
-          closes a survey before finishing it.
+          time as the respondent moves on.{" "}
+          <MarkdownInlineCode>endingId</MarkdownInlineCode> is the ending their
+          answers led to.{" "}
+          <MarkdownInlineCode>onSurveyDismiss</MarkdownInlineCode> fires only
+          when someone closes a survey before finishing it.
         </DocsText>
         <CodeBlock code={CALLBACKS_CODE} />
       </DocsSection>
@@ -199,9 +200,10 @@ export default function SdkSurveysPage() {
       <DocsSection id="theming" sections={SECTIONS}>
         <DocsList>
           <li>
-            <InlineCode>theme</InlineCode> and{" "}
-            <InlineCode>primaryColor</InlineCode> set the look. With a hex
-            color, button text switches between dark and white to stay readable.
+            <MarkdownInlineCode>theme</MarkdownInlineCode> and{" "}
+            <MarkdownInlineCode>primaryColor</MarkdownInlineCode> set the look.
+            With a hex color, button text switches between dark and white to
+            stay readable.
           </li>
           <li>
             The position (bottom right, bottom left or centered) is set per
@@ -219,13 +221,14 @@ export default function SdkSurveysPage() {
       <DocsSection id="custom-ui" sections={SECTIONS}>
         <DocsSubsection id="survey-card" title="Embed the survey card">
           <DocsText>
-            <InlineCode>useSurveySession</InlineCode> runs a survey’s flow:
-            branching, validation and saving answers. Pass the session to{" "}
-            <InlineCode>SurveyCard</InlineCode> to render it anywhere, for
-            example inline on a settings page. Inside{" "}
-            <InlineCode>RefletProvider</InlineCode>, answers are saved to
-            Reflet. The response starts on mount; pass{" "}
-            <InlineCode>autoStart: false</InlineCode> to start it yourself.
+            <MarkdownInlineCode>useSurveySession</MarkdownInlineCode> runs a
+            survey’s flow: branching, validation and saving answers. Pass the
+            session to <MarkdownInlineCode>SurveyCard</MarkdownInlineCode> to
+            render it anywhere, for example inline on a settings page. Inside{" "}
+            <MarkdownInlineCode>RefletProvider</MarkdownInlineCode>, answers are
+            saved to Reflet. The response starts on mount; pass{" "}
+            <MarkdownInlineCode>autoStart: false</MarkdownInlineCode> to start
+            it yourself.
           </DocsText>
           <CodeBlock code={CARD_CODE} />
           <PropsTable props={CARD_PROPS} />
@@ -235,9 +238,9 @@ export default function SdkSurveysPage() {
           <DocsText>
             Render the session yourself for complete control. This example
             handles text questions only. A new session begins whenever{" "}
-            <InlineCode>survey</InlineCode> or{" "}
-            <InlineCode>transport</InlineCode> changes identity, so keep them
-            stable.
+            <MarkdownInlineCode>survey</MarkdownInlineCode> or{" "}
+            <MarkdownInlineCode>transport</MarkdownInlineCode> changes identity,
+            so keep them stable.
           </DocsText>
           <CodeBlock code={HEADLESS_CODE} />
           <ReferenceTable columns={API_COLUMNS} rows={SESSION_ROWS} />
@@ -245,10 +248,10 @@ export default function SdkSurveysPage() {
 
         <DocsSubsection id="preview" title="Preview without saving">
           <DocsText>
-            <InlineCode>reflet-sdk/surveys</InlineCode> exports the same session
-            hook and card without needing the provider. With{" "}
-            <InlineCode>previewTransport</InlineCode>, nothing is saved, which
-            is useful for previews and tests.
+            <MarkdownInlineCode>reflet-sdk/surveys</MarkdownInlineCode> exports
+            the same session hook and card without needing the provider. With{" "}
+            <MarkdownInlineCode>previewTransport</MarkdownInlineCode>, nothing
+            is saved, which is useful for previews and tests.
           </DocsText>
           <CodeBlock code={PREVIEW_CODE} />
         </DocsSubsection>
@@ -256,16 +259,17 @@ export default function SdkSurveysPage() {
 
       <DocsSection id="javascript-client" sections={SECTIONS}>
         <DocsText>
-          The <InlineCode>Reflet</InlineCode> client from{" "}
-          <InlineCode>reflet-sdk</InlineCode> wraps the{" "}
+          The <MarkdownInlineCode>Reflet</MarkdownInlineCode> client from{" "}
+          <MarkdownInlineCode>reflet-sdk</MarkdownInlineCode> wraps the{" "}
           <DocsLink href="/docs/api#eligible-surveys">
             survey endpoints
           </DocsLink>{" "}
           and works without React. It sends the visitor’s anonymous ID, page URL
           and user agent for you. It doesn’t run the branching flow: walk it
-          yourself from each question’s <InlineCode>logic</InlineCode> and{" "}
-          <InlineCode>next</InlineCode>. Completing fails if a required question
-          on the respondent’s path has no answer.
+          yourself from each question’s{" "}
+          <MarkdownInlineCode>logic</MarkdownInlineCode> and{" "}
+          <MarkdownInlineCode>next</MarkdownInlineCode>. Completing fails if a
+          required question on the respondent’s path has no answer.
         </DocsText>
         <CodeBlock code={CLIENT_CODE} />
         <ReferenceTable columns={API_COLUMNS} rows={CLIENT_ROWS} />

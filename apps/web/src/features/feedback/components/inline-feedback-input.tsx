@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@ctrl-ui/react/lib/cn";
+import { Button } from "@ctrl-ui/react/ui/button";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   ComposerIcon,
@@ -41,17 +42,18 @@ function CollapsedComposerButton({
   onOpen: () => void;
 }) {
   return (
-    <button
-      className="flex w-full cursor-pointer items-center gap-3 rounded-xl p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <Button
+      className="w-full justify-start [--cui-button-gap:calc(var(--spacing)*3)] [--cui-button-height:calc(var(--spacing)*16)] [--cui-button-padding-inline:calc(var(--spacing)*4)] [--cui-button-radius:var(--radius-xl)]"
       onClick={onOpen}
       ref={buttonRef}
-      type="button"
+      size="md"
+      variant="ghost"
     >
       <ComposerIcon />
-      <span className="text-muted-foreground text-sm">
+      <span className="font-normal text-muted-foreground">
         Share an idea or suggestion…
       </span>
-    </button>
+    </Button>
   );
 }
 
@@ -79,7 +81,7 @@ export function InlineFeedbackInput({
           "rounded-xl border bg-card transition-[border-color,box-shadow] duration-(--duration-fast)",
           isExpanded
             ? "border-border shadow-sm focus-within:border-ring"
-            : "border-border/50 border-dashed hover:border-border hover:bg-accent/30"
+            : "border-border/50 border-dashed hover:border-border"
         )}
       >
         {isExpanded ? (

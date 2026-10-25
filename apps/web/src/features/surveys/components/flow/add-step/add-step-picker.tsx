@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { CaretRight } from "@phosphor-icons/react";
 import type { QuestionDraft } from "@reflet/backend/convex/surveys/lib/ai_draft_schema";
 import { type QuestionType, takesAnswer } from "@reflet/survey-core";
@@ -25,6 +25,8 @@ const PRIMARY_TYPES: readonly QuestionType[] = [
 ];
 const MORE_TYPES: readonly QuestionType[] = ["statement"];
 const GRID_COLUMNS = 3;
+const TILE_CLASSES =
+  "aspect-[5/4] items-start justify-between whitespace-normal text-left [--cui-button-background:oklch(from_var(--muted)_l_c_h/0.7)] [--cui-button-hover-background:var(--muted)] [--cui-button-icon:calc(var(--spacing)*7)] [--cui-button-padding-block:calc(var(--spacing)*3)] [--cui-button-padding-inline:calc(var(--spacing)*3)] [--cui-button-radius:var(--radius-2xl)]";
 
 const TILE_LABELS: Record<QuestionType, string> = {
   boolean: "Yes / no",
@@ -101,40 +103,32 @@ export function AddStepPicker({ anchor, onInserted }: AddStepPickerProps) {
           Add step
         </h2>
         {showsMore ? null : (
-          <button
-            className="inline-flex items-center gap-0.5 rounded-md text-muted-foreground text-sm hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
-            onClick={() => setShowsMore(true)}
-            type="button"
-          >
+          <Button onClick={() => setShowsMore(true)} size="sm" variant="quiet">
             More
-            <CaretRight aria-hidden className="size-3.5" />
-          </button>
+            <CaretRight aria-hidden />
+          </Button>
         )}
       </div>
       <div className="grid grid-cols-3 gap-2">
         {types.map((type, index) => (
-          <button
-            className={cn(
-              "flex aspect-[5/4] flex-col justify-between rounded-2xl bg-muted/70 p-3 text-left",
-              "transition-colors duration-150 hover:bg-muted motion-reduce:transition-none",
-              "focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60"
-            )}
+          <Button
+            className={TILE_CLASSES}
             disabled={pendingType !== null}
             key={type}
+            layout="tile"
             onClick={() => insertType(type)}
             onFocus={() => setActiveIndex(index)}
             onKeyDown={moveFocus}
             ref={(element) => {
               tileRefs.current[index] = element;
             }}
+            size="md"
             tabIndex={index === activeIndex ? 0 : -1}
-            type="button"
+            variant="ghost"
           >
-            <StepGlyph className="size-7" type={type} />
-            <span className="font-medium text-sm">
-              {pendingType === type ? "Adding…" : TILE_LABELS[type]}
-            </span>
-          </button>
+            <StepGlyph type={type} />
+            {pendingType === type ? "Adding…" : TILE_LABELS[type]}
+          </Button>
         ))}
       </div>
       <DescribeStepsForm anchor={anchor} onInserted={onInserted} />

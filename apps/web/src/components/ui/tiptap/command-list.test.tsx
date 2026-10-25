@@ -3,6 +3,14 @@ import { createRef, type RefObject } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CommandListHandle } from "./command-items";
 
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+HTMLElement.prototype.scrollIntoView = vi.fn();
+
 const createMockIcon = (name: string) => {
   const Icon = (props: Record<string, unknown>) => (
     <svg data-testid={`icon-${name}`} {...props} />
@@ -72,21 +80,37 @@ describe("CommandList", () => {
     expect(screen.getByTestId("icon-code-block")).toBeInTheDocument();
   });
 
-  it("renders the container with data-slot attribute", () => {
-    const items = createMockItems();
-    render(<CommandList command={vi.fn()} items={items} />);
+  it("renders the items as a labelled listbox", () => {
+    render(<CommandList command={vi.fn()} items={createMockItems()} />);
 
-    const menu = document.querySelector('[data-slot="slash-command-menu"]');
-    expect(menu).toBeInTheDocument();
+    expect(
+      screen.getByRole("listbox", { name: "Insert block" })
+    ).toBeInTheDocument();
   });
 
   it("highlights first item by default", () => {
     const items = createMockItems();
     render(<CommandList command={vi.fn()} items={items} />);
 
-    const buttons = screen.getAllByRole("button");
-    expect(buttons[0]).toHaveAttribute("data-active", "true");
-    expect(buttons[1]).not.toHaveAttribute("data-active", "true");
+    const options = screen.getAllByRole("option");
+    expect(options[0]).toHaveAttribute("aria-selected", "true");
+    expect(options[1]).toHaveAttribute("aria-selected", "false");
+  });
+
+  it("moves the selection to the option under the pointer", () => {
+    const items = createMockItems();
+    const command = vi.fn();
+    const ref = createRef<CommandListHandle>();
+    render(<CommandList command={command} items={items} ref={ref} />);
+
+    fireEvent.pointerMove(screen.getAllByRole("option")[2]);
+
+    expect(screen.getAllByRole("option")[2]).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    pressKey(ref, "Enter");
+    expect(command).toHaveBeenCalledWith(items[2]);
   });
 
   it("calls command with correct item on click", () => {
@@ -102,10 +126,10 @@ describe("CommandList", () => {
     const items = createMockItems();
     render(<CommandList command={vi.fn()} items={items} />);
 
-    const button = screen.getAllByRole("button")[0];
+    const option = screen.getAllByRole("option")[0];
     const event = new MouseEvent("mousedown", { bubbles: true });
     const preventDefaultSpy = vi.spyOn(event, "preventDefault");
-    button.dispatchEvent(event);
+    option.dispatchEvent(event);
     expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
@@ -130,8 +154,8 @@ describe("CommandList", () => {
         result = pressKey(ref, "ArrowDown");
       });
       expect(result).toBe(true);
-      expect(screen.getAllByRole("button")[1]).toHaveAttribute(
-        "data-active",
+      expect(screen.getAllByRole("option")[1]).toHaveAttribute(
+        "aria-selected",
         "true"
       );
     });
@@ -147,8 +171,8 @@ describe("CommandList", () => {
         result = pressKey(ref, "ArrowUp");
       });
       expect(result).toBe(true);
-      expect(screen.getAllByRole("button")[2]).toHaveAttribute(
-        "data-active",
+      expect(screen.getAllByRole("option")[2]).toHaveAttribute(
+        "aria-selected",
         "true"
       );
     });

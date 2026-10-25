@@ -1,5 +1,5 @@
-import { cn } from "@ctrl-ui/react/lib/cn";
 import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
+import { MarkdownRoot } from "@ctrl-ui/react/ui/markdown-elements";
 import {
   PageBody,
   PageDescription,
@@ -12,7 +12,6 @@ import { Info } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HeadingAnchor } from "@/components/heading-anchor";
-import { textVariants } from "@/components/ui/typography-variants";
 
 interface DocsSectionEntry {
   readonly id: string;
@@ -21,7 +20,6 @@ interface DocsSectionEntry {
   readonly level?: 3;
 }
 
-/** Page sections in reading order; drives the table of contents. */
 type DocsSections = readonly DocsSectionEntry[];
 
 const MIN_SECTIONS_FOR_TOC = 3;
@@ -50,8 +48,8 @@ function DocsPage({ children, description, sections, title }: DocsPageProps) {
         <PageTitle>{title}</PageTitle>
         <PageDescription>{description}</PageDescription>
       </PageHeader>
-      <PageBody aside={toc} contentClassName="flex flex-col gap-12">
-        {children}
+      <PageBody aside={toc}>
+        <MarkdownRoot className="flex flex-col gap-12">{children}</MarkdownRoot>
       </PageBody>
     </PageLayout>
   );
@@ -152,7 +150,8 @@ interface DocsLinkProps {
 }
 
 function DocsLink({ children, href }: DocsLinkProps) {
-  const className = cn(textVariants({ variant: "link" }));
+  const className =
+    "text-brand-text underline underline-offset-4 hover:text-brand-text/80";
   if (href.startsWith("http")) {
     return (
       <a

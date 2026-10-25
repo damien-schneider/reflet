@@ -2,29 +2,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/typography", () => ({
-  H3: ({
-    children,
-    className,
-    variant,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    variant?: string;
-  }) => (
-    <h3 className={className} data-variant={variant}>
-      {children}
-    </h3>
-  ),
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <p className={className}>{children}</p>,
-}));
-
 vi.mock("./release-item", () => ({
   ReleaseItem: ({
     release,
