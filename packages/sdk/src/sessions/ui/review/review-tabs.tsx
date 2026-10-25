@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ViewOptionsIcon } from "../../../devtools/client/devtools-icons";
 import { Menu } from "../../../devtools/client/menu";
+import { TabList } from "../../../devtools/client/tab-list";
 import type { SessionDetail } from "../../protocol";
 import { ImageIcon, IntentionIcon, TranscriptIcon } from "../session-icons";
 import type { IntentionView } from "./proposals/proposals-tab";
@@ -81,24 +82,22 @@ export function ReviewTabs({
     place.tab === "proposals" && calloutReport(detail).screens.length > 0;
   return (
     <div className="dt-toolbar">
-      <div className="dt-tabs" role="tablist">
-        {tabOptions(detail).map((option) => (
-          <button
-            aria-selected={option.value === place.tab}
-            className="dt-tab"
-            key={option.value}
-            onClick={() => place.selectTab(option.value)}
-            role="tab"
-            type="button"
-          >
-            {option.icon}
-            {option.label}
-            {option.count !== null && (
-              <span className="dt-tab-count">{option.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
+      <TabList
+        onSelect={place.selectTab}
+        options={tabOptions(detail).map((option) => ({
+          content: (
+            <>
+              {option.icon}
+              {option.label}
+              {option.count !== null && (
+                <span className="dt-tab-count">{option.count}</span>
+              )}
+            </>
+          ),
+          value: option.value,
+        }))}
+        selected={place.tab}
+      />
       {canPickView && <IntentionViewMenu place={place} />}
     </div>
   );

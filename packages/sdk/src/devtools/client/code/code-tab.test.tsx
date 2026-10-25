@@ -147,7 +147,7 @@ it("reads up to where the element's component is used, and back down", async () 
 
   fireEvent.click(screen.getByRole("button", { name: "Inspect" }));
 
-  await screen.findByText("src/ui/button.tsx:9");
+  await screen.findByTitle("src/ui/button.tsx:9");
   await waitFor(() => crumb("main.tsx"));
   expect(
     within(screen.getByRole("navigation", { name: "Component path" }))
@@ -157,12 +157,12 @@ it("reads up to where the element's component is used, and back down", async () 
   expect(crumb("Button").getAttribute("aria-current")).toBe("location");
 
   fireEvent.click(crumb("SettingsForm"));
-  await screen.findByText("src/settings-form.tsx:17");
+  await screen.findByTitle("src/settings-form.tsx:17");
   expect(crumb("SettingsForm").getAttribute("aria-current")).toBe("location");
   expect(crumb("Button").getAttribute("aria-current")).toBeNull();
 
   fireEvent.click(crumb("Button"));
-  await screen.findByText("src/ui/button.tsx:9");
+  await screen.findByTitle("src/ui/button.tsx:9");
 });
 
 it("opens a Server Component's step in its source and never offers one the dev route cannot read", async () => {
@@ -201,7 +201,7 @@ it("opens a Server Component's step in its source and never offers one the dev r
     )
   );
   fireEvent.click(await waitFor(() => crumb("ProfilePage")));
-  await screen.findByText("src/app/profile/page.tsx:12");
+  await screen.findByTitle("src/app/profile/page.tsx:12");
   expect(
     within(screen.getByRole("navigation", { name: "Component path" }))
       .getAllByRole("button")

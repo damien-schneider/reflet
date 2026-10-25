@@ -1,7 +1,7 @@
 import type { SessionProposal } from "../../../protocol";
 import { attributedText, formatClock } from "../../session-format";
 import type { ProposalContext } from "../proposals/proposal-details";
-import { contextLine } from "./moment-labels";
+import { ContextLine } from "./context-line";
 
 export function IntentionSource({
   context,
@@ -33,7 +33,9 @@ export function IntentionSource({
         <span className="dt-ses-time">{range}</span> “{attributedText(segment)}”
       </span>
       {firstContext && (
-        <span className="dt-meta">{contextLine(firstContext)}</span>
+        <span className="dt-meta">
+          <ContextLine item={firstContext} />
+        </span>
       )}
     </button>
   );

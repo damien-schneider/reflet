@@ -69,7 +69,9 @@ export function MomentScreenshot({
       <span className="dt-ses-shot" data-large="true">
         <img
           alt={screenshotAlt(item, evidence)}
+          decoding="async"
           height={image.height}
+          loading="lazy"
           src={image.url}
           width={image.width}
         />

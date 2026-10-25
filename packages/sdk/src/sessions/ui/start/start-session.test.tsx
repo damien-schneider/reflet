@@ -82,3 +82,14 @@ it("starts a solo session by default", () => {
   fireEvent.click(screen.getByRole("button", { name: "Start session" }));
   expect(recorder.start).toHaveBeenCalledWith({ detectSpeakers: false });
 });
+
+it("says what a session is before listing what it records", () => {
+  renderStart(false);
+  const pitch = screen.getByText(/Talk while you use the app/);
+  const disclosure = screen.getByRole("heading", {
+    name: "What a session records",
+  });
+  expect(pitch.compareDocumentPosition(disclosure)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING
+  );
+});

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { EditorId, LineRange, SourceFile } from "../../protocol";
 import { CopyButton } from "../copy-button";
 import { fetchSourceFile, type SourceRequest } from "../route/dev-route";
+import { SourcePath } from "../source-path";
 import { editorUrl } from "./editor-url";
 
 type SourceState =
@@ -87,7 +88,9 @@ export function CodePanel({
   if (state.kind === "failed") {
     return (
       <>
-        <p className="dt-code-path">{state.request.fileName}</p>
+        <p className="dt-code-path">
+          <SourcePath path={state.request.fileName} />
+        </p>
         <p className="dt-error">{state.message}</p>
       </>
     );
@@ -98,7 +101,9 @@ export function CodePanel({
   return (
     <>
       <div className="dt-code-head">
-        <p className="dt-code-path">{location}</p>
+        <p className="dt-code-path">
+          <SourcePath path={location} />
+        </p>
         <div className="dt-actions">
           <a
             className="dt-btn"

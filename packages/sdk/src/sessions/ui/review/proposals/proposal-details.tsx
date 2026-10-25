@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SessionDetail, SessionProposal } from "../../../protocol";
 import { attributedText, formatClock } from "../../session-format";
+import { submitOnModEnter } from "../../submit-shortcut";
 import { IntentionHistory } from "../continuation/intention-history";
 import { EvidenceThumb } from "../transcript/evidence-thumb";
 import type { ReviewHandle } from "../use-session-detail";
@@ -99,7 +100,13 @@ function ClarifyBox({
   };
 
   return (
-    <div className="dt-ses-form">
+    <form
+      className="dt-ses-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        send(text.trim());
+      }}
+    >
       {proposal.question && <p className="dt-note-text">{proposal.question}</p>}
       <textarea
         aria-label={proposal.question ? "Your answer" : "Add a precision…"}
@@ -107,6 +114,7 @@ function ClarifyBox({
         disabled={isRefining}
         maxLength={1000}
         onChange={(event) => setText(event.target.value)}
+        onKeyDown={submitOnModEnter}
         placeholder="Add a precision…"
         rows={2}
         value={text}
@@ -115,8 +123,7 @@ function ClarifyBox({
         <button
           className="dt-btn"
           disabled={isRefining || text.trim() === ""}
-          onClick={() => send(text.trim())}
-          type="button"
+          type="submit"
         >
           Update intention
         </button>
@@ -125,7 +132,7 @@ function ClarifyBox({
         onRetry={() => lastClarification && send(lastClarification)}
         proposal={proposal}
       />
-    </div>
+    </form>
   );
 }
 

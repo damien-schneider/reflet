@@ -3,6 +3,7 @@ import { PencilIcon, TrashIcon } from "../../../feedback/ui/icons";
 import { isSubmitEnter } from "../../../feedback/ui/keyboard";
 import type { CodeTarget } from "../code/use-code-lookup";
 import { reportFailure } from "../notices";
+import { SourcePath } from "../source-path";
 import { type DevNote, noteStore } from "./note-store";
 
 interface CloseUpPreview {
@@ -199,10 +200,12 @@ function NoteSourceLine({
         onClick={() => onOpenCode({ request: source, title: selection.label })}
         type="button"
       >
-        {selection.sourceLocation}
+        <SourcePath path={selection.sourceLocation} />
       </button>
     ) : (
-      <p className="dt-meta">{selection.sourceLocation}</p>
+      <p className="dt-meta">
+        <SourcePath path={selection.sourceLocation} />
+      </p>
     );
   }
   if (source) {
@@ -276,7 +279,11 @@ export function NoteCard({
     : undefined;
 
   return (
-    <article className="dt-card dt-openable" data-sent={Boolean(note.sent)}>
+    <article
+      className="dt-card dt-openable"
+      data-kind="note"
+      data-sent={Boolean(note.sent)}
+    >
       {closeUp && (
         <img
           alt=""
@@ -293,11 +300,6 @@ export function NoteCard({
         pageLink={pageLink}
         pinNumber={pinNumber}
       />
-      <NoteSourceLine
-        isLocating={isLocating}
-        note={note}
-        onOpenCode={onOpenCode}
-      />
       {isEditing ? (
         <NoteEditor
           initialText={note.note}
@@ -307,6 +309,11 @@ export function NoteCard({
       ) : (
         <p className="dt-note-text">{note.note || "No comment"}</p>
       )}
+      <NoteSourceLine
+        isLocating={isLocating}
+        note={note}
+        onOpenCode={onOpenCode}
+      />
       {isOffPage && (
         <p className="dt-meta">The element is not on the page right now.</p>
       )}

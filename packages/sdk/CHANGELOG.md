@@ -10,10 +10,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Devtools Code tab: a component path above the code, like `App › SettingsForm › Button`. Click a step to see where that component uses the element you picked, and click back down to return. The page outlines what the selected step draws. Components from libraries are skipped. Server Components are included when the dev server can read their source.
+- Devtools and sessions: Cmd/Ctrl+Enter submits a typed passage, a passage correction, a proposal, a considered response, a refine request and a verdict.
+- Devtools: the panel tabs and the session review tabs are one Tab stop each. Arrow keys, Home and End move between them.
 
 ### Changed
 
 - Devtools Code tab: moving to another file keeps the current code on screen until the new file has loaded.
+- Devtools notes: the note you wrote comes first and the component label is muted. Source paths in notes, on the board and in the Code tab stay on one line, with the file name in bold and the folders trimmed from the left. The full path shows on hover.
+- Devtools board: "Copy as prompt" sits in the votes and date row, so more cards fit on screen. "Clear notes" moves to the far end of the notes footer.
+- Sessions: the start screen says what a session is before listing what it records. Intention cards drop the repeated "Intention" label, and an empty response is one "Add a considered response" link. Page paths show as code, so a root path no longer reads as a stray "/".
+- Devtools: the panel opens in 240ms instead of 320ms, switching tabs no longer replays a fade, text renders antialiased and buttons scale to 96% when pressed.
+- Touch screens: panel controls are at least 44px tall, fields use 16px text so iOS no longer zooms into them, and a double tap no longer zooms the page. Hover motion only runs with a mouse.
+- Contrast: numbers on blue and text on green meet 4.5:1 in dark mode, and accent-colored text meets it in light mode.
+- Sessions: screenshots in the review load lazily.
+
+### Fixed
+
+- Picker: pointing at text inside a `display: contents` wrapper, common in component libraries, outlines the real element and opens the note composer under it. It used to open in the top-left corner with no outline.
+- Recording bar: the cancel confirmation and the moment note no longer stretch the bar across the page.
+- Recording bar: the live transcript no longer cuts its oldest passage in half under the heading.
+- Devtools: copy buttons keep their width when they switch to "Copied", so the buttons beside them no longer jump.
+- Notes and sessions: screenshots show their edge, so a light screenshot no longer blends into a light panel.
 
 ## [0.7.14] - 2026-10-24
 

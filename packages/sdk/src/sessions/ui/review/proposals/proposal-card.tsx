@@ -136,7 +136,7 @@ function DecisionButtons({
     decisionToggle(context.actions, proposal, decision);
   const isKept = proposal.decision === "kept";
   return (
-    <div className="dt-actions">
+    <div className="dt-actions dt-ses-decisions">
       <button
         aria-pressed={isKept}
         className="dt-btn"
@@ -253,15 +253,21 @@ function ResponseBlock({
       />
     );
   }
-  if (!(proposal.response || context.canEdit)) {
-    return null;
+  if (!proposal.response) {
+    return context.canEdit ? (
+      <button
+        className="dt-ses-link"
+        onClick={() => setIsEditing(true)}
+        type="button"
+      >
+        Add a considered response
+      </button>
+    ) : null;
   }
   return (
     <section className="dt-ses-block">
       <h4 className="dt-ses-label">Considered response</h4>
-      <p className={proposal.response ? "dt-note-text" : "dt-meta"}>
-        {proposal.response ?? "No considered response yet."}
-      </p>
+      <p className="dt-note-text">{proposal.response}</p>
       {context.canEdit && (
         <button
           className="dt-ses-link"
@@ -286,7 +292,6 @@ function IntentionBody({
 }) {
   return (
     <>
-      <p className="dt-ses-label">Intention</p>
       <p className="dt-ses-need" data-expanded={disclosure.isExpanded}>
         {proposal.need}
       </p>

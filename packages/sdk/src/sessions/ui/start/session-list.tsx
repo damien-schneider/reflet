@@ -166,9 +166,6 @@ export function SessionList({
   return (
     <>
       <UploadingDrafts drafts={drafts} />
-      {mine.length + shared.length === 0 && (
-        <p className="dt-meta">Your recorded sessions will be listed here.</p>
-      )}
       <SessionGroup
         interruptedIds={interruptedIds}
         onOpen={onOpen}

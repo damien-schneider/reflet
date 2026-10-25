@@ -109,7 +109,7 @@ export const PICKER_STYLES = `
   color: var(--rf-text-muted);
   white-space: nowrap;
 }
-.picker-note-target strong { flex: none; font-weight: 600; color: var(--rf-accent); }
+.picker-note-target strong { flex: none; font-weight: 600; color: var(--rf-accent-ink); }
 .picker-note-target span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .picker-note textarea {
   width: 100%;

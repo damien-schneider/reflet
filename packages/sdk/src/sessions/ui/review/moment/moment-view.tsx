@@ -9,12 +9,8 @@ import { useFocusWhen } from "../transcript/remove-evidence";
 import { gapLabel } from "../transcript/timeline";
 import type { ReviewHandle } from "../use-session-detail";
 import { ContextCorrection } from "./context-correction";
-import {
-  contextKindLabel,
-  contextLine,
-  gapsDuring,
-  ORIGIN_LABELS,
-} from "./moment-labels";
+import { ContextLine } from "./context-line";
+import { contextKindLabel, gapsDuring, ORIGIN_LABELS } from "./moment-labels";
 import { MomentScreenshot } from "./moment-screenshot";
 
 const AMBIGUOUS_COPY =
@@ -40,7 +36,9 @@ function ContextItem({
     <li className="dt-ses-moment-item">
       <p className="dt-ses-moment-line">
         <span className="dt-chip">{contextKindLabel(item)}</span>
-        <span>{contextLine(item)}</span>
+        <span>
+          <ContextLine item={item} />
+        </span>
       </p>
       {item.evidenceId && <MomentScreenshot evidence={evidence} item={item} />}
     </li>

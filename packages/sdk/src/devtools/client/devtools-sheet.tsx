@@ -4,6 +4,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { CloseIcon, CodeIcon } from "../../feedback/ui/icons";
@@ -12,6 +13,7 @@ import { MicIcon } from "../../sessions/ui/session-icons";
 import type { SheetTab } from "./devtools-bar";
 import { ChevronLeftIcon, InboxIcon, NotesIcon } from "./devtools-icons";
 import { focusedElementAround } from "./focused-element";
+import { TabList } from "./tab-list";
 import { useSheetSize } from "./use-sheet-size";
 
 const FULL_HEIGHT = "calc(100dvh - 24px)";
@@ -125,21 +127,19 @@ function SheetNavigation({
     );
   }
   return (
-    <div className="dt-tabs" role="tablist">
-      {tabs.map((option) => (
-        <button
-          aria-selected={option === tab}
-          className="dt-tab"
-          key={option}
-          onClick={() => onSelectTab(option)}
-          role="tab"
-          type="button"
-        >
-          {TABS[option].icon}
-          {TABS[option].label}
-        </button>
-      ))}
-    </div>
+    <TabList
+      onSelect={onSelectTab}
+      options={tabs.map((option) => ({
+        content: (
+          <>
+            {TABS[option].icon}
+            {TABS[option].label}
+          </>
+        ),
+        value: option,
+      }))}
+      selected={tab}
+    />
   );
 }
 
@@ -170,6 +170,7 @@ export function DevtoolsSheet({
   });
   const isMoved = floating.position !== null;
   const { rootRef } = floating;
+  const [hasEntered, setHasEntered] = useState(false);
   useSheetFocus(rootRef);
   useFocusOnNavigation(rootRef, navigation.place?.id ?? null);
 
@@ -187,8 +188,14 @@ export function DevtoolsSheet({
     <aside
       aria-label={label}
       className="dt-sheet glass"
+      data-entered={hasEntered}
       data-moved={isMoved}
       data-side={side}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) {
+          setHasEntered(true);
+        }
+      }}
       ref={rootRef}
       style={{
         height: size.height ?? (isMoved ? FULL_HEIGHT : undefined),

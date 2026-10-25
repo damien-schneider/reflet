@@ -36,12 +36,6 @@ export function pagePath(url: string | null): string | null {
   return URL_PATH.exec(url)?.[1] || "/";
 }
 
-export function contextLine(item: SegmentContext): string {
-  const page = pagePath(item.url ?? item.frame?.url ?? null);
-  const element = item.element?.label ?? item.label;
-  return page ? `${element} · ${page}` : element;
-}
-
 export function offsetFromPassage(
   atMs: number,
   segment: Pick<SessionSegment, "endMs" | "startMs">

@@ -3,35 +3,10 @@ import { PencilIcon } from "../../../../feedback/ui/icons";
 import type { SessionSegment, SpokenRun } from "../../../protocol";
 import { formatClock, speakerLabel } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
+import { submitOnModEnter } from "../../submit-shortcut";
 import { SaveProblemMessage, useGuardedSave } from "../guarded-save";
+import { FormActions } from "../proposals/proposal-editor";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
-
-function SaveCancelActions({
-  isSaveDisabled,
-  onCancel,
-  onSave,
-}: {
-  isSaveDisabled: boolean;
-  onCancel: () => void;
-  onSave: () => void;
-}) {
-  return (
-    <div className="dt-actions">
-      <button
-        className="dt-btn"
-        data-variant="primary"
-        disabled={isSaveDisabled}
-        onClick={onSave}
-        type="button"
-      >
-        Save
-      </button>
-      <button className="dt-btn" onClick={onCancel} type="button">
-        Cancel
-      </button>
-    </div>
-  );
-}
 
 function SegmentEditor({
   onDone,
@@ -58,24 +33,31 @@ function SegmentEditor({
     });
 
   return (
-    <div className="dt-ses-form">
+    <form
+      className="dt-ses-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
       <textarea
         aria-label={`Passage at ${formatClock(segment.startMs)}`}
         className="dt-field"
         maxLength={5000}
         onChange={(event) => setText(event.target.value)}
+        onKeyDown={submitOnModEnter}
         rows={3}
         value={text}
       />
       {problem && (
         <SaveProblemMessage onReload={review.reload} problem={problem} />
       )}
-      <SaveCancelActions
-        isSaveDisabled={isSaving || text.trim() === ""}
+      <FormActions
+        isSubmitDisabled={isSaving || text.trim() === ""}
         onCancel={onDone}
-        onSave={submit}
+        submitLabel="Save"
       />
-    </div>
+    </form>
   );
 }
 

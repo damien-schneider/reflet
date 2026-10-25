@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SessionContribution } from "../../../intention-protocol";
 import { attributedText, formatClock, formatDate } from "../../session-format";
+import { submitOnModEnter } from "../../submit-shortcut";
 import type { ProposalContext } from "../proposals/proposal-details";
 import type { ChangeScope } from "./intention-change";
 
@@ -39,12 +40,19 @@ export function QuestionBox({ scope }: { scope: ChangeScope }) {
         ))}
       </ul>
       {scope.context.canEdit && (
-        <>
+        <form
+          className="dt-ses-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            send();
+          }}
+        >
           <textarea
             aria-label="Your answer"
             className="dt-field"
             maxLength={1000}
             onChange={(event) => setText(event.target.value)}
+            onKeyDown={submitOnModEnter}
             rows={2}
             value={text}
           />
@@ -52,13 +60,12 @@ export function QuestionBox({ scope }: { scope: ChangeScope }) {
             <button
               className="dt-btn"
               disabled={isSending || text.trim() === ""}
-              onClick={send}
-              type="button"
+              type="submit"
             >
               Send answer
             </button>
           </div>
-        </>
+        </form>
       )}
     </section>
   );

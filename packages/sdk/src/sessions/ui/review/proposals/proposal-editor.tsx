@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { EditProposalBody } from "../../../api/session-api";
 import type { SessionProposal } from "../../../protocol";
 import { useSessionWorkspace } from "../../session-workspace";
+import { submitOnModEnter } from "../../submit-shortcut";
 import { SaveProblemMessage, useGuardedSave } from "../guarded-save";
 import { type ReviewHandle, withProposal } from "../use-session-detail";
 
@@ -58,6 +59,7 @@ export function TextField({
         className="dt-field"
         maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={submitOnModEnter}
         rows={rows}
         value={value}
       />

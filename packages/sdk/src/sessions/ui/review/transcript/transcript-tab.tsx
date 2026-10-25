@@ -4,6 +4,7 @@ import { announce, reportFailure } from "../../../../devtools/client/notices";
 import type { SessionDetail } from "../../../protocol";
 import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
+import { submitOnModEnter } from "../../submit-shortcut";
 import type { ShowMoment } from "../proposals/proposal-details";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
 import { MomentTime, SegmentRow, useOpenMomentOnRowClick } from "./segment-row";
@@ -82,27 +83,29 @@ function useTypedPassage({ detail, review }: TranscriptEditing) {
 function AddTypedPassage({ detail, review }: TranscriptEditing) {
   const { add, setText, text } = useTypedPassage({ detail, review });
   return (
-    <div className="dt-ses-form">
+    <form
+      className="dt-ses-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        add();
+      }}
+    >
       <textarea
         aria-label="Add a typed passage"
         className="dt-field"
         maxLength={5000}
         onChange={(event) => setText(event.target.value)}
+        onKeyDown={submitOnModEnter}
         placeholder="Add a typed passage"
         rows={2}
         value={text}
       />
       <div className="dt-actions">
-        <button
-          className="dt-btn"
-          disabled={text.trim() === ""}
-          onClick={add}
-          type="button"
-        >
+        <button className="dt-btn" disabled={text.trim() === ""} type="submit">
           Add passage
         </button>
       </div>
-    </div>
+    </form>
   );
 }
 

@@ -190,7 +190,7 @@ function NotesFooter({
       />
       {clearable.length > 0 && (
         <button
-          className="dt-btn"
+          className="dt-btn dt-foot-end"
           onClick={() => archiveNotes(clearable)}
           type="button"
         >

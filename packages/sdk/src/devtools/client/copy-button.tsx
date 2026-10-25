@@ -23,15 +23,17 @@ export function CopyButton({
     setTimeout(() => setOutcome(null), COPIED_FEEDBACK_MS);
   };
 
-  const outcomeLabel = outcome === "copied" ? "Copied" : "Copy failed";
   return (
     <button
-      className="dt-btn"
+      className="dt-btn dt-copy"
       data-variant={variant}
       onClick={copy}
       type="button"
     >
-      {outcome ? outcomeLabel : label}
+      <span aria-hidden={outcome !== null}>{label}</span>
+      <span aria-hidden={outcome === null}>
+        {outcome === "failed" ? "Copy failed" : "Copied"}
+      </span>
     </button>
   );
 }

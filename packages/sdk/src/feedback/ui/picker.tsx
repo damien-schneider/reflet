@@ -6,7 +6,12 @@ import {
 } from "../core/element-selector";
 import { getFiberFromNode, resolveComponentStack } from "../core/react-source";
 import type { FeedbackWidgetLabels } from "../types";
-import { AIM_KEYS, isWidgetOwned, stepAim } from "./floating/element-walk";
+import {
+  AIM_KEYS,
+  isWidgetOwned,
+  nearestBoxedElement,
+  stepAim,
+} from "./floating/element-walk";
 import { ArrowIcon, CodeIcon, CopyIcon, TargetIcon } from "./icons";
 import { isApplePlatform, isSubmitEnter, matchesHotkey } from "./keyboard";
 import {
@@ -30,7 +35,7 @@ interface HoverTarget {
 }
 
 function elementUnder(x: number, y: number): Element | null {
-  const element = document.elementFromPoint(x, y);
+  const element = nearestBoxedElement(document.elementFromPoint(x, y));
   if (!element || isWidgetOwned(element)) {
     return null;
   }

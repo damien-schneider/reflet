@@ -78,7 +78,9 @@ export function EvidenceThumb({
     <span className="dt-ses-shot" data-large={isLarge}>
       <img
         alt={evidenceCaption(evidence)}
+        decoding="async"
         height={image.height}
+        loading="lazy"
         src={image.url}
         width={image.width}
       />

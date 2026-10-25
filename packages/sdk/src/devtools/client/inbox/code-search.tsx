@@ -42,9 +42,11 @@ export function CodeSearch({
       >
         <input
           aria-label="Text to find in the code"
+          autoComplete="off"
           className="dt-field"
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Text shown by the element"
+          spellCheck={false}
           value={query}
         />
         <button

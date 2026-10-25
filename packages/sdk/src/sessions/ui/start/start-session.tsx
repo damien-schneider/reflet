@@ -91,10 +91,6 @@ function StartActions({
 }) {
   return (
     <div className="dt-ses-start">
-      <p className="dt-meta">
-        Talk while you use the app. Reflet turns what you say and show into
-        intentions you can brief an agent with.
-      </p>
       {children}
       <div className="dt-actions">
         <button
@@ -163,6 +159,10 @@ export function StartSession({
 
   return (
     <>
+      <p className="dt-ses-pitch">
+        Talk while you use the app. Reflet turns what you say and show into
+        intentions you can brief an agent with.
+      </p>
       {isFirstVisit && disclosure}
       {failure ? (
         <StartProblem

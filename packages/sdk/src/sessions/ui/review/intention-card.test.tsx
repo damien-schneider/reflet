@@ -126,7 +126,7 @@ it("shows what becomes visible to the team before adding to another intention", 
   );
 });
 
-it("edits the considered response without touching the need", async () => {
+it("adds a considered response without touching the need", async () => {
   const api = fakeApi({
     editProposal: vi
       .fn()
@@ -134,7 +134,9 @@ it("edits the considered response without touching the need", async () => {
   });
   await renderReview(aDetail(), api);
 
-  fireEvent.click(screen.getByRole("button", { name: "Edit response" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Add a considered response" })
+  );
   fireEvent.change(
     screen.getByRole("textbox", { name: "Considered response" }),
     { target: { value: "Pin the bar" } }
@@ -149,6 +151,7 @@ it("edits the considered response without touching the need", async () => {
     })
   );
   expect(await screen.findByText("Pin the bar")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Edit response" })).toBeTruthy();
 });
 
 it("deletes an intention only after warning about what goes with it", async () => {

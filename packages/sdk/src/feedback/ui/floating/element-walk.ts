@@ -19,6 +19,14 @@ export function isWidgetOwned(element: Element): boolean {
   return element.closest(`[${WIDGET_MARKER}]`) !== null;
 }
 
+export function nearestBoxedElement(element: Element | null): Element | null {
+  let candidate = element;
+  while (candidate && getComputedStyle(candidate).display === "contents") {
+    candidate = candidate.parentElement;
+  }
+  return candidate;
+}
+
 function isPickable(element: Element | null): boolean {
   if (
     !element ||

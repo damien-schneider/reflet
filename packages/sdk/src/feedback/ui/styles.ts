@@ -19,8 +19,11 @@ export const WIDGET_STYLES = `
   --rf-primary-text: #ffffff;
   --rf-accent: #2383e2;
   --rf-accent-text: #ffffff;
+  --rf-accent-ink: #016dc8;
   --rf-danger: #d44c47;
   --rf-success: #448361;
+  --rf-success-text: #ffffff;
+  --rf-image-edge: rgb(0 0 0 / 10%);
   --rf-swatch-base: #ffffff;
   --rf-spectrum: conic-gradient(#ff5757, #ffde59, #6bdb78, #4ac9fa, #8b5cf6, #ef73dc, #ff5757);
   --rf-radius: 20px;
@@ -40,6 +43,8 @@ export const WIDGET_STYLES = `
   color-scheme: light;
   all: initial;
   font-family: var(--rf-font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 :host([data-theme="dark"]) {
@@ -56,8 +61,12 @@ export const WIDGET_STYLES = `
   --rf-primary: #f1efec;
   --rf-primary-text: #1c1c1b;
   --rf-accent: #529cca;
+  --rf-accent-text: #1c1c1b;
+  --rf-accent-ink: #5aa4d2;
   --rf-danger: #eb5757;
   --rf-success: #4dab74;
+  --rf-success-text: #1c1c1b;
+  --rf-image-edge: rgb(255 255 255 / 10%);
   --rf-ring: 0 0 0 1px rgb(255 255 255 / 7%);
   --rf-shadow-low: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 10px -4px rgb(0 0 0 / 40%);
   --rf-shadow: 0 2px 5px -1px rgb(0 0 0 / 35%), 0 14px 36px -10px rgb(0 0 0 / 55%);
@@ -86,10 +95,10 @@ export const WIDGET_STYLES = `
 .root[data-position="bottom-left"] .panel { transform-origin: bottom left; }
 .root[data-position^="top"] .panel { transform-origin: top center; }
 .root[data-editing="true"] { visibility: hidden; pointer-events: none; }
-button, select, input, textarea { font: inherit; color: inherit; }
+button, select, input, textarea { font: inherit; color: inherit; touch-action: manipulation; }
 button { margin: 0; cursor: pointer; border: 0; background: none; transition: scale 120ms var(--rf-ease); }
 button:disabled, button[aria-disabled="true"] { cursor: not-allowed; opacity: .4; }
-button:active:not(:disabled, [aria-disabled="true"]) { scale: .97; }
+button:active:not(:disabled, [aria-disabled="true"]) { scale: .96; }
 svg { flex-shrink: 0; }
 :focus-visible { outline: 2px solid var(--rf-accent); outline-offset: 3px; }
 .icon-btn, .tool {
@@ -104,7 +113,9 @@ svg { flex-shrink: 0; }
   font-weight: 500;
   transition: transform 200ms var(--rf-ease), box-shadow 200ms var(--rf-ease), scale 120ms var(--rf-ease);
 }
-.launcher:hover { transform: translateY(-2px); box-shadow: var(--rf-shadow); }
+@media (hover: hover) and (pointer: fine) {
+  .launcher:hover { transform: translateY(-2px); box-shadow: var(--rf-shadow); }
+}
 .launcher-icon { display: flex; width: 15px; height: 15px; }
 .launcher-icon .on-close { display: none; }
 .floating-controls {

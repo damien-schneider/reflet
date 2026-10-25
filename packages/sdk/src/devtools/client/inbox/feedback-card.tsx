@@ -4,6 +4,7 @@ import type { CodeTarget } from "../code/use-code-lookup";
 import { CopyButton } from "../copy-button";
 import { boardFeedbackToPrompt } from "../notes/agent-prompt";
 import type { BoardFeedback, SourceRequest } from "../route/dev-route";
+import { SourcePath } from "../source-path";
 import { CodeSearch } from "./code-search";
 
 const SOURCE_LOCATION = /^(.+?):(\d+)(?::(\d+))?$/;
@@ -65,11 +66,13 @@ function SelectionRow({
       {selection.comment && <p className="dt-note-text">{selection.comment}</p>}
       {selection.sourceLocation && openSource && (
         <button className="dt-source" onClick={openSource} type="button">
-          {selection.sourceLocation}
+          <SourcePath path={selection.sourceLocation} />
         </button>
       )}
       {selection.sourceLocation && !onOpenCode && (
-        <p className="dt-meta">{selection.sourceLocation}</p>
+        <p className="dt-meta">
+          <SourcePath path={selection.sourceLocation} />
+        </p>
       )}
       {onOpenCode && !(request || isSearching) && (
         <div className="dt-actions">
@@ -130,10 +133,13 @@ export function FeedbackCard({
           {item.organizationStatus?.name ?? item.status}
         </span>
       </div>
-      <p className="dt-meta">
-        {item.voteCount} {item.voteCount === 1 ? "vote" : "votes"} ·{" "}
-        {new Date(item.createdAt).toLocaleDateString()}
-      </p>
+      <div className="dt-card-meta">
+        <p className="dt-meta">
+          {item.voteCount} {item.voteCount === 1 ? "vote" : "votes"} ·{" "}
+          {new Date(item.createdAt).toLocaleDateString()}
+        </p>
+        <CopyButton label="Copy as prompt" text={boardFeedbackToPrompt(item)} />
+      </div>
       {item.description && item.description !== item.title && (
         <p className="dt-note-text">{item.description}</p>
       )}
@@ -145,9 +151,6 @@ export function FeedbackCard({
           selection={selection}
         />
       ))}
-      <div className="dt-actions">
-        <CopyButton label="Copy as prompt" text={boardFeedbackToPrompt(item)} />
-      </div>
     </article>
   );
 }

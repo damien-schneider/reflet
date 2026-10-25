@@ -114,7 +114,9 @@ function ScreenFigure({
   return (
     <figure className="dt-ses-report">
       <figcaption>
-        <ShotCaption atMs={atMs}>{newPage}</ShotCaption>
+        <ShotCaption atMs={atMs}>
+          {newPage && <code className="dt-ses-page">{newPage}</code>}
+        </ShotCaption>
       </figcaption>
       <div
         className="dt-ses-report-canvas"
@@ -124,7 +126,9 @@ function ScreenFigure({
       >
         <img
           alt={`Screenshot at ${formatClock(atMs)}`}
+          decoding="async"
           height={image.height}
+          loading="lazy"
           src={image.url}
           width={image.width}
         />

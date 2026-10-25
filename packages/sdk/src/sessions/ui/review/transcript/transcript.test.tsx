@@ -195,3 +195,29 @@ it("opens the moment from anywhere on a passage, except after dragging across it
   fireEvent.click(passage, { clientX: 10, clientY: 10 });
   expect(screen.getByRole("heading", { name: /^Moment / })).toBeTruthy();
 });
+
+it("adds a typed passage with Cmd/Ctrl+Enter, and never an empty one", async () => {
+  const api = fakeApi({
+    addTypedSegment: vi
+      .fn()
+      .mockResolvedValue(
+        aSegment({ id: "segment_typed", text: "Pin the bar" })
+      ),
+  });
+  await openTranscript(aDetail(), api);
+  const passage = screen.getByRole("textbox", { name: "Add a typed passage" });
+
+  fireEvent.keyDown(passage, { ctrlKey: true, key: "Enter" });
+  fireEvent.keyDown(passage, { key: "Enter", metaKey: true });
+  expect(api.addTypedSegment).not.toHaveBeenCalled();
+
+  fireEvent.change(passage, { target: { value: "Pin the bar" } });
+  fireEvent.keyDown(passage, { ctrlKey: true, key: "Enter" });
+  fireEvent.keyDown(passage, { key: "Enter", metaKey: true });
+
+  await waitFor(() =>
+    expect(api.addTypedSegment).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Pin the bar" })
+    )
+  );
+});
