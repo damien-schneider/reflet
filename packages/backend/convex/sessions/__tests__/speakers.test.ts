@@ -249,7 +249,7 @@ describe("speaker turns", () => {
 });
 
 describe("speakers in the transcript", () => {
-  test("detail and live feed say who said what", async () => {
+  test("detail says who said what", async () => {
     const { a, t } = await setupSessionWorld();
     const sessionId = await startSpeakerSession(a);
     const session = await seedTranscribedPassage(t, sessionId);
@@ -266,17 +266,11 @@ describe("speakers in the transcript", () => {
     const detail = sessionDetailSchema.parse(
       (await a.get(`/api/v1/sessions/detail?sessionId=${sessionId}`)).body
     );
-    const live = z
-      .object({ entries: z.array(z.object({ lines: z.array(z.string()) })) })
-      .parse((await a.get("/api/v1/sessions/live")).body);
 
     expect(detail.segments[0]?.speech).toEqual([
       { speaker: "S1", text: "Bon, on fait le point." },
       { speaker: "S2", text: "Moi je trouve que c'est long." },
     ]);
-    expect(live.entries[0]?.lines[0]).toBe(
-      "[00:01] Speaker 1: Bon, on fait le point. Speaker 2: Moi je trouve que c'est long."
-    );
   });
 
   test("a corrected passage keeps the speaker who talked longest", async () => {

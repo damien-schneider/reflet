@@ -1,16 +1,16 @@
 import type { Infer } from "convex/values";
 import type { Doc } from "../../_generated/dataModel";
 import {
-  SESSION_LIMITS,
   SESSION_START_FUTURE_TOLERANCE_MS,
   SESSION_START_PAST_TOLERANCE_MS,
+  sessionLimitsFor,
 } from "../constants";
 import type { sessionGapValidator } from "../validators";
 
 type SessionGap = Infer<typeof sessionGapValidator>;
 type SessionTimeline = Pick<
   Doc<"sessions">,
-  "endedAt" | "gaps" | "startedAt" | "updatedAt"
+  "endedAt" | "gaps" | "startedAt" | "surface" | "updatedAt"
 >;
 
 export function clampStartedAt(startedAt: number, now: number): number {
@@ -51,7 +51,8 @@ export function exceedsDuration(
   atMs: number
 ): boolean {
   return (
-    atMs - pausedMsBefore(session.gaps, atMs) > SESSION_LIMITS.maxDurationMs
+    atMs - pausedMsBefore(session.gaps, atMs) >
+    sessionLimitsFor(session.surface).maxDurationMs
   );
 }
 

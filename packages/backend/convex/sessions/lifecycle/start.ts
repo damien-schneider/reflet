@@ -72,7 +72,11 @@ export const start = internalMutation({
     detectSpeakers: v.optional(v.boolean()),
     page: v.object({ title: v.string(), url: v.string() }),
     startedAt: v.number(),
-    surface: v.union(v.literal("devtools"), v.literal("app")),
+    surface: v.union(
+      v.literal("devtools"),
+      v.literal("app"),
+      v.literal("live")
+    ),
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

@@ -9,6 +9,7 @@ import {
 } from "../../../../sdk/src/sessions/protocol";
 import { internal } from "../../_generated/api";
 import {
+  LIVE_SESSION_RETENTION_MS,
   SESSION_INTERRUPT_AFTER_MS,
   SESSION_TOMBSTONE_RETENTION_MS,
 } from "../constants";
@@ -23,6 +24,8 @@ import {
   testFrame,
   wavBlob,
 } from "./session.fixtures";
+
+const HOUR_MS = 3_600_000;
 
 const summaryResponse = z.object({ session: sessionSummarySchema });
 const evidenceResponse = z.object({ evidence: sessionEvidenceSchema });
@@ -245,6 +248,93 @@ describe("session lifecycle", () => {
       endedAt: staleAt,
       gaps: [{ endMs: 60_000, reason: "interrupted", startMs: 60_000 }],
     });
+  });
+
+  test("a live session survives an idle stretch that ends other sessions", async () => {
+    const { organizationId, t } = await setupSessionWorld();
+    const idleAt = Date.now() - 2 * HOUR_MS;
+    const idle = (surface: "devtools" | "live") => ({
+      authorId: MEMBER_A.userId,
+      collection: "recording" as const,
+      organizationId,
+      startedAt: idleAt - 60_000,
+      surface,
+      updatedAt: idleAt,
+    });
+    const ids = await t.run(async (ctx) => ({
+      devtools: await seedSession(ctx, idle("devtools")),
+      live: await seedSession(ctx, idle("live")),
+    }));
+
+    await t.mutation(
+      internal.sessions.lifecycle.expiry.endInterruptedSessions,
+      {}
+    );
+
+    const rows = await t.run(async (ctx) => ({
+      devtools: await ctx.db.get(ids.devtools),
+      live: await ctx.db.get(ids.live),
+    }));
+    expect(rows.live?.collection).toBe("recording");
+    expect(rows.devtools?.collection).toBe("ended");
+  });
+
+  test("live sessions are erased a day after their last update", async () => {
+    const { organizationId, t } = await setupSessionWorld();
+    const expiredAt = Date.now() - LIVE_SESSION_RETENTION_MS - 1000;
+    const ids = await t.run(async (ctx) => {
+      const old = await seedSession(ctx, {
+        authorId: MEMBER_A.userId,
+        organizationId,
+        surface: "live",
+        updatedAt: expiredAt,
+      });
+      const segment = await ctx.db.insert("sessionSegments", {
+        clientKey: "segment-old",
+        createdAt: expiredAt,
+        endMs: 3000,
+        organizationId,
+        revision: 1,
+        sessionId: old,
+        source: "voice",
+        startMs: 0,
+        text: "Keep the folder.",
+        textOrigin: "transcription",
+        transcription: { attempts: 1, state: "done", updatedAt: expiredAt },
+        updatedAt: expiredAt,
+      });
+      return {
+        devtools: await seedSession(ctx, {
+          authorId: MEMBER_A.userId,
+          organizationId,
+          updatedAt: expiredAt,
+        }),
+        old,
+        recent: await seedSession(ctx, {
+          authorId: MEMBER_A.userId,
+          organizationId,
+          surface: "live",
+          updatedAt: Date.now() - HOUR_MS,
+        }),
+        segment,
+      };
+    });
+
+    await t.mutation(
+      internal.sessions.lifecycle.removal.expireLiveSessions,
+      {}
+    );
+
+    const rows = await t.run(async (ctx) => ({
+      devtools: await ctx.db.get(ids.devtools),
+      old: await ctx.db.get(ids.old),
+      recent: await ctx.db.get(ids.recent),
+      segment: await ctx.db.get(ids.segment),
+    }));
+    expect(rows.old?.deletedAt).toEqual(expect.any(Number));
+    expect(rows.segment).toBeNull();
+    expect(rows.recent?.deletedAt).toBeUndefined();
+    expect(rows.devtools?.deletedAt).toBeUndefined();
   });
 
   test("tombstones are purged after the retention period", async () => {

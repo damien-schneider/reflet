@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import type { Id } from "../../_generated/dataModel";
+import type { Doc, Id } from "../../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
 import { loadSession, sessionActorValidator } from "../access";
 import {
+  LIVE_SESSION_RETENTION_MS,
   SESSION_CRON_BATCH_SIZE,
   SESSION_TOMBSTONE_RETENTION_MS,
 } from "../constants";
@@ -63,6 +64,22 @@ async function deleteSessionChildren(
   }
 }
 
+async function eraseSession(
+  ctx: MutationCtx,
+  session: Doc<"sessions">
+): Promise<void> {
+  await removeSessionContributions(ctx, session._id);
+  await forgetSessionIntentions(ctx, session._id);
+  await deleteSessionChildren(ctx, session._id);
+  const now = Date.now();
+  await ctx.db.patch(session._id, {
+    deletedAt: now,
+    startUrl: undefined,
+    title: "",
+    updatedAt: now,
+  });
+}
+
 export const remove = internalMutation({
   args: { actor: sessionActorValidator, sessionId: v.string() },
   handler: async (ctx, { actor, sessionId }) => {
@@ -80,18 +97,29 @@ export const remove = internalMutation({
       actor,
       sessionId,
     });
-    await removeSessionContributions(ctx, session._id);
-    await forgetSessionIntentions(ctx, session._id);
-    await deleteSessionChildren(ctx, session._id);
-    const now = Date.now();
-    await ctx.db.patch(session._id, {
-      deletedAt: now,
-      startUrl: undefined,
-      title: "",
-      updatedAt: now,
-    });
+    await eraseSession(ctx, session);
     return { deleted: true };
   },
+});
+
+export const expireLiveSessions = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const expired = await ctx.db
+      .query("sessions")
+      .withIndex("by_surface_deleted_updated", (q) =>
+        q
+          .eq("surface", "live")
+          .eq("deletedAt", undefined)
+          .lt("updatedAt", Date.now() - LIVE_SESSION_RETENTION_MS)
+      )
+      .take(SESSION_CRON_BATCH_SIZE);
+    for (const session of expired) {
+      await eraseSession(ctx, session);
+    }
+    return null;
+  },
+  returns: v.null(),
 });
 
 export const purgeTombstones = internalMutation({

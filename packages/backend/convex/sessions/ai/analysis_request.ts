@@ -89,11 +89,18 @@ export const startAnalysisRun = async (
   );
 };
 
+export const skipsAnalysis = (session: Doc<"sessions">): boolean =>
+  session.surface === "live";
+
 export async function requestAnalysis(
   ctx: MutationCtx,
   session: Doc<"sessions">
 ): Promise<void> {
-  if (session.analysis.state === "waiting" || hasRunCoveringSession(session)) {
+  if (
+    skipsAnalysis(session) ||
+    session.analysis.state === "waiting" ||
+    hasRunCoveringSession(session)
+  ) {
     return;
   }
   await ensureAnalysisAllowed(ctx, session.authorId);

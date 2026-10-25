@@ -12,7 +12,9 @@ import type { TestContext } from "../../test.helpers";
 import {
   addProposal,
   errorBody,
+  MEMBER_A,
   type SessionClient,
+  seedSession,
   sessionClient,
   setupSessionWorld,
   startSession,
@@ -154,6 +156,26 @@ describe("session access over HTTP", () => {
     for (const [path, body] of writesOn(ids)) {
       expect((await b.post(path, body)).status).toBe(403);
     }
+  });
+
+  test("live sessions never appear in the list", async () => {
+    const { a, organizationId, t } = await setupSessionWorld();
+    const visibleId = await t.run(async (ctx) => {
+      await seedSession(ctx, {
+        authorId: MEMBER_A.userId,
+        organizationId,
+        surface: "live",
+      });
+      return await seedSession(ctx, {
+        authorId: MEMBER_A.userId,
+        organizationId,
+      });
+    });
+
+    const list = z
+      .object({ sessions: z.array(sessionSummarySchema) })
+      .parse((await a.get("/api/v1/sessions/list")).body);
+    expect(list.sessions.map((session) => session.id)).toEqual([visibleId]);
   });
 
   test("another organization's member gets not found", async () => {

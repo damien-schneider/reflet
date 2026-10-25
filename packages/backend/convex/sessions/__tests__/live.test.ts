@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
-import type { Doc, Id } from "../../_generated/dataModel";
+import type { Doc } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import {
   MEMBER_A,
@@ -16,17 +16,28 @@ const LIVE = "/api/v1/sessions/live";
 const liveResponse = z.object({
   entries: z.array(
     z.object({
+      atMs: z.number(),
+      endMs: z.number(),
       id: z.string(),
       lines: z.array(z.string()),
       screenshotIds: z.array(z.string()),
     })
   ),
   screenshots: z.array(z.object({ id: z.string(), url: z.string() })),
-  session: z
-    .object({ collection: z.string(), id: z.string(), title: z.string() })
-    .nullable(),
-  transcription: z.object({ failed: z.number(), running: z.number() }),
+  session: z.object({
+    collection: z.string(),
+    id: z.string(),
+    startedAt: z.number(),
+    title: z.string(),
+  }),
+  transcription: z.object({
+    oldestRunningMs: z.number().nullable(),
+    running: z.number(),
+  }),
 });
+
+const feedOf = (sessionId: string, sinceMs: number | string = 0) =>
+  `${LIVE}?sessionId=${sessionId}&sinceMs=${sinceMs}`;
 
 const saveButton = {
   component: "CheckoutForm",
@@ -66,6 +77,7 @@ async function seedRecordingWithPassages() {
       authorId: MEMBER_A.userId,
       collection: "recording",
       organizationId: world.organizationId,
+      surface: "live",
     });
     const session = { _id: sessionId, organizationId: world.organizationId };
     await passage(ctx, session, {
@@ -111,6 +123,29 @@ async function seedRecordingWithPassages() {
       sessionId,
       startMs: 11_000,
     });
+    await passage(ctx, session, {
+      endMs: 203_000,
+      startMs: 200_000,
+      state: "done",
+      text: "Keep the folder I picked.",
+    });
+    await ctx.db.insert("sessionEventBatches", {
+      clientKey: "events-2",
+      createdAt: Date.now(),
+      endMs: 201_000,
+      events: [
+        {
+          atMs: 201_000,
+          element: saveButton,
+          frame: testFrame,
+          kind: "click",
+          pointer: { x: 60, y: 410 },
+        },
+      ],
+      organizationId: world.organizationId,
+      sessionId,
+      startMs: 150_000,
+    });
     const screenshotId = await ctx.db.insert("sessionEvidence", {
       atMs: 40_000,
       capturedAtMs: 40_200,
@@ -137,10 +172,10 @@ async function seedRecordingWithPassages() {
 }
 
 describe("live session feed", () => {
-  test("hands over what was said and typed so far, with where it happened", async () => {
+  test("hands over what was said and typed, with where it happened", async () => {
     const world = await seedRecordingWithPassages();
 
-    const response = await world.a.get(LIVE);
+    const response = await world.a.get(feedOf(world.sessionId));
 
     expect(response.status).toBe(200);
     const live = liveResponse.parse(response.body);
@@ -161,42 +196,69 @@ describe("live session feed", () => {
           `pointed at button "Save" in <CheckoutForm> at 00:40 on /checkout (${world.screenshotId})`
         ),
       ],
+      [expect.stringContaining("(this passage could not be transcribed)")],
+      [
+        "[03:20] Keep the folder I picked.",
+        expect.stringContaining('clicked button "Save"'),
+      ],
     ]);
-    expect(live.entries[1]?.screenshotIds).toEqual([world.screenshotId]);
+    expect(live.entries[1]).toMatchObject({
+      atMs: 40_000,
+      endMs: 40_000,
+      screenshotIds: [world.screenshotId],
+    });
+    expect(live.entries[0]).toMatchObject({ atMs: 10_000, endMs: 13_000 });
     expect(live.screenshots).toEqual([
       { id: world.screenshotId, url: expect.any(String) },
     ]);
-    expect(live.transcription).toEqual({ failed: 1, running: 1 });
+    expect(live.transcription).toEqual({ oldestRunningMs: 50_000, running: 1 });
   });
 
-  test("follows only the member's own devtools sessions", async () => {
-    const world = await setupSessionWorld();
-    const ownDevtoolsSession: Id<"sessions"> = await world.t.run(
-      async (ctx) => {
-        const own = await seedSession(ctx, {
-          authorId: MEMBER_A.userId,
-          organizationId: world.organizationId,
-        });
-        await seedSession(ctx, {
-          authorId: MEMBER_B.userId,
-          collection: "recording",
-          organizationId: world.organizationId,
-          visibility: "team",
-        });
-        await seedSession(ctx, {
-          authorId: MEMBER_A.userId,
-          collection: "recording",
-          organizationId: world.organizationId,
-          surface: "app",
-        });
-        return own;
-      }
+  test("sinceMs returns only later passages, with clicks from just before", async () => {
+    const world = await seedRecordingWithPassages();
+
+    const live = liveResponse.parse(
+      (await world.a.get(feedOf(world.sessionId, 200_000))).body
     );
 
-    const mine = liveResponse.parse((await world.a.get(LIVE)).body);
-    const outsider = liveResponse.parse((await world.outsider.get(LIVE)).body);
+    expect(live.entries.map(({ lines }) => lines)).toEqual([
+      [
+        "[03:20] Keep the folder I picked.",
+        expect.stringContaining('clicked button "Save"'),
+      ],
+    ]);
+    expect(live.screenshots).toEqual([]);
+    expect(live.transcription).toEqual({ oldestRunningMs: null, running: 0 });
+  });
 
-    expect(mine.session?.id).toBe(ownDevtoolsSession);
-    expect(outsider.session).toBeNull();
+  test("rejects a sinceMs that is not whole milliseconds", async () => {
+    const world = await seedRecordingWithPassages();
+
+    for (const sinceMs of ["1.5", "-1", "soon"]) {
+      expect((await world.a.get(feedOf(world.sessionId, sinceMs))).status).toBe(
+        400
+      );
+    }
+  });
+
+  test("only the author's own live sessions can be followed", async () => {
+    const world = await setupSessionWorld();
+    const ids = await world.t.run(async (ctx) => ({
+      devtools: await seedSession(ctx, {
+        authorId: MEMBER_A.userId,
+        collection: "recording",
+        organizationId: world.organizationId,
+      }),
+      othersLive: await seedSession(ctx, {
+        authorId: MEMBER_B.userId,
+        collection: "recording",
+        organizationId: world.organizationId,
+        surface: "live",
+        visibility: "team",
+      }),
+    }));
+
+    expect((await world.a.get(feedOf(ids.devtools))).status).toBe(404);
+    expect((await world.a.get(feedOf(ids.othersLive))).status).toBe(404);
   });
 });

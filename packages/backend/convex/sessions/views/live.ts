@@ -1,6 +1,13 @@
+import { v } from "convex/values";
 import type { Doc, Id } from "../../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../../_generated/server";
-import { type SessionActor, sessionActorValidator } from "../access";
+import {
+  loadSession,
+  sessionActorValidator,
+  sessionFailure,
+  sessionNotFound,
+} from "../access";
+import { LIVE_CONTEXT_LOOKBACK_MS } from "../constants";
 import { quotedPassage } from "../formatters";
 import {
   describeEvent,
@@ -11,55 +18,36 @@ import {
   toLinkableEvent,
   toLinkableEvidence,
 } from "../linking";
-import { type SpokenRun, segmentSpeech } from "../speakers/attribution";
-import { loadSessionCapture } from "./detail";
 
 type EvidenceId = Id<"sessionEvidence">;
 type TranscriptionState = Doc<"sessionSegments">["transcription"]["state"];
 
 interface LiveEntry {
   atMs: number;
+  endMs: number;
   id: string;
   lines: string[];
   screenshotIds: EvidenceId[];
 }
 
+const BAD_REQUEST_STATUS = 400;
+const INVALID_SINCE = "sinceMs must be a whole number of milliseconds.";
+const UNTRANSCRIBED_PASSAGE = "(this passage could not be transcribed)";
 const STILL_TRANSCRIBING: TranscriptionState[] = ["pending", "running"];
 const NEVER_TRANSCRIBED: TranscriptionState[] = ["failed", "expired"];
 
-const NO_LIVE_SESSION = {
-  entries: [],
-  screenshots: [],
-  session: null,
-  transcription: { failed: 0, running: 0 },
-};
-
-async function latestDevtoolsSession(
-  ctx: QueryCtx,
-  actor: SessionActor
-): Promise<Doc<"sessions"> | null> {
-  const newestFirst = ctx.db
-    .query("sessions")
-    .withIndex("by_org_author", (q) =>
-      q.eq("organizationId", actor.organizationId).eq("authorId", actor.userId)
-    )
-    .order("desc");
-  for await (const session of newestFirst) {
-    if (session.surface === "devtools" && session.deletedAt === undefined) {
-      return session;
-    }
-  }
-  return null;
-}
-
 const liveEntry = (
   id: string,
-  said: { speech: SpokenRun[] | null; startMs: number; text: string },
+  said: { endMs: number; startMs: number; text: string },
   resolved: ResolvedContext<EvidenceId>
 ): LiveEntry => ({
   atMs: said.startMs,
+  endMs: said.endMs,
   id,
-  lines: quotedPassage(said, resolved),
+  lines: quotedPassage(
+    { speech: null, startMs: said.startMs, text: said.text },
+    resolved
+  ),
   screenshotIds: resolved.context.flatMap(({ evidenceId }) =>
     evidenceId ? [evidenceId] : []
   ),
@@ -80,7 +68,7 @@ function typedNoteEntries(
   return [
     liveEntry(
       `${event.kind}@${event.atMs}`,
-      { speech: null, startMs: event.atMs, text: `Note: ${note}` },
+      { endMs: event.atMs, startMs: event.atMs, text: `Note: ${note}` },
       {
         ambiguous: false,
         context: [describeEvent(linkable, evidence)],
@@ -88,6 +76,17 @@ function typedNoteEntries(
       }
     ),
   ];
+}
+
+function passageText(segment: Doc<"sessionSegments">): string | null {
+  const { state } = segment.transcription;
+  if (NEVER_TRANSCRIBED.includes(state)) {
+    return UNTRANSCRIBED_PASSAGE;
+  }
+  if (state === "done" && segment.text.trim() !== "") {
+    return segment.text;
+  }
+  return null;
 }
 
 async function citedScreenshots(
@@ -111,54 +110,93 @@ async function citedScreenshots(
   return screenshots;
 }
 
+async function loadCaptureSince(
+  ctx: QueryCtx,
+  sessionId: Id<"sessions">,
+  sinceMs: number
+) {
+  const contextFromMs = sinceMs - LIVE_CONTEXT_LOOKBACK_MS;
+  const [segments, batches, evidence] = await Promise.all([
+    ctx.db
+      .query("sessionSegments")
+      .withIndex("by_session_start", (q) =>
+        q.eq("sessionId", sessionId).gte("startMs", sinceMs)
+      )
+      .collect(),
+    ctx.db
+      .query("sessionEventBatches")
+      .withIndex("by_session_start", (q) =>
+        q.eq("sessionId", sessionId).gte("startMs", contextFromMs)
+      )
+      .collect(),
+    ctx.db
+      .query("sessionEvidence")
+      .withIndex("by_session_at", (q) =>
+        q.eq("sessionId", sessionId).gte("atMs", contextFromMs)
+      )
+      .collect(),
+  ]);
+  const events = batches
+    .flatMap((batch) => batch.events)
+    .sort((a, b) => a.atMs - b.atMs);
+  return { events, evidence, segments };
+}
+
 export const feed = internalQuery({
-  args: { actor: sessionActorValidator },
-  handler: async (ctx, { actor }) => {
-    const session = await latestDevtoolsSession(ctx, actor);
-    if (!session) {
-      return NO_LIVE_SESSION;
+  args: {
+    actor: sessionActorValidator,
+    sessionId: v.string(),
+    sinceMs: v.number(),
+  },
+  handler: async (ctx, { actor, sessionId, sinceMs }) => {
+    const session = await loadSession(ctx, {
+      access: "read",
+      actor,
+      sessionId,
+    });
+    if (session.authorId !== actor.userId || session.surface !== "live") {
+      throw sessionNotFound();
     }
-    const { events, evidence, segments, turns } = await loadSessionCapture(
+    if (!Number.isInteger(sinceMs) || sinceMs < 0) {
+      throw sessionFailure(BAD_REQUEST_STATUS, INVALID_SINCE);
+    }
+    const { events, evidence, segments } = await loadCaptureSince(
       ctx,
-      session._id
+      session._id,
+      sinceMs
     );
     const linkable = evidence.map((item) => toLinkableEvidence(item, item._id));
-    const passages = segments
-      .filter(
-        (segment) =>
-          segment.transcription.state === "done" && segment.text.trim() !== ""
-      )
-      .map((segment) =>
-        liveEntry(
-          `${segment._id}@${segment.revision}`,
-          {
-            speech: segmentSpeech(segment, turns),
-            startMs: segment.startMs,
-            text: segment.text,
-          },
-          resolveStoredSegment(segment, { events, evidence: linkable })
-        )
-      );
-    const entries = [
-      ...passages,
-      ...events.flatMap((event) => typedNoteEntries(event, linkable)),
-    ].sort((a, b) => a.atMs - b.atMs);
-    const countIn = (states: TranscriptionState[]) =>
-      segments.filter((segment) => states.includes(segment.transcription.state))
-        .length;
+    const passages = segments.flatMap((segment) => {
+      const text = passageText(segment);
+      return text === null
+        ? []
+        : [
+            liveEntry(
+              `${segment._id}@${segment.revision}`,
+              { endMs: segment.endMs, startMs: segment.startMs, text },
+              resolveStoredSegment(segment, { events, evidence: linkable })
+            ),
+          ];
+    });
+    const notes = events
+      .filter((event) => event.atMs >= sinceMs)
+      .flatMap((event) => typedNoteEntries(event, linkable));
+    const entries = [...passages, ...notes].sort((a, b) => a.atMs - b.atMs);
+    const running = segments.filter((segment) =>
+      STILL_TRANSCRIBING.includes(segment.transcription.state)
+    );
     return {
       entries,
       screenshots: await citedScreenshots(ctx, evidence, entries),
       session: {
         collection: session.collection,
-        endedAt: session.endedAt ?? null,
         id: session._id,
         startedAt: session.startedAt,
         title: session.title,
       },
       transcription: {
-        failed: countIn(NEVER_TRANSCRIBED),
-        running: countIn(STILL_TRANSCRIBING),
+        oldestRunningMs: running[0]?.startMs ?? null,
+        running: running.length,
       },
     };
   },

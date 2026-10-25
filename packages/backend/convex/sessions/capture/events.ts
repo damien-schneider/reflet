@@ -2,7 +2,7 @@ import { type Infer, v } from "convex/values";
 import type { Doc } from "../../_generated/dataModel";
 import { internalMutation } from "../../_generated/server";
 import { loadSession, sessionActorValidator } from "../access";
-import { SESSION_LIMITS } from "../constants";
+import { sessionLimitsFor } from "../constants";
 import { exceedsDuration, isCollectedAt } from "../lifecycle/timeline";
 import { sessionEventValidator } from "../validators";
 
@@ -12,7 +12,8 @@ function admitEvents(
   session: Doc<"sessions">,
   events: SessionEvent[]
 ): { accepted: SessionEvent[]; limitReached: boolean } {
-  const remaining = SESSION_LIMITS.maxEvents - session.usage.eventCount;
+  const remaining =
+    sessionLimitsFor(session.surface).maxEvents - session.usage.eventCount;
   const collected = events.filter((event) =>
     isCollectedAt(session, event.atMs)
   );
@@ -50,7 +51,9 @@ export const record = internalMutation({
       return {
         accepted: replayed.events.length,
         dropped: 0,
-        limitReached: session.usage.eventCount >= SESSION_LIMITS.maxEvents,
+        limitReached:
+          session.usage.eventCount >=
+          sessionLimitsFor(session.surface).maxEvents,
       };
     }
     const { accepted, limitReached } = admitEvents(session, args.events);

@@ -2,7 +2,11 @@ import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
-import { hasRunCoveringSession, startAnalysisRun } from "./analysis_request";
+import {
+  hasRunCoveringSession,
+  skipsAnalysis,
+  startAnalysisRun,
+} from "./analysis_request";
 import { isAnalysisConfigured } from "./configuration";
 
 const LIVE_ANALYSIS_GAP_MS = 15_000;
@@ -20,7 +24,10 @@ export async function followRecording(
   sessionId: Id<"sessions">
 ): Promise<void> {
   const session = await ctx.db.get(sessionId);
-  if (!(isStillRecording(session) && isAnalysisConfigured())) {
+  if (
+    !(isStillRecording(session) && isAnalysisConfigured()) ||
+    skipsAnalysis(session)
+  ) {
     return;
   }
   const { analysis, transcriptRevision } = session;

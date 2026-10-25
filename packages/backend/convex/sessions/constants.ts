@@ -60,6 +60,21 @@ export const SESSION_LIMITS = {
   warnBeforeLimitMs: 5 * MINUTE_MS,
 } as const;
 
+export const LIVE_SESSION_LIMITS = {
+  ...SESSION_LIMITS,
+  maxDurationMs: 4 * HOUR_MS,
+  maxEvents: 20_000,
+  maxEvidence: 240,
+  maxSegments: 2000,
+  warnBeforeLimitMs: 10 * MINUTE_MS,
+} as const;
+
+export type SessionLimits = typeof SESSION_LIMITS | typeof LIVE_SESSION_LIMITS;
+
+export const sessionLimitsFor = (
+  surface: "app" | "devtools" | "live"
+): SessionLimits => (surface === "live" ? LIVE_SESSION_LIMITS : SESSION_LIMITS);
+
 export const SPEAKER_TURN_LIMITS = {
   maxPerBatch: 200,
   maxPerSession: 5000,
@@ -88,6 +103,10 @@ export const SESSION_START_PAST_TOLERANCE_MS = DAY_MS;
 export const SESSION_START_FUTURE_TOLERANCE_MS = MINUTE_MS;
 export const SESSION_INTERRUPT_AFTER_MS =
   SESSION_LIMITS.maxDurationMs + 30 * MINUTE_MS;
+export const LIVE_SESSION_INTERRUPT_AFTER_MS =
+  LIVE_SESSION_LIMITS.maxDurationMs + 30 * MINUTE_MS;
+export const LIVE_SESSION_RETENTION_MS = DAY_MS;
+export const LIVE_CONTEXT_LOOKBACK_MS = 2 * MINUTE_MS;
 export const SESSION_TOMBSTONE_RETENTION_MS = 30 * DAY_MS;
 export const SESSION_LIST_LIMIT = 50;
 export const MAX_HANDOFF_DELIVERIES = 20;

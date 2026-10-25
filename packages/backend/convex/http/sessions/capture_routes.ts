@@ -49,8 +49,12 @@ const CAPTURE_ENDPOINTS: SessionEndpoint[] = [
     path: "/api/v1/sessions/detail",
   },
   {
-    handler: sessionGet((ctx, actor) =>
-      ctx.runQuery(internal.sessions.views.live.feed, { actor })
+    handler: sessionGet((ctx, actor, params) =>
+      ctx.runQuery(internal.sessions.views.live.feed, {
+        actor,
+        sessionId: params.get("sessionId") ?? "",
+        sinceMs: Number(params.get("sinceMs") ?? "0"),
+      })
     ),
     method: "GET",
     path: "/api/v1/sessions/live",

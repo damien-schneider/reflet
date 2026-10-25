@@ -244,7 +244,11 @@ export const sessionsTables = {
     organizationId: v.id("organizations"),
     startedAt: v.number(),
     startUrl: v.optional(v.string()),
-    surface: v.union(v.literal("devtools"), v.literal("app")),
+    surface: v.union(
+      v.literal("devtools"),
+      v.literal("app"),
+      v.literal("live")
+    ),
     title: v.string(),
     transcriptRevision: v.number(),
     updatedAt: v.number(),
@@ -265,5 +269,6 @@ export const sessionsTables = {
     ])
     .index("by_org_visibility", ["organizationId", "visibility"])
     .index("by_collection_updated", ["collection", "updatedAt"])
+    .index("by_surface_deleted_updated", ["surface", "deletedAt", "updatedAt"])
     .index("by_deleted_at", ["deletedAt"]),
 };

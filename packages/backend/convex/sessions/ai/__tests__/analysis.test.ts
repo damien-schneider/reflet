@@ -122,6 +122,27 @@ describe("session analysis", () => {
     expect((await loadSession(t, sessionId)).analysis.state).toBe("waiting");
   });
 
+  test("never analyzes a live session", async () => {
+    const t = setupTest();
+    const { sessionId } = await seedOstalSession(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(sessionId, { surface: "live" });
+      const session = await ctx.db.get(sessionId);
+      if (session) {
+        await requestAnalysis(ctx, session);
+      }
+    });
+
+    const { analysis } = await loadSession(t, sessionId);
+    expect(analysis.state).toBe("idle");
+    expect(analysis.runId).toBeUndefined();
+    expect(
+      await t.run((ctx) =>
+        ctx.db.system.query("_scheduled_functions").collect()
+      )
+    ).toEqual([]);
+  });
+
   test("refuses to start when the deployment has no AI key", async () => {
     vi.stubEnv("OPENROUTER_API_KEY", "");
     const t = setupTest();

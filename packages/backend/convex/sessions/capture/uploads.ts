@@ -13,6 +13,7 @@ import {
   AUDIO_CONTENT_TYPES,
   IMAGE_CONTENT_TYPES,
   SESSION_LIMITS,
+  sessionLimitsFor,
 } from "../constants";
 
 type UploadKind = "audio" | "image";
@@ -41,13 +42,13 @@ export function requireUploadCapacity(
 ): void {
   if (
     kind === "audio" &&
-    session.usage.segmentCount >= SESSION_LIMITS.maxSegments
+    session.usage.segmentCount >= sessionLimitsFor(session.surface).maxSegments
   ) {
     throw sessionLimitReached("segments");
   }
   if (
     kind === "image" &&
-    session.usage.evidenceCount >= SESSION_LIMITS.maxEvidence
+    session.usage.evidenceCount >= sessionLimitsFor(session.surface).maxEvidence
   ) {
     throw sessionLimitReached("evidence");
   }

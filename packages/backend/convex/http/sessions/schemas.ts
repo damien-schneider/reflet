@@ -102,7 +102,7 @@ export const startBody = z.object({
   detectSpeakers: z.boolean().optional(),
   page: z.object({ title: text(CAPS.pageTitle), url: text(CAPS.url) }),
   startedAt: finite,
-  surface: z.enum(["devtools", "app"]),
+  surface: z.enum(["devtools", "app", "live"]),
   title: text(CAPS.sessionTitle).optional(),
 });
 

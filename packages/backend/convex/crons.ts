@@ -93,6 +93,12 @@ crons.interval(
   internal.sessions.ai.transcription_state.expireSessionAudio
 );
 
+crons.interval(
+  "expire live sessions",
+  { hours: 1 },
+  internal.sessions.lifecycle.removal.expireLiveSessions
+);
+
 crons.daily(
   "purge deleted sessions",
   { hourUTC: 4, minuteUTC: 15 },

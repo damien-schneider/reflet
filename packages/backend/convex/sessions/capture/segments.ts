@@ -15,6 +15,7 @@ import {
   RECORDED_WHILE_PAUSED,
   REVISION_CONFLICT,
   SESSION_LIMITS,
+  sessionLimitsFor,
 } from "../constants";
 import { exceedsDuration, isCollectedAt } from "../lifecycle/timeline";
 import { loadSegmentView } from "../views/detail";
@@ -34,7 +35,9 @@ function requireRecordable(
   if (segment.voice && exceedsDuration(session, segment.startMs)) {
     throw sessionLimitReached("duration");
   }
-  if (session.usage.segmentCount >= SESSION_LIMITS.maxSegments) {
+  if (
+    session.usage.segmentCount >= sessionLimitsFor(session.surface).maxSegments
+  ) {
     throw sessionLimitReached("segments");
   }
   const lengthMs = segment.endMs - segment.startMs;

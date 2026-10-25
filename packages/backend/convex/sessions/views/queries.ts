@@ -8,7 +8,11 @@ import {
   isSpeakerDetectionConfigured,
   isTranscriptionConfigured,
 } from "../ai/configuration";
-import { SESSION_LIMITS, SESSION_LIST_LIMIT } from "../constants";
+import {
+  LIVE_SESSION_LIMITS,
+  SESSION_LIMITS,
+  SESSION_LIST_LIMIT,
+} from "../constants";
 import {
   loadContinuation,
   loadContributedEvidence,
@@ -35,6 +39,7 @@ export const identity = internalQuery({
     return {
       analysisConfigured: isAnalysisConfigured(),
       limits: SESSION_LIMITS,
+      liveLimits: LIVE_SESSION_LIMITS,
       organizationId: organization._id,
       organizationName: organization.name,
       speakersConfigured: isSpeakerDetectionConfigured(),
@@ -72,7 +77,10 @@ export const list = internalQuery({
     ]);
     const byId = new Map(
       [...mine, ...shared]
-        .filter((session) => session.deletedAt === undefined)
+        .filter(
+          (session) =>
+            session.deletedAt === undefined && session.surface !== "live"
+        )
         .map((session) => [session._id, session])
     );
     const newest = [...byId.values()]

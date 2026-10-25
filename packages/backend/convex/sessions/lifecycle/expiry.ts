@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "../../_generated/dataModel";
 import { internalMutation } from "../../_generated/server";
 import {
+  LIVE_SESSION_INTERRUPT_AFTER_MS,
   SESSION_CRON_BATCH_SIZE,
   SESSION_INTERRUPT_AFTER_MS,
 } from "../constants";
@@ -29,12 +30,20 @@ function interruptedState(session: Doc<"sessions">): Partial<Doc<"sessions">> {
 export const endInterruptedSessions = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - SESSION_INTERRUPT_AFTER_MS;
+    const now = Date.now();
+    const cutoff = now - SESSION_INTERRUPT_AFTER_MS;
+    const liveCutoff = now - LIVE_SESSION_INTERRUPT_AFTER_MS;
     for (const collection of ["recording", "paused"] as const) {
       const stale = await ctx.db
         .query("sessions")
         .withIndex("by_collection_updated", (q) =>
           q.eq("collection", collection).lt("updatedAt", cutoff)
+        )
+        .filter((q) =>
+          q.or(
+            q.neq(q.field("surface"), "live"),
+            q.lt(q.field("updatedAt"), liveCutoff)
+          )
         )
         .take(SESSION_CRON_BATCH_SIZE);
       for (const session of stale) {
