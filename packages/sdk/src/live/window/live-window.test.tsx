@@ -2,7 +2,6 @@ import {
   act,
   cleanup,
   fireEvent,
-  render,
   screen,
   waitFor,
 } from "@testing-library/react";
@@ -13,14 +12,14 @@ import {
   fakeRecorder,
   RECORDING_SNAPSHOT,
 } from "../../sessions/ui/testing/session-fixtures";
-import {
-  LIVE_HUB_ENDPOINTS,
-  LIVE_STATUS_OFF,
-  type LiveConnections,
-  type LiveWindowMessage,
-} from "../protocol";
-import { LiveWindow } from "./live-window";
+import { LIVE_HUB_ENDPOINTS } from "../protocol";
 import { NEEDS_ACTIVATION_MESSAGE } from "./recorder/live-commands";
+import {
+  NO_APPS,
+  openWindow,
+  setUserActivation,
+  stubMatchMedia,
+} from "./testing/live-window-harness";
 
 const mocks = vi.hoisted(() => {
   const hoisted: { recorder: FakeRecorder | null } = { recorder: null };
@@ -47,88 +46,10 @@ vi.mock("../../sessions/local/local-sessions", () => ({
   }),
 }));
 
-const CONNECTIONS: LiveConnections = {
-  connections: [
-    { apiUrl: "https://api.reflet.test", id: "acme", organizationName: "Acme" },
-  ],
-  selectedId: null,
-};
-
-const APPS: LiveWindowMessage = { apps: [], focusedAppId: null, kind: "apps" };
-
-interface HubPost {
-  body: unknown;
-  path: string;
-}
-
-function fakeHub() {
-  const posts: HubPost[] = [];
-  const streams: ReadableStreamDefaultController<Uint8Array>[] = [];
-  const encoder = new TextEncoder();
-  const respond = (path: string, init: RequestInit | undefined) => {
-    if (path === LIVE_HUB_ENDPOINTS.windowStream) {
-      return new Response(
-        new ReadableStream<Uint8Array>({
-          start: (controller) => {
-            streams.push(controller);
-            init?.signal?.addEventListener("abort", () =>
-              controller.error(new DOMException("Aborted", "AbortError"))
-            );
-          },
-        })
-      );
-    }
-    if (init?.method === "POST") {
-      posts.push({ body: JSON.parse(String(init.body)), path });
-      return Response.json(
-        path === LIVE_HUB_ENDPOINTS.connection ? CONNECTIONS : LIVE_STATUS_OFF
-      );
-    }
-    return Response.json(CONNECTIONS);
-  };
-  vi.stubGlobal(
-    "fetch",
-    vi.fn((input: string, init?: RequestInit) =>
-      Promise.resolve(respond(input, init))
-    )
-  );
-
-  const current = () => {
-    const stream = streams.at(-1);
-    if (!stream) {
-      throw new Error("The window has not opened the hub stream yet.");
-    }
-    return stream;
-  };
-  return {
-    drop: () => current().close(),
-    posts,
-    postsTo: (path: string) => posts.filter((post) => post.path === path),
-    send: (message: LiveWindowMessage) =>
-      current().enqueue(encoder.encode(`${JSON.stringify(message)}\n`)),
-    streamCount: () => streams.length,
-  };
-}
-
-function setUserActivation(hasBeenActive: boolean) {
-  Object.defineProperty(navigator, "userActivation", {
-    configurable: true,
-    value: { hasBeenActive, isActive: hasBeenActive },
-  });
-}
-
-async function openWindow() {
-  const hub = fakeHub();
-  render(<LiveWindow />);
-  await waitFor(() => expect(hub.streamCount()).toBe(1));
-  hub.send(APPS);
-  await screen.findByRole("button", { name: "Record" });
-  return hub;
-}
-
 beforeEach(() => {
   mocks.recorder = fakeRecorder();
   setUserActivation(false);
+  stubMatchMedia();
 });
 
 afterEach(() => {
@@ -180,7 +101,7 @@ it("keeps recording when the hub stream drops and tells the hub again once it is
   await act(() => vi.advanceTimersByTimeAsync(2000));
   vi.useRealTimers();
   expect(hub.streamCount()).toBe(2);
-  hub.send(APPS);
+  hub.send(NO_APPS);
 
   await waitFor(() => {
     expect(hub.postsTo(LIVE_HUB_ENDPOINTS.connection)).toHaveLength(

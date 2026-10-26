@@ -38,9 +38,10 @@ export class PresenceTimeline {
     }
   }
 
-  focusedApp(now: number): LiveApp | null {
+  focus(now: number): { app: LiveApp; frame: LiveFrame } | null {
     this.#expire(now);
-    return this.#holder?.app ?? null;
+    const holder = this.#holder;
+    return holder ? { app: holder.app, frame: holder.frame } : null;
   }
 
   since(startedAt: number, now: number): FocusTransition[] {

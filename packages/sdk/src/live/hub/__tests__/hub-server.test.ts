@@ -1,26 +1,15 @@
 // @vitest-environment node
 import { mkdtemp, rm } from "node:fs/promises";
-import { createServer, type IncomingMessage, request } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createInterface } from "node:readline";
+import { afterAll, describe, expect, it, vi } from "vitest";
+import type { LiveWindowState } from "../../protocol";
 import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
-import { saveConnection } from "../../../devtools/server/connect/connection-store";
-import {
-  encodeLiveAppHeader,
-  type LiveWindowMessage,
-  type LiveWindowState,
-} from "../../protocol";
-import { type LiveHub, startLiveHub } from "../hub-server";
-import type { LiveHubEvent } from "../hub-state";
+  liveHubHarness,
+  TEST_APP_ID,
+  windowHeaders,
+  windowState,
+} from "./hub-harness";
 
 const storageHome = await mkdtemp(join(tmpdir(), "reflet-live-home-"));
 vi.mock("node:os", async (importOriginal) => ({
@@ -29,171 +18,17 @@ vi.mock("node:os", async (importOriginal) => ({
 }));
 afterAll(() => rm(storageHome, { force: true, recursive: true }));
 
-let hub: LiveHub;
-let windowDirectory: string;
-
-beforeEach(async () => {
-  windowDirectory = await mkdtemp(join(tmpdir(), "reflet-live-hub-"));
-  hub = await startLiveHub({ port: 0, windowDirectory });
-});
-
-afterEach(async () => {
-  await hub.close();
-  await rm(windowDirectory, { force: true, recursive: true });
-  await rm(join(storageHome, ".reflet"), { force: true, recursive: true });
-});
-
-interface CallOptions {
-  body?: unknown;
-  headers?: Record<string, string>;
-  method?: string;
-}
-
-function send(path: string, options: CallOptions): Promise<IncomingMessage> {
-  return new Promise((resolve, reject) => {
-    const outgoing = request(
-      {
-        headers: { host: `localhost:${hub.port}`, ...options.headers },
-        host: "127.0.0.1",
-        method: options.method ?? "GET",
-        path,
-        port: hub.port,
-      },
-      resolve
-    );
-    outgoing.once("error", reject);
-    outgoing.end(
-      options.body === undefined ? undefined : JSON.stringify(options.body)
-    );
-  });
-}
-
-async function call(path: string, options: CallOptions = {}) {
-  const response = await send(path, options);
-  let text = "";
-  for await (const chunk of response) {
-    text += String(chunk);
-  }
-  return { body: JSON.parse(text), status: response.statusCode };
-}
-
-const windowHeaders = {
-  "sec-fetch-site": "same-origin",
-  "x-reflet-devtools": "1",
-};
-const appHeaders = () => ({
-  authorization: `Bearer ${hub.secret}`,
-  "x-reflet-live-app": encodeLiveAppHeader({
-    origin: "http://localhost:3000",
-    root: "/code/reflet/apps/web",
-    workspaceRoot: "/code/reflet",
-  }),
-});
-
-async function openWindowStream() {
-  const response = await send("/live/window/stream", {
-    headers: windowHeaders,
-  });
-  const lines = createInterface({ input: response })[Symbol.asyncIterator]();
-  return {
-    close: () => response.destroy(),
-    async next(kind: LiveWindowMessage["kind"]): Promise<LiveWindowMessage> {
-      for (;;) {
-        const line = await lines.next();
-        if (line.done) {
-          throw new Error(`The stream ended before a ${kind} message.`);
-        }
-        const message: LiveWindowMessage = JSON.parse(line.value);
-        if (message.kind === kind) {
-          return message;
-        }
-      }
-    },
-  };
-}
-
-const windowState = (phase: LiveWindowState["phase"]): LiveWindowState => ({
-  canStart: true,
-  limits: null,
-  pauseReason: null,
-  pendingUploads: 0,
-  phase,
-  sessionId: "s1",
-  startedAt: Date.now(),
-});
-
-async function startFakeBackend(respond: (feedCalls: number) => unknown) {
-  const calls: string[] = [];
-  const feedCalls = () =>
-    calls.filter((call) => call.startsWith("GET /api/v1/sessions/live")).length;
-  const server = createServer((incoming, outgoing) => {
-    calls.push(`${incoming.method} ${incoming.url}`);
-    incoming.resume();
-    outgoing.setHeader("content-type", "application/json");
-    outgoing.end(JSON.stringify(respond(feedCalls())));
-  });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  const apiUrl =
-    typeof address === "object" && address
-      ? `http://127.0.0.1:${address.port}`
-      : "";
-  await saveConnection("/code/reflet", {
-    apiUrl,
-    organizationName: "Acme",
-    token: "fb_dev_acme",
-  });
-  return {
-    calls,
-    close: () => new Promise((resolve) => server.close(resolve)),
-  };
-}
-
-async function selectOnlyConnection() {
-  const { body } = await call("/live/connections", { headers: windowHeaders });
-  return await call("/live/connection", {
-    body: { id: body.connections[0].id },
-    headers: windowHeaders,
-    method: "POST",
-  });
-}
-
-async function restartHubCollectingEvents(): Promise<LiveHubEvent[]> {
-  const events: LiveHubEvent[] = [];
-  await hub.close();
-  hub = await startLiveHub({
-    onEvent: (event) => {
-      events.push(event);
-    },
-    port: 0,
-    windowDirectory,
-  });
-  return events;
-}
-
-async function postWindowStates(states: LiveWindowState[]) {
-  for (const state of states) {
-    await call("/live/window/state", {
-      body: state,
-      headers: windowHeaders,
-      method: "POST",
-    });
-  }
-}
-
-async function reportPresence() {
-  const { body } = await call("/live/presence", {
-    body: {
-      at: Date.now(),
-      clientId: "tab-1",
-      focused: true,
-      frame: { path: "/", title: "Home" },
-    },
-    headers: appHeaders(),
-    method: "POST",
-  });
-  return body;
-}
+const live = liveHubHarness(storageHome);
+const {
+  appHeaders,
+  call,
+  openWindowStream,
+  postWindowStates,
+  reportPresence,
+  restartHubCollectingEvents,
+  selectOnlyConnection,
+  startFakeBackend,
+} = live;
 
 describe("Reflet Live hub guards", () => {
   it("refuses a page reaching it through another hostname", async () => {
@@ -319,7 +154,7 @@ describe("Reflet Live window link", () => {
       });
     await postState(windowState("recording"));
     let settled = false;
-    const stopped = hub.stopRecording(5000).then((done) => {
+    const stopped = live.hub.stopRecording(5000).then((done) => {
       settled = true;
       return done;
     });
@@ -346,7 +181,7 @@ describe("Reflet Live window link", () => {
     await window.next("apps");
     expect(await window.next("apps")).toMatchObject({
       apps: [{ label: "reflet/apps/web", root: "/code/reflet/apps/web" }],
-      focusedAppId: "http://localhost:3000|/code/reflet/apps/web",
+      focus: { appId: TEST_APP_ID, page: { path: "/", title: "Home" } },
     });
     window.close();
   });

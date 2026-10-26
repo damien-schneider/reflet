@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import {
   LIVE_HUB_ENDPOINTS,
   type LiveApp,
+  type LiveCapture,
   type LiveCommand,
+  type LiveFocus,
   type LiveHubEntry,
   type LiveWindowMessage,
   liveWindowMessageSchema,
@@ -17,7 +19,9 @@ export interface HubActivity {
   agentFollowing: boolean;
   apps: LiveApp[];
   entries: LiveHubEntry[];
-  focusedAppId: string | null;
+  focus: LiveFocus | null;
+  lastCapture: LiveCapture | null;
+  transcribing: number;
 }
 
 type CommandListener = (action: LiveCommand) => void;
@@ -37,7 +41,9 @@ const NO_ACTIVITY: HubActivity = {
   agentFollowing: false,
   apps: [],
   entries: [],
-  focusedAppId: null,
+  focus: null,
+  lastCapture: null,
+  transcribing: 0,
 };
 
 function createCommandChannel() {
@@ -113,13 +119,15 @@ function withMessage(
 ): HubActivity {
   switch (message.kind) {
     case "apps":
+      return { ...activity, apps: message.apps, focus: message.focus };
+    case "feed":
       return {
         ...activity,
-        apps: message.apps,
-        focusedAppId: message.focusedAppId,
+        entries: message.entries,
+        transcribing: message.transcribing,
       };
-    case "feed":
-      return { ...activity, entries: message.entries };
+    case "capture":
+      return { ...activity, lastCapture: message.capture };
     case "agent":
       return { ...activity, agentFollowing: message.following };
     default:

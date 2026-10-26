@@ -170,6 +170,20 @@ export const liveWindowStateSchema = z.object({
 });
 export type LiveWindowState = z.infer<typeof liveWindowStateSchema>;
 
+export const liveFocusSchema = z.object({
+  appId: z.string(),
+  page: liveFrameSchema.nullable(),
+});
+export type LiveFocus = z.infer<typeof liveFocusSchema>;
+
+export const liveCaptureSchema = z.object({
+  appId: z.string(),
+  at: z.number(),
+  element: z.object({ label: z.string(), role: z.string().nullable() }),
+  kind: z.enum(["click", "pick"]),
+});
+export type LiveCapture = z.infer<typeof liveCaptureSchema>;
+
 export const liveWindowMessageSchema = z.discriminatedUnion("kind", [
   z.object({
     action: z.enum(LIVE_COMMANDS),
@@ -178,10 +192,15 @@ export const liveWindowMessageSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     apps: z.array(liveAppSchema),
-    focusedAppId: z.string().nullable(),
+    focus: liveFocusSchema.nullable(),
     kind: z.literal("apps"),
   }),
-  z.object({ entries: z.array(liveHubEntrySchema), kind: z.literal("feed") }),
+  z.object({
+    entries: z.array(liveHubEntrySchema),
+    kind: z.literal("feed"),
+    transcribing: z.number().int().min(0),
+  }),
+  z.object({ capture: liveCaptureSchema, kind: z.literal("capture") }),
   z.object({ following: z.boolean(), kind: z.literal("agent") }),
   z.object({ kind: z.literal("elsewhere") }),
   z.object({ kind: z.literal("ping") }),

@@ -47,6 +47,8 @@ export const HUB_PAGE_HEADERS = {
 };
 
 const WINDOW_BUNDLE = "live-window.js";
+const WINDOW_STYLES = "live-window.css";
+const EVENTS_API_PATH: LiveAppApiPath = "/api/v1/sessions/events";
 const WINDOW_PROXY_PREFIX = `${DEVTOOLS_ROUTE_BASE}${DEVTOOLS_ENDPOINTS.proxy}`;
 const NO_ALLOWED_HOSTS: string[] = [];
 const NOT_RECORDING = "Reflet Live is not recording.";
@@ -56,7 +58,7 @@ const sessionTargetSchema = z.object({ sessionId: z.string() });
 
 const WINDOW_PAGE = `<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Reflet Live</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><title>Reflet Live</title><link rel="stylesheet" href="/${WINDOW_STYLES}"></head>
 <body><div id="root"></div><script type="module" src="/${WINDOW_BUNDLE}"></script></body>
 </html>
 `;
@@ -76,14 +78,15 @@ async function parseJson<T>(
 const invalidBody = (what: string) =>
   errorResponse(`Reflet Live expected ${what}.`, 400);
 
-async function serveWindowBundle(windowDirectory: string): Promise<Response> {
-  const path = join(windowDirectory, WINDOW_BUNDLE);
+async function serveWindowAsset(
+  windowDirectory: string,
+  name: string,
+  contentType: string
+): Promise<Response> {
+  const path = join(windowDirectory, name);
   try {
     return new Response(await readFile(path), {
-      headers: {
-        ...HUB_PAGE_HEADERS,
-        "content-type": "text/javascript; charset=utf-8",
-      },
+      headers: { ...HUB_PAGE_HEADERS, "content-type": contentType },
     });
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -206,11 +209,16 @@ async function forwardAppApi(
   ) {
     return errorResponse(NOT_RECORDING, 409);
   }
-  return await proxyToReflet(
+  const response = await proxyToReflet(
     new Request(request.url, { body, method: request.method }),
     apiPath,
     connection
   );
+  const identity = decodeLiveAppHeader(request.headers.get(LIVE_APP_HEADER));
+  if (apiPath === EVENTS_API_PATH && response.ok && identity) {
+    state.reportCapture(identity, payload);
+  }
+  return response;
 }
 
 async function proxyForWindow(
@@ -242,7 +250,18 @@ export function createHubRoutes(
           "content-type": "text/html; charset=utf-8",
         },
       }),
-    [`GET /${WINDOW_BUNDLE}`]: () => serveWindowBundle(windowDirectory),
+    [`GET /${WINDOW_BUNDLE}`]: () =>
+      serveWindowAsset(
+        windowDirectory,
+        WINDOW_BUNDLE,
+        "text/javascript; charset=utf-8"
+      ),
+    [`GET /${WINDOW_STYLES}`]: () =>
+      serveWindowAsset(
+        windowDirectory,
+        WINDOW_STYLES,
+        "text/css; charset=utf-8"
+      ),
     [`GET ${LIVE_HUB_ENDPOINTS.health}`]: async () =>
       jsonResponse({
         app: "reflet-live",

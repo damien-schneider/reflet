@@ -68,12 +68,16 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-export function Notices() {
-  const current = useSyncExternalStore(
+export function useNotices(): Notice[] {
+  return useSyncExternalStore(
     subscribe,
     () => notices,
     () => notices
   );
+}
+
+export function Notices() {
+  const current = useNotices();
   return (
     <div aria-live="polite" className="dt-notices">
       {current.map((notice) => (

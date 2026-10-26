@@ -5,6 +5,16 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Reflet Live floating bar (Chrome and Edge): pressing Record in the Live window also opens a small always-on-top bar, and "Floating bar" opens it at any time. It shows the recording time, a level meter from your microphone, the app and page you are on, the last passage, a spinner while a passage is being transcribed, and for a few seconds what you just pointed at or clicked. Pause, Resume and Stop move into it, and come back to the Live window once you close it. Browsers without Document Picture-in-Picture keep the controls in the Live window.
+
+### Changed
+
+- Reflet Live window: rebuilt with Control UI and follows the system light or dark theme. The focused app shows its current page, the organization picker sits above the controls, and "Last passages" tells you how many passages are still being transcribed.
+
 ## [0.8.0] - 2026-10-25
 
 ### Added

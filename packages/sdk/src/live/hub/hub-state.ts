@@ -15,11 +15,11 @@ import type {
   LiveHubFeed,
   LivePresence,
   LiveStatus,
-  LiveWindowMessage,
   LiveWindowState,
 } from "../protocol";
 import { type FeedPoller, pollLiveFeed } from "./feed/feed-cache";
 import { PresenceTimeline } from "./feed/presence-timeline";
+import { type SendToWindow, WindowChannel } from "./window-channel";
 
 export type LiveHubEvent =
   | { kind: "app-joined"; app: LiveApp }
@@ -29,11 +29,9 @@ export type LiveHubEvent =
   | { kind: "window-closed" };
 
 type WindowPhase = LiveWindowState["phase"];
-type SendToWindow = (message: LiveWindowMessage) => void;
 
 const COMMAND_TIMEOUT_MS = 3000;
 const AGENT_FOLLOWING_MS = 180_000;
-const RECENT_FEED_ENTRIES = 5;
 const ACTIVE_PHASES: WindowPhase[] = ["recording", "paused"];
 const COMMAND_TARGETS: Record<LiveCommand, WindowPhase[]> = {
   pause: ["paused"],
@@ -89,7 +87,7 @@ export class LiveHubState {
   readonly #apps = new Map<string, LiveApp>();
   readonly #presence = new PresenceTimeline();
   readonly #waiters = new Set<(closing: boolean) => void>();
-  #window: SendToWindow | null = null;
+  readonly #window = new WindowChannel();
   #windowState: LiveWindowState | null = null;
   #selectedId: string | null = null;
   #organizationName: string | null = null;
@@ -97,15 +95,13 @@ export class LiveHubState {
   #lastFeed: LiveHubFeed = EMPTY_FEED;
   #followingUntil = 0;
   #followingTimer: ReturnType<typeof setTimeout> | undefined;
-  #sentApps = "";
-  #sentFeed = "";
 
   constructor(onEvent: (event: LiveHubEvent) => void) {
     this.#onEvent = onEvent;
   }
 
   get hasWindow(): boolean {
-    return this.#window !== null;
+    return this.#window.isOpen;
   }
 
   get selectedId(): string | null {
@@ -140,7 +136,7 @@ export class LiveHubState {
           }
         : null;
     return {
-      canStart: this.#window !== null && (window?.canStart ?? false),
+      canStart: this.#window.isOpen && (window?.canStart ?? false),
       organizationName: this.#organizationName,
       session,
       state: this.#liveState(),
@@ -148,23 +144,19 @@ export class LiveHubState {
   }
 
   attachWindow(send: SendToWindow): boolean {
-    if (this.#window) {
+    if (!this.#window.attach(send)) {
       return false;
     }
-    this.#window = send;
-    this.#sentApps = "";
-    this.#sentFeed = "";
     this.#sendApps();
     send({ following: this.#isFollowed(), kind: "agent" });
-    this.#sendFeed(this.#currentFeed());
+    this.#window.feed(this.#currentFeed());
     return true;
   }
 
   detachWindow(send: SendToWindow): void {
-    if (this.#window !== send) {
+    if (!this.#window.detach(send)) {
       return;
     }
-    this.#window = null;
     this.#poller?.stop();
     this.#windowState = null;
     this.#onEvent({ kind: "window-closed" });
@@ -172,7 +164,7 @@ export class LiveHubState {
   }
 
   heartbeat(): void {
-    this.#window?.({ kind: "ping" });
+    this.#window.send({ kind: "ping" });
     this.#sendApps();
   }
 
@@ -245,9 +237,12 @@ export class LiveHubState {
     return this.status();
   }
 
+  reportCapture(identity: LiveAppIdentity, forwardedEvents: unknown): void {
+    this.#window.capture(liveAppOf(identity).id, forwardedEvents);
+  }
+
   async command(action: LiveCommand): Promise<DevtoolsOutcome<LiveStatus>> {
-    const send = this.#window;
-    if (!send) {
+    if (!this.#window.isOpen) {
       return failure(WINDOW_CLOSED, 409);
     }
     if (action === "start" && !this.status().canStart) {
@@ -258,7 +253,7 @@ export class LiveHubState {
       return phase !== undefined && COMMAND_TARGETS[action].includes(phase);
     };
     if (!reached()) {
-      send({ action, id: randomUUID(), kind: "command" });
+      this.#window.send({ action, id: randomUUID(), kind: "command" });
       await this.#waitFor(reached, COMMAND_TIMEOUT_MS);
     }
     return { ok: true, value: this.status() };
@@ -274,21 +269,21 @@ export class LiveHubState {
     this.#followingUntil = Date.now() + AGENT_FOLLOWING_MS;
     clearTimeout(this.#followingTimer);
     this.#followingTimer = setTimeout(() => {
-      this.#window?.({ following: false, kind: "agent" });
+      this.#window.send({ following: false, kind: "agent" });
     }, AGENT_FOLLOWING_MS);
     if (!wasFollowed) {
-      this.#window?.({ following: true, kind: "agent" });
+      this.#window.send({ following: true, kind: "agent" });
     }
     return this.#currentFeed();
   }
 
   async stopRecording(timeoutMs: number): Promise<boolean> {
-    if (this.#window && holdsSession(this.#windowState)) {
-      this.#window({ action: "stop", id: randomUUID(), kind: "command" });
+    if (this.#window.isOpen && holdsSession(this.#windowState)) {
+      this.#window.send({ action: "stop", id: randomUUID(), kind: "command" });
     }
     return await this.#waitFor(() => {
       const window = this.#windowState;
-      return this.#window === null || (window !== null && isSettled(window));
+      return !this.#window.isOpen || (window !== null && isSettled(window));
     }, timeoutMs);
   }
 
@@ -315,14 +310,14 @@ export class LiveHubState {
   close(): void {
     clearTimeout(this.#followingTimer);
     this.#poller?.close();
-    this.#window = null;
+    this.#window.close();
     for (const check of [...this.#waiters]) {
       check(true);
     }
   }
 
   #liveState(): LiveStatus["state"] {
-    if (!this.#window) {
+    if (!this.#window.isOpen) {
       return "no-window";
     }
     const window = this.#windowState;
@@ -365,35 +360,17 @@ export class LiveHubState {
     this.#presence.forgetBefore(startedAt);
     this.#poller = pollLiveFeed({
       connection: () => this.#resolveConnection(selectedId),
-      onChange: (feed) => this.#sendFeed(feed),
+      onChange: (feed) => this.#window.feed(feed),
       session: { id: sessionId, organizationName, startedAt },
       transitions: () => this.#presence.since(startedAt, Date.now()),
     });
   }
 
   #sendApps(): void {
-    const message: LiveWindowMessage = {
-      apps: [...this.#apps.values()],
-      focusedAppId: this.#presence.focusedApp(Date.now())?.id ?? null,
-      kind: "apps",
-    };
-    const serialized = JSON.stringify(message);
-    if (this.#window && serialized !== this.#sentApps) {
-      this.#sentApps = serialized;
-      this.#window(message);
-    }
-  }
-
-  #sendFeed(feed: LiveHubFeed): void {
-    const message: LiveWindowMessage = {
-      entries: feed.entries.slice(-RECENT_FEED_ENTRIES),
-      kind: "feed",
-    };
-    const serialized = JSON.stringify(message);
-    if (this.#window && serialized !== this.#sentFeed) {
-      this.#sentFeed = serialized;
-      this.#window(message);
-    }
+    this.#window.apps(
+      [...this.#apps.values()],
+      this.#presence.focus(Date.now())
+    );
   }
 
   #settleWaiters(): void {

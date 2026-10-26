@@ -1,0 +1,4 @@
+@import "tailwindcss";
+@import "@ctrl-ui/react/styles/index.css";
+@source "./";
+@source "../../../node_modules/@ctrl-ui/react/dist";

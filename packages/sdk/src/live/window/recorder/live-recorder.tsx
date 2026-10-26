@@ -1,3 +1,13 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { useState } from "react";
 import { devtoolsTransport } from "../../../sessions/api/session-transports";
 import { useRecorderSnapshot } from "../../../sessions/recorder/use-recorder-snapshot";
@@ -7,7 +17,7 @@ import {
   useWorkspaceLoader,
 } from "../../../sessions/ui/session-workspace";
 import type { LiveConnection } from "../hub-link/use-hub-connections";
-import type { CommandChannel } from "../hub-link/use-hub-stream";
+import type { CommandChannel, HubActivity } from "../hub-link/use-hub-stream";
 import { LiveControls } from "./live-controls";
 import { useWindowStateReport } from "./use-window-state-report";
 
@@ -43,37 +53,59 @@ function OrganizationPicker({
   selectedId,
 }: OrganizationChoice & { isLocked: boolean }) {
   if (connections.length < 2) {
-    const name = connections[0]?.organizationName ?? "";
-    return <p className="dt-meta">org: {name}</p>;
+    return (
+      <Text size="caption" tone="muted">
+        Records into {connections[0]?.organizationName}
+      </Text>
+    );
   }
   return (
-    <label className="lw-org">
-      <span className="dt-meta">Organization</span>
-      <select
-        className="dt-field"
+    <span className="flex items-center gap-2">
+      <Text id="live-organization" size="caption" tone="muted">
+        Records into
+      </Text>
+      <Select
         disabled={isLocked}
-        onChange={(event) => onSelect(event.target.value)}
-        title={
-          isLocked ? "Stop the recording to switch organization" : undefined
-        }
+        items={connections.map((connection) => ({
+          label: connection.organizationName,
+          value: connection.id,
+        }))}
+        onValueChange={(id) => {
+          if (id) {
+            onSelect(id);
+          }
+        }}
         value={selectedId}
       >
-        {connections.map((connection) => (
-          <option key={connection.id} value={connection.id}>
-            {connection.organizationName}
-          </option>
-        ))}
-      </select>
-    </label>
+        <SelectTrigger
+          aria-labelledby="live-organization"
+          size="sm"
+          title={
+            isLocked ? "Stop the recording to switch organization" : undefined
+          }
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {connections.map((connection) => (
+            <SelectItem key={connection.id} value={connection.id}>
+              {connection.organizationName}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </span>
   );
 }
 
 function ReadyRecorder({
+  activity,
   commands,
   epoch,
   picker,
   workspace,
 }: {
+  activity: HubActivity;
   commands: CommandChannel;
   epoch: number;
   picker: OrganizationChoice;
@@ -82,22 +114,31 @@ function ReadyRecorder({
   const { phase } = useRecorderSnapshot(workspace.recorder);
   return (
     <SessionWorkspaceProvider workspace={workspace}>
-      <OrganizationPicker
-        {...picker}
-        isLocked={phase !== "idle" && phase !== "failed"}
-      />
-      <LiveControls commands={commands} epoch={epoch} workspace={workspace} />
+      <div className="flex flex-col gap-2">
+        <OrganizationPicker
+          {...picker}
+          isLocked={phase !== "idle" && phase !== "failed"}
+        />
+        <LiveControls
+          activity={activity}
+          commands={commands}
+          epoch={epoch}
+          workspace={workspace}
+        />
+      </div>
     </SessionWorkspaceProvider>
   );
 }
 
 export function LiveRecorder({
+  activity,
   commands,
   connections,
   epoch,
   onSelect,
   selectedId,
 }: {
+  activity: HubActivity;
   commands: CommandChannel;
   connections: LiveConnection[];
   epoch: number;
@@ -116,6 +157,7 @@ export function LiveRecorder({
   if (loaded.kind === "ready") {
     return (
       <ReadyRecorder
+        activity={activity}
         commands={commands}
         epoch={epoch}
         picker={picker}
@@ -124,22 +166,24 @@ export function LiveRecorder({
     );
   }
   return (
-    <>
-      <IdleStateReport epoch={epoch} />
+    <div className="flex flex-col gap-2">
       <OrganizationPicker {...picker} isLocked={false} />
-      {loaded.kind === "failed" && (
-        <div className="lw-section">
-          <p className="dt-error">
+      <IdleStateReport epoch={epoch} />
+      {loaded.kind === "failed" ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <Text tone="destructive">
             {isRevoked ? REVOKED_MESSAGE : loaded.message}
-          </p>
-          <button className="dt-btn" onClick={loaded.retry} type="button">
+          </Text>
+          <Button onClick={loaded.retry} size="sm" variant="surface">
             Try again
-          </button>
+          </Button>
         </div>
+      ) : (
+        <span className="flex items-center gap-2">
+          <Spinner aria-hidden="true" size="xs" />
+          <Text tone="muted">Connecting to Reflet…</Text>
+        </span>
       )}
-      {(loaded.kind === "loading" || loaded.kind === "idle") && (
-        <p className="dt-meta">Connecting to Reflet…</p>
-      )}
-    </>
+    </div>
   );
 }

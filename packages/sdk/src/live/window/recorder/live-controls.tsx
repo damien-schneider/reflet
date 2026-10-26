@@ -1,42 +1,29 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Text } from "@ctrl-ui/react/ui/typography";
 import { useEffect } from "react";
-import { SquareIcon } from "../../../feedback/ui/icons";
+import { createPortal } from "react-dom";
 import { useSyncStatus } from "../../../sessions/local/local-sessions";
-import type { RecorderSnapshot } from "../../../sessions/recorder/session-recorder";
+import type {
+  RecorderSnapshot,
+  SessionRecorder,
+} from "../../../sessions/recorder/session-recorder";
 import { useRecorderSnapshot } from "../../../sessions/recorder/use-recorder-snapshot";
-import { LevelMeter } from "../../../sessions/ui/recording/level-meter";
-import { formatClock } from "../../../sessions/ui/session-format";
-import {
-  MicIcon,
-  PauseIcon,
-  PlayIcon,
-} from "../../../sessions/ui/session-icons";
 import type { SessionWorkspace } from "../../../sessions/ui/session-workspace";
 import type { LiveCommand } from "../../protocol";
-import type { CommandChannel } from "../hub-link/use-hub-stream";
+import { FloatingBar } from "../floating-bar/floating-bar";
+import { useFloatingWindow } from "../floating-bar/use-floating-window";
+import type { CommandChannel, HubActivity } from "../hub-link/use-hub-stream";
+import { ControlButtons, type RecorderActions } from "./control-buttons";
 import { runLiveCommand, useLiveCommands } from "./live-commands";
+import { RecorderStatus } from "./recorder-status";
+import { RecordingClock } from "./recording-clock";
+import { RecordingLevels } from "./recording-levels";
 import {
   useUserActivation,
   useWindowStateReport,
 } from "./use-window-state-report";
-
-function statusText(snapshot: RecorderSnapshot): string {
-  if (snapshot.failure) {
-    return snapshot.failure.message;
-  }
-  if (snapshot.phase === "failed") {
-    return "Recording stopped.";
-  }
-  if (snapshot.phase === "requesting") {
-    return "Waiting for the microphone…";
-  }
-  if (snapshot.pauseReason === "limit") {
-    return "Time limit reached: press Stop.";
-  }
-  if (snapshot.phase === "paused") {
-    return "Paused";
-  }
-  return "";
-}
 
 function useConfirmLeaving(isRecording: boolean): void {
   useEffect(() => {
@@ -49,68 +36,75 @@ function useConfirmLeaving(isRecording: boolean): void {
   }, [isRecording]);
 }
 
-function ControlButtons({
-  onCommand,
+function RecorderPanel({
+  canFloat,
+  onFloat,
+  recorder,
   snapshot,
-}: {
-  onCommand: (action: LiveCommand) => void;
+  ...actions
+}: RecorderActions & {
+  canFloat: boolean;
+  onFloat: () => void;
+  recorder: SessionRecorder;
   snapshot: RecorderSnapshot;
 }) {
-  const { pauseReason, phase } = snapshot;
-  if (phase === "idle" || phase === "failed" || phase === "requesting") {
-    return (
-      <button
-        className="dt-btn"
-        data-variant="primary"
-        disabled={phase === "requesting"}
-        onClick={() => onCommand("start")}
-        type="button"
-      >
-        <MicIcon />
-        Record
-      </button>
-    );
-  }
+  const isCapturing =
+    snapshot.phase === "recording" || snapshot.phase === "paused";
   return (
-    <>
-      {phase === "recording" && (
-        <button
-          className="dt-btn"
-          onClick={() => onCommand("pause")}
-          type="button"
-        >
-          <PauseIcon />
-          Pause
-        </button>
-      )}
-      {phase === "paused" && pauseReason !== "limit" && (
-        <button
-          className="dt-btn"
-          onClick={() => onCommand("resume")}
-          type="button"
-        >
-          <PlayIcon />
-          Resume
-        </button>
-      )}
-      <button
-        className="dt-btn"
-        disabled={phase === "finishing"}
-        onClick={() => onCommand("stop")}
-        type="button"
-      >
-        <SquareIcon />
-        {phase === "finishing" ? "Saving…" : "Stop"}
-      </button>
-    </>
+    <Card>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {isCapturing && <RecordingClock snapshot={snapshot} />}
+          {isCapturing && (
+            <RecordingLevels
+              className="h-6 w-24"
+              isLive={snapshot.phase === "recording"}
+              recorder={recorder}
+            />
+          )}
+          <span
+            className={cn("flex items-center gap-2", isCapturing && "ms-auto")}
+          >
+            <ControlButtons
+              {...actions}
+              isCompact={false}
+              snapshot={snapshot}
+            />
+            {canFloat && (
+              <Button onClick={onFloat} size="md" variant="ghost">
+                Floating bar
+              </Button>
+            )}
+          </span>
+        </div>
+        <RecorderStatus snapshot={snapshot} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function InFloatingBar({ onBringBack }: { onBringBack: () => void }) {
+  return (
+    <Card>
+      <CardContent className="flex items-center justify-between gap-3">
+        <Text tone="muted">
+          The recording controls are in the floating bar.
+        </Text>
+        <Button onClick={onBringBack} variant="surface">
+          Bring them back
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
 export function LiveControls({
+  activity,
   commands,
   epoch,
   workspace,
 }: {
+  activity: HubActivity;
   commands: CommandChannel;
   epoch: number;
   workspace: SessionWorkspace;
@@ -119,8 +113,7 @@ export function LiveControls({
   const snapshot = useRecorderSnapshot(recorder);
   const { pendingOperations } = useSyncStatus(account.key);
   const canStart = useUserActivation();
-  const capturing =
-    snapshot.phase === "recording" || snapshot.phase === "paused";
+  const floating = useFloatingWindow();
 
   useWindowStateReport(
     {
@@ -135,29 +128,43 @@ export function LiveControls({
     epoch
   );
   useLiveCommands(recorder, commands);
-  useConfirmLeaving(capturing);
+  useConfirmLeaving(
+    snapshot.phase === "recording" || snapshot.phase === "paused"
+  );
 
+  const actions: RecorderActions = {
+    onCommand: (action: LiveCommand) => runLiveCommand(recorder, action),
+    onRecord: () => {
+      runLiveCommand(recorder, "start");
+      if (!floating.window) {
+        floating.open();
+      }
+    },
+  };
+
+  if (floating.window) {
+    return (
+      <>
+        {createPortal(
+          <FloatingBar
+            {...actions}
+            activity={activity}
+            recorder={recorder}
+            snapshot={snapshot}
+          />,
+          floating.window.document.body
+        )}
+        <InFloatingBar onBringBack={floating.close} />
+      </>
+    );
+  }
   return (
-    <section className="lw-section">
-      <div
-        aria-label="Reflet Live recording"
-        className="dt-rec lw-controls"
-        data-phase={snapshot.phase}
-        role="toolbar"
-      >
-        {capturing && <span aria-hidden="true" className="dt-rec-dot" />}
-        {capturing && <LevelMeter recorder={recorder} />}
-        <span aria-live="off" className="dt-rec-time" role="timer">
-          {formatClock(snapshot.activeMs)}
-        </span>
-        <ControlButtons
-          onCommand={(action) => runLiveCommand(recorder, action)}
-          snapshot={snapshot}
-        />
-      </div>
-      <p aria-live="polite" className="dt-rec-status">
-        {statusText(snapshot)}
-      </p>
-    </section>
+    <RecorderPanel
+      {...actions}
+      canFloat={floating.isSupported}
+      onFloat={floating.open}
+      recorder={recorder}
+      snapshot={snapshot}
+    />
   );
 }

@@ -1,26 +1,42 @@
+import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Heading, Text } from "@ctrl-ui/react/ui/typography";
 import type { ReactNode } from "react";
-import { DEVTOOLS_STYLES } from "../../devtools/client/devtools-styles";
-import { Notices } from "../../devtools/client/notices";
-import { SESSIONS_STYLES } from "../../sessions/ui/sessions-styles";
+import { AppsSection } from "./activity/apps-section";
+import { PassagesSection } from "./activity/passages-section";
 import {
   type ConnectionsState,
   useHubConnections,
 } from "./hub-link/use-hub-connections";
 import { type HubStream, useHubStream } from "./hub-link/use-hub-stream";
-import { LiveActivity } from "./live-activity";
-import { LIVE_WINDOW_STYLES } from "./live-window-styles";
+import { LiveNotices } from "./live-notices";
 import { IdleStateReport, LiveRecorder } from "./recorder/live-recorder";
 
-const STYLES = `${DEVTOOLS_STYLES}${SESSIONS_STYLES}${LIVE_WINDOW_STYLES}`;
-
-function WindowFrame({ children }: { children: ReactNode }) {
+function WindowFrame({
+  agentFollowing,
+  children,
+}: {
+  agentFollowing: boolean | null;
+  children: ReactNode;
+}) {
   return (
-    <div className="dt lw">
-      <style>{STYLES}</style>
-      <h1 className="lw-title">Reflet Live</h1>
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-6">
+      <header className="flex flex-wrap items-center justify-between gap-2">
+        <Heading level={1} size="heading-3">
+          Reflet Live
+        </Heading>
+        {agentFollowing === true && (
+          <Badge color="green">Agent following</Badge>
+        )}
+        {agentFollowing === false && (
+          <Text size="caption" tone="muted">
+            No agent following: run /reflet-live in your coding agent
+          </Text>
+        )}
+      </header>
       {children}
-      <Notices />
-    </div>
+      <LiveNotices />
+    </main>
   );
 }
 
@@ -36,6 +52,7 @@ function ConnectionSection({
   if (connections.kind === "ready") {
     return (
       <LiveRecorder
+        activity={stream.activity}
         commands={stream.commands}
         connections={connections.connections}
         epoch={stream.epoch}
@@ -49,16 +66,16 @@ function ConnectionSection({
     <>
       <IdleStateReport epoch={stream.epoch} />
       {connections.kind === "empty" && (
-        <p className="dt-hint">
+        <Text tone="muted">
           Connect Reflet from any app's devtools panel (footer → Connect), then
           come back here.
-        </p>
+        </Text>
       )}
       {connections.kind === "failed" && (
-        <p className="dt-error">{connections.message}</p>
+        <Text tone="destructive">{connections.message}</Text>
       )}
       {connections.kind === "loading" && stream.link !== "lost" && (
-        <p className="dt-meta">Connecting to Reflet Live…</p>
+        <Text tone="muted">Connecting to Reflet Live…</Text>
       )}
     </>
   );
@@ -70,27 +87,30 @@ export function LiveWindow() {
 
   if (stream.link === "elsewhere") {
     return (
-      <WindowFrame>
-        <p className="dt-hint">
+      <WindowFrame agentFollowing={null}>
+        <Text tone="muted">
           Reflet Live is open in another window: use that one and close this
           tab.
-        </p>
+        </Text>
       </WindowFrame>
     );
   }
   return (
-    <WindowFrame>
+    <WindowFrame agentFollowing={stream.activity.agentFollowing}>
       {stream.link === "lost" && (
-        <p className="lw-banner" role="status">
-          Reflet Live stopped in the terminal: run npx reflet-cli live again.
-        </p>
+        <Alert role="status" variant="destructive">
+          <AlertDescription>
+            Reflet Live stopped in the terminal: run npx reflet-cli live again.
+          </AlertDescription>
+        </Alert>
       )}
       <ConnectionSection
         connections={state}
         onSelect={select}
         stream={stream}
       />
-      <LiveActivity activity={stream.activity} />
+      <AppsSection activity={stream.activity} />
+      <PassagesSection activity={stream.activity} />
     </WindowFrame>
   );
 }
