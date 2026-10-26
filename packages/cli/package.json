@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/reflet-app/reflet.git",
+    "url": "git+https://github.com/reflet-app/reflet.git",
     "directory": "packages/cli"
   },
   "license": "MIT",
@@ -28,8 +28,8 @@
     "./prompt": "./src/setup-prompt.ts"
   },
   "bin": {
-    "reflet": "./dist/index.js",
-    "reflet-cli": "./dist/index.js"
+    "reflet": "dist/index.js",
+    "reflet-cli": "dist/index.js"
   },
   "files": [
     "dist",
