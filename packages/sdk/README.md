@@ -234,7 +234,11 @@ users. Pass `devtools={false}` to turn it off.
   `Content-Security-Policy`, add `wss://api.mistral.ai` to `connect-src` for
   this; without it the session records without telling voices apart.
   Sessions are recorded under your own name, so they need Connect rather than
-  `REFLET_SECRET_KEY`. To have a coding agent change the code while you talk,
+  `REFLET_SECRET_KEY`. An app that can't connect on its own (no widget key, or
+  a hostname Connect refuses) records under an account you connected in
+  another app on this machine against the same Reflet API, picked from the
+  panel footer: Prepare brief works, Add to board stays with apps connected
+  themselves. To have a coding agent change the code while you talk,
   across several of your apps at once, record with Reflet Live instead
   (`npx reflet-cli live`, then `/reflet-live` in the agent): each passage
   reaches the agent with the app it is about, what you clicked or pointed at

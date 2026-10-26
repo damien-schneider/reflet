@@ -148,6 +148,7 @@ export function LiveRecorder({
   const [transport] = useState(devtoolsTransport);
   const [isRevoked, setIsRevoked] = useState(false);
   const loaded = useWorkspaceLoader({
+    canAddToBoard: false,
     onUnauthorized: () => setIsRevoked(true),
     surface: "live",
     transport,

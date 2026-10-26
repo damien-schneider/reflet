@@ -143,6 +143,7 @@ describe("createDevtoolsHandler", () => {
     expect(await response.json()).toEqual({
       board: { kind: "secretKey" },
       editor: "cursor",
+      machineAccounts: [],
       marker: "reflet-devtools",
     });
   });

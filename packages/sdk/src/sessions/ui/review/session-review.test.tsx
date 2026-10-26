@@ -461,6 +461,29 @@ it("adds the confirmed intentions that are not on the board yet", async () => {
   );
 });
 
+it("keeps a session recorded under another app's account off the board", async () => {
+  const detail = aDetail({ proposals: [aProposal({ decision: "kept" })] });
+  renderInWorkspace(
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
+    fakeWorkspace({
+      api: fakeApi({ detail: vi.fn().mockResolvedValue(detail) }),
+      canAddToBoard: false,
+    })
+  );
+  await screen.findByRole("heading", { name: detail.session.title });
+
+  const [onlyAddButton, ...others] = screen.getAllByRole("button", {
+    name: "Add to board",
+  });
+  expect(others).toEqual([]);
+  expect(onlyAddButton).toHaveProperty("disabled", true);
+  expect(onlyAddButton).toBe(footerButton("Add to board"));
+});
+
 it("opens the brief from the confirmed intentions", async () => {
   const api = fakeApi({
     detail: vi

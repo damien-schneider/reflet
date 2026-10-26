@@ -11,6 +11,7 @@ import {
   finishConnect,
   startConnect,
 } from "./connect/connect-routes";
+import { listConnectionsTo } from "./connect/connection-store";
 import { errorResponse, jsonResponse, outcomeResponse } from "./json-response";
 import { forwardToLiveHub } from "./live-forward";
 import {
@@ -86,6 +87,9 @@ async function routeRequest(
       return jsonResponse({
         board: await boardAccess(request, settings),
         editor: settings.editor,
+        machineAccounts: (await listConnectionsTo(settings.apiUrl)).map(
+          ({ id, organizationName }) => ({ id, organizationName })
+        ),
         marker: DEVTOOLS_STATUS_MARKER,
       } satisfies DevtoolsStatus);
     case DEVTOOLS_ENDPOINTS.connectStart:

@@ -23,6 +23,7 @@ const READY: DevRouteState = {
   status: {
     board: { canConnect: false, kind: "disconnected" },
     editor: "vscode",
+    machineAccounts: [],
     marker: DEVTOOLS_STATUS_MARKER,
   },
 };

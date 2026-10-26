@@ -13,6 +13,7 @@ const DISCONNECTED: DevRouteState = {
   status: {
     board: { canConnect: true, kind: "disconnected" },
     editor: "vscode",
+    machineAccounts: [],
     marker: "reflet-devtools",
   },
 };

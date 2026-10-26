@@ -26,6 +26,7 @@ import { useRecorderSnapshot } from "../recorder/use-recorder-snapshot";
 export interface SessionWorkspace {
   account: SessionAccount;
   api: SessionApi;
+  canAddToBoard: boolean;
   identity: SessionIdentity;
   onUnauthorized: () => void;
   recorder: SessionRecorder;
@@ -59,6 +60,7 @@ function accountFor(identity: SessionIdentity): SessionAccount {
 }
 
 async function openWorkspace(options: {
+  canAddToBoard: boolean;
   onRefused: (account: SessionAccount) => void;
   surface: SessionSurface;
   transport: SessionTransport;
@@ -76,6 +78,7 @@ async function openWorkspace(options: {
   return {
     account,
     api,
+    canAddToBoard: options.canAddToBoard,
     identity,
     onUnauthorized: () => options.onRefused(account),
     recorder,
@@ -84,12 +87,13 @@ async function openWorkspace(options: {
 }
 
 function loadWorkspace(options: {
+  canAddToBoard: boolean;
   onUnauthorized: () => void;
   setState: (state: WorkspaceState) => void;
   surface: SessionSurface;
   transport: SessionTransport;
 }): () => void {
-  const { setState, surface, transport } = options;
+  const { canAddToBoard, setState, surface, transport } = options;
   let isCurrent = true;
   let opened: SessionWorkspace | null = null;
   const showFailure = (message: string) => {
@@ -109,7 +113,12 @@ function loadWorkspace(options: {
   };
   const load = () => {
     setState({ kind: "loading" });
-    openWorkspace({ onRefused: refuse, surface, transport }).then(
+    openWorkspace({
+      canAddToBoard,
+      onRefused: refuse,
+      surface,
+      transport,
+    }).then(
       (workspace) => {
         opened = workspace;
         if (isCurrent) {
@@ -135,11 +144,12 @@ function loadWorkspace(options: {
 }
 
 export function useWorkspaceLoader(options: {
+  canAddToBoard: boolean;
   onUnauthorized: () => void;
   surface: SessionSurface;
   transport: SessionTransport | null;
 }): WorkspaceState {
-  const { surface, transport } = options;
+  const { canAddToBoard, surface, transport } = options;
   const [state, setState] = useState<WorkspaceState>({ kind: "idle" });
   const onUnauthorizedRef = useRef(options.onUnauthorized);
   useLayoutEffect(() => {
@@ -152,12 +162,13 @@ export function useWorkspaceLoader(options: {
       return;
     }
     return loadWorkspace({
+      canAddToBoard,
       onUnauthorized: () => onUnauthorizedRef.current(),
       setState,
       surface,
       transport,
     });
-  }, [surface, transport]);
+  }, [canAddToBoard, surface, transport]);
 
   return state;
 }

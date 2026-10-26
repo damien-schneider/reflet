@@ -7,6 +7,7 @@ import {
 } from "../../../../feedback/ui/icons";
 import type { ProposalDecision, SessionProposal } from "../../../protocol";
 import { ClockIcon } from "../../session-icons";
+import { useSessionWorkspace } from "../../session-workspace";
 import { ContinueIntention } from "../continuation/continue-panel";
 import { IntentionSource } from "../moment/intention-source";
 import { useFocusWhen } from "../transcript/remove-evidence";
@@ -132,8 +133,13 @@ function DecisionButtons({
   onEdit: () => void;
   proposal: SessionProposal;
 }) {
+  const { canAddToBoard } = useSessionWorkspace();
   const toggle = (decision: ProposalDecision) =>
     decisionToggle(context.actions, proposal, decision);
+  const canAddThis =
+    canAddToBoard &&
+    proposal.feedbackId === null &&
+    proposal.decision !== "dismissed";
   const isKept = proposal.decision === "kept";
   return (
     <div className="dt-actions dt-ses-decisions">
@@ -171,7 +177,7 @@ function DecisionButtons({
       >
         <PencilIcon />
       </button>
-      {proposal.feedbackId === null && proposal.decision !== "dismissed" && (
+      {canAddThis && (
         <button
           aria-label="Add to board"
           className="dt-btn"

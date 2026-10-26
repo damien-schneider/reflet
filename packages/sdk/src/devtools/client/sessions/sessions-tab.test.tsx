@@ -18,25 +18,36 @@ vi.mock("../../../sessions/local/local-sessions", () => ({
 
 afterEach(cleanup);
 
+const NO_ACCOUNT: DevtoolsSessions["account"] = { kind: "none" };
+
 function routeWithBoard(board: DevtoolsStatus["board"]): DevRouteState {
   return {
     kind: "ready",
-    status: { board, editor: "vscode", marker: DEVTOOLS_STATUS_MARKER },
+    status: {
+      board,
+      editor: "vscode",
+      machineAccounts: [],
+      marker: DEVTOOLS_STATUS_MARKER,
+    },
   };
 }
 
 function renderTab(
   route: DevRouteState,
   state: DevtoolsSessions["state"],
-  canConnect = true
+  account = NO_ACCOUNT
 ) {
   const actions = { onStarted: vi.fn() };
   render(
     <SessionsTab
       actions={actions}
-      canConnect={canConnect}
+      canConnect={account.kind === "none"}
       route={route}
-      sessions={{ navigation: { go: vi.fn(), place: { view: "home" } }, state }}
+      sessions={{
+        account,
+        navigation: { go: vi.fn(), place: { view: "home" } },
+        state,
+      }}
     />
   );
   return actions;
@@ -55,18 +66,20 @@ it("points to the connect footer before recording", () => {
   expect(screen.queryByRole("button")).toBeNull();
 });
 
-it("explains that connecting needs localhost and a public key", () => {
+it("opens sessions as an account connected in another app", () => {
+  const otherApp = { id: "account_1", organizationName: "One Rec" };
   renderTab(
     routeWithBoard({ canConnect: false, kind: "disconnected" }),
-    { kind: "idle" },
-    false
+    { kind: "failed", message: "Offline", retry: vi.fn() },
+    {
+      accounts: [otherApp],
+      choose: vi.fn(),
+      chosen: otherApp,
+      kind: "machine",
+    }
   );
 
-  expect(
-    screen.getByText(
-      "Sessions are recorded under your Reflet account. Connecting to Reflet needs a public key and a local address (localhost, *.localhost or *.test)."
-    )
-  ).toBeTruthy();
+  expect(screen.getByText("Sessions did not open: Offline")).toBeTruthy();
 });
 
 it("explains that the secret key cannot record sessions", () => {
@@ -81,11 +94,11 @@ it("explains that the secret key cannot record sessions", () => {
 
 it("offers to retry when the workspace did not open", () => {
   const retry = vi.fn();
-  renderTab(routeWithBoard({ kind: "connected", organizationName: "Acme" }), {
-    kind: "failed",
-    message: "Offline",
-    retry,
-  });
+  renderTab(
+    routeWithBoard({ kind: "connected", organizationName: "Acme" }),
+    { kind: "failed", message: "Offline", retry },
+    { kind: "own" }
+  );
 
   expect(screen.getByText("Sessions did not open: Offline")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));

@@ -178,7 +178,12 @@ export function DevtoolsLayer({
   const { refresh, route } = useDevRoute();
   const notes = useNotes();
   useResumeLocating(notes, route);
-  const sessions = useDevtoolsSessions({ onUnauthorized: refresh, route });
+  const canConnect = canConnectBoard(route, publicKey);
+  const sessions = useDevtoolsSessions({
+    canConnect,
+    onUnauthorized: refresh,
+    route,
+  });
   const live = useLiveLink(route.kind === "ready");
   const [isPicking, setIsPicking] = useState(false);
   const [isLivePointing, setIsLivePointing] = useState(false);
@@ -195,7 +200,6 @@ export function DevtoolsLayer({
   const edge = position.startsWith("top") ? "top" : "bottom";
   const side = position.endsWith("right") ? "right" : "left";
   const canReadSource = route.kind === "ready";
-  const canConnect = canConnectBoard(route, publicKey);
   const isRecessed = isWidgetOpen || isPicking || isLivePointing;
 
   const closeSheet = () => {
@@ -245,7 +249,7 @@ export function DevtoolsLayer({
                   connectKey={canConnect ? publicKey : null}
                   refresh={refresh}
                   route={route}
-                  workspace={sessions.state}
+                  sessions={sessions}
                 />
               )
             }

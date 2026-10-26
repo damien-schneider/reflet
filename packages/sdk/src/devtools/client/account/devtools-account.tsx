@@ -3,8 +3,12 @@ import { reportFailure } from "../notices";
 import { disconnectBoard } from "../route/dev-route";
 import { CONNECT_REQUIREMENT } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
+import type { DevtoolsSessions } from "../sessions/devtools-sessions";
 import { AccountFooter, AccountNote } from "./account-footer";
 import { ConnectFooter } from "./connect-footer";
+
+const personOf = (workspace: WorkspaceState) =>
+  workspace.kind === "ready" ? workspace.workspace.identity.user : null;
 
 async function disconnect(refresh: () => void) {
   try {
@@ -27,15 +31,29 @@ export function DevtoolsAccount({
   connectKey,
   refresh,
   route,
-  workspace,
+  sessions,
 }: {
   connectKey: string | null;
   refresh: () => void;
   route: DevRouteState;
-  workspace: WorkspaceState;
+  sessions: DevtoolsSessions;
 }) {
   if (route.kind !== "ready") {
     return null;
+  }
+  const { account } = sessions;
+  if (account.kind === "machine") {
+    return (
+      <AccountFooter
+        actions={account.accounts.map((listed) => ({
+          checked: listed.id === account.chosen.id,
+          label: listed.organizationName,
+          onSelect: () => account.choose(listed.id),
+        }))}
+        organizationName={account.chosen.organizationName}
+        person={personOf(sessions.state)}
+      />
+    );
   }
   const { board } = route.status;
   if (board.kind === "secretKey") {
@@ -58,9 +76,7 @@ export function DevtoolsAccount({
         },
       ]}
       organizationName={board.organizationName}
-      person={
-        workspace.kind === "ready" ? workspace.workspace.identity.user : null
-      }
+      person={personOf(sessions.state)}
     />
   );
 }

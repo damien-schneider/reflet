@@ -3,6 +3,7 @@ import {
   type BoardAccess,
   type CodeSearchResult,
   type ConnectStartResponse,
+  DEVTOOLS_ACCOUNT_HEADER,
   DEVTOOLS_ENDPOINTS,
   DEVTOOLS_REQUEST_HEADER,
   DEVTOOLS_ROUTE_BASE,
@@ -10,6 +11,7 @@ import {
   type DevtoolsStatus,
   type DisconnectResponse,
   EDITORS,
+  type MachineAccount,
   type PROXIED_API_PATHS,
   type SourceFile,
 } from "../../protocol";
@@ -64,6 +66,17 @@ function isBoardAccess(value: unknown): value is BoardAccess {
   }
 }
 
+function isMachineAccount(value: unknown): value is MachineAccount {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "organizationName" in value &&
+    typeof value.organizationName === "string"
+  );
+}
+
 function isDevtoolsStatus(value: unknown): value is DevtoolsStatus {
   return (
     typeof value === "object" &&
@@ -73,7 +86,10 @@ function isDevtoolsStatus(value: unknown): value is DevtoolsStatus {
     "board" in value &&
     isBoardAccess(value.board) &&
     "editor" in value &&
-    EDITORS.some((known) => known === value.editor)
+    EDITORS.some((known) => known === value.editor) &&
+    "machineAccounts" in value &&
+    Array.isArray(value.machineAccounts) &&
+    value.machineAccounts.every(isMachineAccount)
   );
 }
 
@@ -81,6 +97,7 @@ export async function callDevRoute<T>(
   endpoint: string,
   init: {
     body?: unknown;
+    headers?: Record<string, string>;
     method?: "GET" | "POST";
     query?: Record<string, string>;
   } = {}
@@ -89,6 +106,7 @@ export async function callDevRoute<T>(
   const response = await fetch(`${DEVTOOLS_ROUTE_BASE}${endpoint}${search}`, {
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     headers: {
+      ...init.headers,
       "Content-Type": "application/json",
       [DEVTOOLS_REQUEST_HEADER]: "1",
     },
@@ -154,15 +172,34 @@ export function searchCode(text: string): Promise<CodeSearchResult> {
   });
 }
 
-export function callReflet<T>(
+interface RefletCallInit {
+  body?: unknown;
+  query?: Record<string, string>;
+}
+
+function callProxy<T>(
   apiPath: ProxiedApiPath,
-  init: { body?: unknown; query?: Record<string, string> } = {}
+  init: RefletCallInit,
+  headers?: Record<string, string>
 ): Promise<T> {
   return callDevRoute<T>(`${DEVTOOLS_ENDPOINTS.proxy}${apiPath}`, {
     body: init.body,
+    headers,
     method: init.body === undefined ? "GET" : "POST",
     query: init.query,
   });
 }
 
+export function callReflet<T>(
+  apiPath: ProxiedApiPath,
+  init: RefletCallInit = {}
+): Promise<T> {
+  return callProxy<T>(apiPath, init);
+}
+
 export type BoardCall = typeof callReflet;
+
+export function callRefletAs(accountId: string): BoardCall {
+  return <T>(apiPath: ProxiedApiPath, init: RefletCallInit = {}) =>
+    callProxy<T>(apiPath, init, { [DEVTOOLS_ACCOUNT_HEADER]: accountId });
+}

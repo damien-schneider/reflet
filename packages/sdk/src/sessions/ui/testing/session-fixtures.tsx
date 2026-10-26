@@ -156,7 +156,11 @@ export function fakeRecorder(initial: RecorderSnapshot = IDLE_SNAPSHOT) {
 }
 
 export function fakeWorkspace(
-  parts: { api?: SessionApi; recorder?: SessionRecorder } = {}
+  parts: {
+    api?: SessionApi;
+    canAddToBoard?: boolean;
+    recorder?: SessionRecorder;
+  } = {}
 ): SessionWorkspace {
   return {
     account: {
@@ -166,6 +170,7 @@ export function fakeWorkspace(
       userName: "Ada",
     },
     api: parts.api ?? fakeApi(),
+    canAddToBoard: parts.canAddToBoard ?? true,
     identity: IDENTITY,
     onUnauthorized: vi.fn(),
     recorder: parts.recorder ?? fakeRecorder(),

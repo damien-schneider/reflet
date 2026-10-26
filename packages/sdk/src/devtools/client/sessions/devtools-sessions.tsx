@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { devtoolsTransport } from "../../../sessions/api/session-transports";
 import {
   SessionWorkspaceProvider,
   useWorkspaceLoader,
@@ -10,30 +9,35 @@ import {
   SessionsPanel,
   useSessionNavigation,
 } from "../../../sessions/ui/sessions-panel";
-import { CONNECT_REQUIREMENT, MissingRouteHint } from "../route/route-hint";
+import { MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
-
-const DEVTOOLS_TRANSPORT = devtoolsTransport();
+import {
+  type SessionsAccount,
+  useSessionsAccount,
+} from "./use-sessions-account";
 
 export interface DevtoolsSessions {
+  account: SessionsAccount;
   navigation: SessionNavigation;
   state: WorkspaceState;
 }
 
-/** Sessions go through the dev route with the developer's own Connect token, never the secret key. */
 export function useDevtoolsSessions(options: {
+  canConnect: boolean;
   onUnauthorized: () => void;
   route: DevRouteState;
 }): DevtoolsSessions {
-  const { route } = options;
-  const isConnected =
-    route.kind === "ready" && route.status.board.kind === "connected";
+  const { account, transport } = useSessionsAccount(
+    options.route,
+    options.canConnect
+  );
   const state = useWorkspaceLoader({
+    canAddToBoard: account.kind === "own",
     onUnauthorized: options.onUnauthorized,
     surface: "devtools",
-    transport: isConnected ? DEVTOOLS_TRANSPORT : null,
+    transport,
   });
-  return { navigation: useSessionNavigation(), state };
+  return { account, navigation: useSessionNavigation(), state };
 }
 
 export function SessionsScope({
@@ -54,6 +58,8 @@ export function SessionsScope({
 
 const SESSIONS_NEED_ACCOUNT =
   "Sessions are recorded under your Reflet account.";
+const CONNECT_ANY_APP =
+  "Connect to Reflet in the devtools panel of any of your apps, and this one records under that account too.";
 
 function WorkspaceGate({
   actions,
@@ -109,17 +115,10 @@ export function SessionsTab({
       <MissingRouteHint purpose="record sessions under your Reflet account" />
     );
   }
-  const { board } = route.status;
-  if (board.kind === "disconnected") {
-    return (
-      <p className="dt-empty">
-        {SESSIONS_NEED_ACCOUNT}{" "}
-        {canConnect
-          ? "Connect to Reflet below to start one."
-          : CONNECT_REQUIREMENT}
-      </p>
-    );
+  if (sessions.account.kind !== "none") {
+    return <WorkspaceGate actions={actions} sessions={sessions} />;
   }
+  const { board } = route.status;
   if (board.kind === "secretKey") {
     return (
       <p className="dt-empty">
@@ -128,5 +127,10 @@ export function SessionsTab({
       </p>
     );
   }
-  return <WorkspaceGate actions={actions} sessions={sessions} />;
+  return (
+    <p className="dt-empty">
+      {SESSIONS_NEED_ACCOUNT}{" "}
+      {canConnect ? "Connect to Reflet below to start one." : CONNECT_ANY_APP}
+    </p>
+  );
 }

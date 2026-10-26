@@ -104,20 +104,33 @@ async function readDatedConnection(
   }
 }
 
-export async function listConnections(): Promise<ListedConnection[]> {
-  let fileNames: string[];
+async function connectionFileNames(): Promise<string[]> {
   try {
-    fileNames = await readdir(connectionsDirectory());
+    const fileNames = await readdir(connectionsDirectory());
+    return fileNames.filter((fileName) => fileName.endsWith(JSON_EXTENSION));
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       return [];
     }
     throw error;
   }
+}
+
+export async function forgetToken(rejectedToken: string): Promise<void> {
+  const fileNames = await connectionFileNames();
+  await Promise.all(
+    fileNames.map(async (fileName) => {
+      const entry = await readDatedConnection(fileName);
+      if (entry?.connection.token === rejectedToken) {
+        await rm(join(connectionsDirectory(), fileName), { force: true });
+      }
+    })
+  );
+}
+
+export async function listConnections(): Promise<ListedConnection[]> {
   const dated = await Promise.all(
-    fileNames
-      .filter((fileName) => fileName.endsWith(JSON_EXTENSION))
-      .map(readDatedConnection)
+    (await connectionFileNames()).map(readDatedConnection)
   );
   const newest = new Map<string, DatedConnection>();
   for (const entry of dated) {
@@ -139,4 +152,11 @@ export async function listConnections(): Promise<ListedConnection[]> {
       id: createHash("sha256").update(key).digest("hex"),
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function listConnectionsTo(
+  apiUrl: string
+): Promise<ListedConnection[]> {
+  const connections = await listConnections();
+  return connections.filter((connection) => connection.apiUrl === apiUrl);
 }

@@ -166,6 +166,7 @@ function TeamBar({
 function useTeamWorkspace(team: SignedInTeam) {
   const { onSignOut } = team;
   const state = useWorkspaceLoader({
+    canAddToBoard: true,
     onUnauthorized: () => onSignOut(REFUSED_SIGN_IN_COPY),
     surface: "app",
     transport: team.transport,

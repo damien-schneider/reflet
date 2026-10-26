@@ -5,6 +5,17 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Sessions in apps that can't connect: without a widget key, or on a hostname Connect refuses, the devtools Sessions tab records under an account you already connected in another app on this machine against the same Reflet API, picked from the panel footer. Prepare brief works as usual; Add to board stays off, since publishing to a board needs the app's own connection.
+- Devtools route: `/status` lists the accounts connected on this machine to the app's Reflet API (their organization, never their token), and the proxy takes session calls on behalf of one of them through the `x-reflet-account` header. It never adds to a board or creates feedback for them.
+
+### Changed
+
+- Restart the dev server after upgrading: the devtools panel reads the accounts from the route's new `/status`, and treats an older route as missing.
+
 ## [0.8.1] - 2026-10-26
 
 ### Added

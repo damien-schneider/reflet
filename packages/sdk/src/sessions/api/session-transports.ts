@@ -1,6 +1,7 @@
 import {
   type BoardCall,
   callReflet,
+  callRefletAs,
   DevRouteError,
 } from "../../devtools/client/route/dev-route";
 import { uploadBlob } from "../../feedback/core/submit";
@@ -46,6 +47,10 @@ export function transportOver(boardCall: BoardCall): SessionTransport {
 
 export function devtoolsTransport(): SessionTransport {
   return transportOver(callReflet);
+}
+
+export function machineAccountTransport(accountId: string): SessionTransport {
+  return transportOver(callRefletAs(accountId));
 }
 
 export function teamTransport(options: {

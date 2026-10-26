@@ -9,6 +9,8 @@ export const DEVTOOLS_ROUTE_BASE = "/api/reflet-devtools";
  */
 export const DEVTOOLS_REQUEST_HEADER = "x-reflet-devtools";
 
+export const DEVTOOLS_ACCOUNT_HEADER = "x-reflet-account";
+
 export const DEVTOOLS_ENDPOINTS = {
   connectCallback: "/connect/callback",
   connectStart: "/connect/start",
@@ -47,9 +49,15 @@ export type BoardAccess =
   | { kind: "connected"; organizationName: string }
   | { canConnect: boolean; kind: "disconnected" };
 
+export interface MachineAccount {
+  id: string;
+  organizationName: string;
+}
+
 export interface DevtoolsStatus {
   board: BoardAccess;
   editor: EditorId;
+  machineAccounts: MachineAccount[];
   marker: typeof DEVTOOLS_STATUS_MARKER;
 }
 
