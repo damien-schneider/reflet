@@ -1,108 +1,63 @@
-# Reflet Sessions — décisions du lot 0
+# Session provider and capture decisions
 
-Ce document fige les choix techniques pris avant de construire les sessions, avec les mesures qui les justifient. Il complète `reflet-sessions.md`.
+This record preserves the October 2026 decisions behind [Sessions](reflet-sessions.md). Measurements below are dated observations, not current pricing, performance guarantees, or proof of the deployed version.
 
-## Transcription
+## Providers and retention
 
-Fournisseur retenu : **ElevenLabs Scribe v2 via OpenRouter, routage `provider.zdr: true`** (zero data retention). Modèle : `TRANSCRIPTION_MODEL` dans `convex/ai/models.ts`.
+| Task | Decision | Reason and boundary |
+| --- | --- | --- |
+| Transcription | ElevenLabs Scribe v2 through OpenRouter, zero-retention routing | Recognized mixed French/English technical words better in the recorded comparison; timestamps originate in the browser |
+| Intention analysis and element location | OpenRouter with zero-retention routing | Uses bounded session context; current model selection lives in `packages/backend/convex/ai/models.ts` and `openrouter.ts` |
+| Optional speaker detection | Mistral Voxtral realtime, direct browser WebSocket | Keeps speaker labels across passages; its text is not used as the transcript |
 
-Pourquoi :
+`OPENROUTER_API_KEY` enables transcription and analysis. `MISTRAL_API_KEY` enables the optional "Several people are talking" setting. Reflet issues a short-lived Mistral client token; the server key never reaches the browser.
 
-- La clé `OPENROUTER_API_KEY` existe déjà sur les déploiements Reflet : aucun nouveau contrat à ajouter.
-- Le routage ZDR garantit que le fournisseur n'entraîne rien sur l'audio et ne le conserve pas.
-- Facturation à la seconde, sans minimum par morceau : environ 0,0018 $ par minute d'audio.
-- Les termes anglais dits en français (« border radius », « save bar », « preview ») sont ceux sur lesquels les autres modèles se trompent.
+Speaker detection is a separate privacy choice: the recorded policy allows Mistral to retain API inputs for up to 30 days without training on them. Zero retention was not requested for this path. Recheck provider terms before changing either implementation or disclosure. Do not describe all session processing as zero retention.
 
-Mesures du 18/10/2026 (appels réels, WAV 16 kHz mono, voix de synthèse française ; 6 termes tech à reconnaître) :
+Reflet deletes raw audio after the transcript is durably saved, with a 24-hour recovery window at most. The browser's temporary speaker-reference samples follow local-draft cleanup. Transcripts and screenshots remain until deleted; removing a session cannot recall files or briefs already exported.
 
-| Modèle (ZDR) | Termes justes | Latence | Prix / heure |
-|---|---|---|---|
-| ElevenLabs Scribe v2 | 5/6 | 0,5–0,8 s | 0,11 $ |
-| Deepgram Nova-3 (`language: multi`) | 4/6 | 0,8–1,4 s | 0,31 $ |
-| Whisper large v3 | 1/6 (« bord des radios », « Refinade ») | 0,6–4,9 s | 0,027 $ |
-| Whisper large v3 turbo, Qwen3 ASR 1.7B, Parakeet v3 | 1/6 | 0,3–1,6 s | 0,012–0,09 $ |
+## Why Scribe
 
-Sans ZDR sur OpenRouter au 18/10, donc écartés : `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gemini-3.5-transcribe`, Grok STT. Voxtral figurait dans cette liste ; Voxtral 3 est depuis disponible en ZDR sur OpenRouter, mais sans diarisation ni liste de termes (voir « Détection des voix »).
+On 18 October 2026, real API calls transcribed synthetic French speech containing six English technical terms, using 16 kHz mono WAV and zero-retention routing.
 
-Scribe ne renvoie pas de probabilité de silence et marque les événements sonores entre crochets (« [pause] ») : ces étiquettes sont retirées, et un passage qui n'en contient que devient vide.
+| Model | Terms recognized | Observed latency | Recorded price/hour |
+| --- | --- | --- | --- |
+| Scribe v2 | 5/6 | 0.5–0.8 s | $0.11 |
+| Deepgram Nova-3, multilingual | 4/6 | 0.8–1.4 s | $0.31 |
+| Whisper large v3 | 1/6 | 0.6–4.9 s | $0.027 |
+| Whisper turbo, Qwen3 ASR, Parakeet v3 | 1/6 | 0.3–1.6 s | $0.012–0.09 |
 
-Le découpage de la parole se fait dans le navigateur : les horodatages ne dépendent donc pas du fournisseur, et on peut en changer sans toucher au reste.
+These small synthetic samples explain the choice; they do not measure accuracy on customer recordings. Scribe's bracketed sound-event labels are stripped. A passage consisting only of those labels becomes empty.
 
-## Détection des voix
+## Why separate speaker detection
 
-Décision du 23/10/2026 : **le texte reste sur Scribe ; qui parle quand vient de Mistral, `voxtral-mini-transcribe-realtime-3` avec `diarize`, en direct depuis le navigateur**, seulement quand la personne qui démarre la session coche « Several people are talking ».
+The 23 October decision kept Scribe for words and used Voxtral only for who spoke when. In a three-voice synthetic sample, Voxtral assigned 10/10 turns correctly but its transcript had about 20% word errors. Speaker references carried 18/18 synthetic turns across a pause; one real meeting sample also preserved the dominant speaker across pause and reload.
 
-Voxtral 3 évalué avant ce choix :
+The browser maps incoming turns onto the session clock. Reflet attributes Scribe's timed words when reading the transcript. Clock error was roughly ±0.25 s, up to 0.4 s at the first change after reconnecting, so boundary words can have the wrong speaker. A voice with less than three seconds of reference audio can receive a new label after a pause.
 
-- Mini et Small en lot : sans liste de termes, Scribe est plus juste ; avec la liste, le texte est parfait. Sur OpenRouter, Voxtral 3 a le ZDR mais ni diarisation ni liste de termes.
-- Temps réel (`voxtral-mini-transcribe-realtime-3`) : libellés stables, 10 tours sur 10 attribués à la bonne voix sur un extrait à 3 voix de synthèse. Des noms sont possibles en fournissant des extraits de référence de chaque voix. Le texte est moins bon que Scribe (20 % d'erreurs sur le même extrait) : il n'est pas utilisé.
+A WebSocket starts for each active recording interval. Pausing closes it; resuming supplies short references for previously heard voices. The client token lasts 120 seconds for connection establishment. A measured 17-minute connection outlived that token; it was not evidence that a new connection could use an expired token.
 
-Fonctionnement :
+Recorded cost was $0.008/minute for speaker detection, only when enabled. Treat that as a decision-time price, not a billing promise.
 
-- Une connexion WebSocket par tranche de collecte (entre deux pauses), qui reçoit le même audio 16 kHz que le découpage de la parole. Les événements de Mistral, sans horodatage, sont convertis en tours de parole sur l'horloge de session et envoyés à Reflet.
-- Le navigateur se connecte avec un jeton `rt_…` de 120 s émis par Convex avec la clé serveur. Le jeton n'a besoin d'être valide qu'à la connexion : une connexion de 17 min lui a survécu.
-- Les locuteurs sont attribués à la lecture, mot par mot, à partir des instants de mots renvoyés par Scribe ; un même libellé reste la même personne pendant toute la session.
-- Après une pause, la nouvelle connexion reçoit 3 à 6 s de chaque voix déjà entendue (`speaker_references`) pour reprendre les mêmes libellés. Les extraits sont pris dans la partie de chaque tour qui tombe dans un passage, et plusieurs tours d'une même voix sont joints : dans une vraie réunion, un tour long déborde souvent sur plusieurs passages. Un passage n'est découpé qu'une fois que Mistral a entendu 1 s au-delà de sa fin (ou à la pause, après ses derniers mots), pour que les derniers mots de chaque tour comptent. Ces extraits sont gardés dans le brouillon local (IndexedDB) : effacés avec lui une fois la session synchronisée, et retirés d'un brouillon inactif depuis plus longtemps que la conservation de l'audio (24 h) au passage de synchronisation suivant. Après un rechargement de la page, la reprise du brouillon garde aussi les libellés.
-- Vérifié dans le navigateur : sur une discussion produit à 3 voix de synthèse, 18 tours sur 18 gardent leur libellé à travers une pause ; sur un extrait de vraie réunion (AMI ES2002a), la personne qui parlait le plus garde son libellé à travers une pause puis un rechargement. Une voix entendue moins de 3 s au total avant la pause (le minimum de Mistral pour un extrait) revient sous un nouveau libellé.
-- Les tours sont envoyés avant chaque passage, puis 2,5 s après, le temps que Mistral ait rendu les derniers mots du passage : le suivi en direct reçoit ainsi le bon locuteur jusqu'à la fin du passage.
-- Précision : l'horloge des tours est juste à ±0,25 s (jusqu'à 0,4 s au premier changement de voix après une connexion, le temps que le retard d'envoi se résorbe). Un ou deux mots à la frontière entre deux voix peuvent donc être attribués à la mauvaise.
+## Capture limits and cleanup
 
-Coût : 0,008 $ par minute, seulement quand la case est cochée, soit environ 0,70 $ par heure de session au total contre 0,22 $ sans.
+`packages/backend/convex/sessions/constants.ts` owns all limits. The client receives them with session identity. Ordinary sessions currently allow 30 minutes, 400 audio segments, 5,000 events, and 60 screenshots; Live has separate larger limits. Do not copy those values into a client policy.
 
-Rétention : Mistral conserve les entrées de l'API jusqu'à 30 jours et ne s'en sert pas pour entraîner. Le ZDR n'a pas été demandé : choix produit, annoncé dans la liste « What a session records » et la documentation. L'audio reste supprimé par Reflet dès la transcription, 24 h au plus.
+Browser capture is bounded and uses DOM screenshots rather than video. Standard input values are cleared in session screenshot clones; configured redactions are hidden. Other visible text may remain. WebKit stores local audio and images as bytes because Blob persistence in IndexedDB was not reliable.
 
-## Analyse
+Interrupted collection is closed by server cleanup. Deletion removes children and stored files, blocks late jobs from restoring content, and retains a content-free tombstone for up to 30 days. Live sessions expire after 24 hours without updates.
 
-Modèle : `sessionAnalysisModel` dans `convex/ai/openrouter.ts` (routage ZDR).
+## Recorded load check
 
-Les intentions se construisent pendant l'enregistrement : chaque passage transcrit relance l'analyse sur tout ce qui a été dit, avec au moins 15 s entre deux analyses et une seule à la fois. Au-dessus de la barre d'enregistrement, un encart montre côte à côte les passages transcrits (« Transcribing… » dès la pause) et les intentions trouvées, mis à jour toutes les 2 s, sans ouvrir le panneau latéral. Il est affiché par défaut ; le bouton transcription de la barre le masque ou le réaffiche. Vérifié sur le backend de dev : un passage apparaît en « Transcribing… » environ 2 s après la pause, son texte 2 s plus tard, et l'intention qu'il contient une dizaine de secondes après la fin du passage.
+The original 10-minute Chromium headless run used a synthetic microphone on the Reflet dashboard, about 7,000 DOM nodes, repeated scroll/pointer activity, clicks every 17 seconds, and a mark every 70 seconds.
 
-- Une analyse qui se termine alors que de nouveaux passages sont arrivés garde ce qu'elle a trouvé, puis la suivante reprend l'ensemble.
-- Finish relance une analyse complète sur toute la session, qui remplace celle en cours si elle avait démarré pendant l'enregistrement.
-- Les intentions que la personne a touchées (confirmées, modifiées, transmises) ne sont jamais remplacées.
-- Les sessions qui complètent une intention existante ne sont analysées qu'à la fin.
-- Coût : une analyse par tranche de parole, plafonnée par l'écart de 15 s et la durée maximale de 30 min.
+| Observation | Result |
+| --- | --- |
+| JavaScript heap | 41–43 MB, no observed growth |
+| DOM nodes | 7,027, stable |
+| Main-thread time | 3.4% of session duration, including the app |
+| Audio segments / screenshots | 20 / 10 |
+| Event requests | 116, 81 KB total |
+| Storage uploads | 30 files |
 
-## Limites
-
-Les limites vivent côté serveur et sont renvoyées au client avec l'identité ; le client n'en code aucune en dur.
-
-| Limite | Valeur |
-|---|---|
-| Durée maximale d'une session | 30 min (avertissement 5 min avant) |
-| Morceau de parole | 30 s, 1,1 Mo |
-| Morceaux par session | 400 |
-| Événements par session | 5 000 (200 par envoi) |
-| Captures par session | 60, 2,5 Mo chacune |
-| Intervalle minimal entre captures automatiques | 10 s |
-| Tampon local avant envoi | 60 Mo |
-| Conservation de l'audio | 24 h, supprimé dès la transcription |
-
-## Suppression
-
-- Supprimer une session la marque supprimée et efface dans la même transaction ses morceaux, événements, captures, propositions, briefs et fichiers.
-- Un traitement en retard (transcription, analyse, reformulation) qui arrive après la suppression ne fait rien.
-- Les marques de suppression sont purgées après 30 jours.
-- Les sessions abandonnées (onglet fermé, crash) sont terminées automatiquement au-delà de la durée maximale plus 30 minutes.
-- Les briefs déjà copiés ou exportés ne peuvent pas être rappelés ; l'interface le dit avant de supprimer.
-
-## Mesures sur une session longue
-
-Session de 10 min enregistrée dans l'onglet Sessions des devtools, sur le tableau de bord de Reflet (page Clés d'API, ~7 000 nœuds DOM), Chromium headless, micro simulé (tonalité continue), backend de dev réel. Toutes les 3,5 s : déplacement de souris et défilement ; un clic toutes les 17 s ; une marque toutes les 70 s.
-
-| Mesure | Valeur |
-|---|---|
-| Tas JS | 41–43 Mo du début à la fin, pas de croissance |
-| Nœuds DOM | 7 027 stables (la barre d'enregistrement n'en ajoute pas au fil du temps) |
-| Temps du thread principal | 3,4 % de la durée, page du tableau de bord comprise |
-| Morceaux de parole | 20 (un par 30 s) |
-| Captures | 10 (début + 9 marques) |
-| Envois d'événements | 116 requêtes, 81 Ko au total |
-| Métadonnées (morceaux, captures, URL d'envoi) | 61 requêtes, < 10 Ko |
-| Envois vers le stockage | 30 fichiers (20 audios, 10 captures) |
-
-Le harnais ne voit pas la taille des corps binaires envoyés au stockage. Pour l'audio, le format la borne : WAV 16 kHz mono 16 bits, soit au plus 0,96 Mo par morceau de 30 s et ~19 Mo pour 10 min de parole continue, sous la limite de 1,1 Mo par morceau.
-
-Navigateurs vérifiés par la suite E2E simulée (`apps/web/e2e/sdk-sessions.e2e.ts`) : Chromium, Firefox, WebKit. Bout en bout réel sur le backend de dev (transcription, analyse, brief, connexion des outils d'équipe par popup) : Chromium.
-
-WebKit refuse les `Blob` dans IndexedDB : l'audio et les captures y sont stockés en octets (`ArrayBuffer` + type).
+The harness did not measure binary upload bodies. The audio format bounds 30 seconds at roughly 0.96 MB, about 19 MB for ten minutes of uninterrupted speech. These figures describe that fixture only. Re-measure with real applications before making cost, browser-support, or latency claims.

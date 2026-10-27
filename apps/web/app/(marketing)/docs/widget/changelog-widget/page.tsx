@@ -1,167 +1,211 @@
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
+  DocsLink,
   DocsList,
   DocsPage,
   DocsSection,
   DocsText,
 } from "@/components/docs/docs-page";
+import { InstallCommand } from "@/components/docs/install-command";
 import { ReferenceTable } from "@/components/docs/reference-table";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "Display recent changelog entries in a popover with unread notification badges.",
+    "Embed published releases, configure a trigger, and manage local unread state.",
   path: "/docs/widget/changelog-widget",
   title: "Changelog widget",
 });
 
 const SECTIONS = [
-  { id: "script-tag", label: "Script tag embed" },
-  { id: "react", label: "React component" },
-  { id: "features", label: "Features" },
+  { id: "script-tag", label: "Embed published updates" },
+  { id: "react", label: "React" },
   { id: "configuration", label: "Configuration" },
+  { id: "api", label: "Methods and callbacks" },
+  { id: "features", label: "Read state and limits" },
 ] as const;
 
-const SCRIPT_TAG = `<script
-  src="https://cdn.reflet.app/widget/reflet-changelog.v1.js"
-  data-public-key="fb_pub_xxx"
-  data-mode="trigger"
-  async
-></script>
-
-<button data-reflet-changelog>
+const EMBED = `<button type="button" data-reflet-changelog>
   What's new <span data-reflet-changelog-badge></span>
-</button>`;
+</button>
+<script>
+  window.RefletChangelog = {
+    publicKey: "fb_pub_xxx",
+    mode: "trigger",
+    theme: "auto"
+  };
+</script>
+<script src="https://www.reflet.app/widget/reflet-changelog.v1.js" async></script>`;
 
-const REACT_USAGE = `import { ChangelogWidget } from "reflet-sdk/react";
+const REACT = `"use client";
 
-function App() {
+import { ChangelogWidget } from "reflet-sdk/react";
+
+export function Updates() {
   return (
     <>
+      <button type="button" data-reflet-changelog>
+        What's new <span data-reflet-changelog-badge />
+      </button>
       <ChangelogWidget publicKey="fb_pub_xxx" mode="trigger" />
-      <button data-reflet-changelog>What's new</button>
     </>
   );
 }`;
 
-const COLUMNS = [
-  { kind: "name", label: "Attribute / prop" },
-  { kind: "code", label: "Values" },
-  { kind: "text", label: "Description" },
+const OPTIONS = [
+  [
+    "publicKey / data-public-key",
+    "string, required",
+    "Organization public key. No user identification or secret key belongs here.",
+  ],
+  [
+    "mode / data-mode",
+    '"card" | "popup" | "trigger"',
+    "Default card: floating notification opens the panel. Popup needs an API call or auto-open. Trigger binds existing matching elements.",
+  ],
+  [
+    "triggerSelector / data-trigger-selector",
+    "CSS selector",
+    "Default [data-reflet-changelog]. All matches are bound once during init.",
+  ],
+  [
+    "maxEntries / data-max-entries",
+    "number",
+    "Default 10; the API caps results at 100.",
+  ],
+  [
+    "position / data-position",
+    '"bottom-right" | "bottom-left"',
+    "Default bottom-right. Sets the collapsed card's corner, not popup placement.",
+  ],
+  [
+    "theme / data-theme",
+    '"light" | "dark" | "auto"',
+    "Default light. Auto resolves the system preference at initialization.",
+  ],
+  ["primaryColor / data-color", "CSS color", "Accent and badge color."],
+  [
+    "autoOpenForNew / data-auto-open",
+    "boolean / string",
+    "Default false. Script attribute must equal true. Ignored in trigger mode.",
+  ],
 ] as const;
 
-const ROWS = [
-  {
-    cells: [
-      "data-public-key / publicKey",
-      "string",
-      "Your organization’s public API key. Required.",
-    ],
-    key: "public-key",
-  },
-  {
-    cells: [
-      "data-mode / mode",
-      '"card" | "popup" | "trigger"',
-      "Floating card, modal popup, or dropdown attached to trigger elements. Defaults to card.",
-    ],
-    key: "mode",
-  },
-  {
-    cells: [
-      "data-trigger-selector / triggerSelector",
-      "CSS selector",
-      "Elements that open the widget in trigger mode. Defaults to [data-reflet-changelog].",
-    ],
-    key: "trigger-selector",
-  },
-  {
-    cells: [
-      "data-max-entries / maxEntries",
-      "number",
-      "Maximum number of entries shown. Defaults to 10.",
-    ],
-    key: "max-entries",
-  },
-  {
-    cells: [
-      "data-position / position",
-      '"bottom-right" | "bottom-left"',
-      "Corner used by card and popup modes. Defaults to bottom-right.",
-    ],
-    key: "position",
-  },
-  {
-    cells: [
-      "data-theme / theme",
-      '"light" | "dark" | "auto"',
-      "Color theme. Defaults to light.",
-    ],
-    key: "theme",
-  },
-  {
-    cells: [
-      "data-color / primaryColor",
-      "CSS color",
-      "Brand color for accents and badges.",
-    ],
-    key: "color",
-  },
-  {
-    cells: [
-      "data-auto-open / autoOpenForNew",
-      "boolean",
-      "Open automatically when there are unread entries.",
-    ],
-    key: "auto-open",
-  },
-] as const;
+const METHODS = `// Script loader API, after initialization:
+window.Reflet("open_changelog");
+window.Reflet("close_changelog");
+const unread = window.Reflet("get_unread_changelog_count");
+window.Reflet("mark_changelog_read");
+
+// The script-created instance also exposes:
+const widget = window.__refletChangelogWidgetInstance;
+widget.toggle();
+widget.getUnreadCount();
+widget.markAsRead();
+widget.destroy();`;
 
 export default function ChangelogWidgetPage() {
   return (
     <DocsPage
-      description="Show recent updates in a popover. A badge counts the entries each visitor hasn’t read yet."
+      description="Show published releases in a floating card or a panel opened from your own button. Unread state belongs to this browser, not a signed-in user."
       sections={SECTIONS}
       title="Changelog widget"
     >
       <DocsSection id="script-tag" sections={SECTIONS}>
         <DocsText>
-          Add this script tag. Any element with the data-reflet-changelog
-          attribute opens the widget, and an inner data-reflet-changelog-badge
-          element shows the unread count.
+          Publish a release in a public organization and create an organization
+          API key. Replace fb_pub_xxx below. Put the config before the loader
+          and render trigger buttons before initialization.
         </DocsText>
-        <CodeBlock code={SCRIPT_TAG} />
-      </DocsSection>
-
-      <DocsSection id="react" sections={SECTIONS}>
+        <CodeBlock code={EMBED} />
         <DocsText>
-          In React projects, render the SDK’s ChangelogWidget with your public
-          key. It loads the same script and accepts the same options as props.
+          Use a real button for keyboard access. The badge is optional. If
+          feedback is also embedded, initialize it before loading changelog;
+          this loader replaces window.Reflet with its command function.
         </DocsText>
-        <CodeBlock code={REACT_USAGE} />
       </DocsSection>
-
+      <DocsSection id="react" sections={SECTIONS}>
+        <InstallCommand command="npm install reflet-sdk" />
+        <CodeBlock code={REACT} />
+        <DocsText>
+          ChangelogWidget requires its own publicKey, even inside
+          RefletProvider. It loads the changelog script and creates an instance;
+          do not also add a configured script embed. Keep one mounted instance
+          and stable callback props. Its instance is not exposed through a React
+          ref or the script loader's global instance.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="configuration" sections={SECTIONS}>
+        <ReferenceTable
+          columns={[
+            { kind: "name", label: "Config / script attribute" },
+            { kind: "code", label: "Value" },
+            { kind: "text", label: "Behavior" },
+          ]}
+          rows={OPTIONS.map(([name, type, description]) => ({
+            cells: [name, type, description],
+            key: name,
+          }))}
+        />
+        <DocsText>
+          Global config takes precedence over script attributes. Use it for
+          predictable initialization when the document is still loading. The
+          React wrapper accepts the config names as props. locale exists in the
+          type but does not translate the widget's current labels.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="api" sections={SECTIONS}>
+        <CodeBlock code={METHODS} />
+        <DocsText>
+          Global config and React props accept onOpen(), onClose() and
+          onEntryClick(entry). An entry contains id, title, optional
+          description/version/publishedAt, and items (linked feedback id/title
+          pairs). Entry callbacks do not navigate automatically and are
+          currently attached to click events, not keyboard actions. Do not use
+          them as the only route to essential content.
+        </DocsText>
+      </DocsSection>
       <DocsSection id="features" sections={SECTIONS}>
         <DocsList>
           <li>
-            Each entry shows its version, date, title, description and the
-            feedback it shipped.
-          </li>
-          <li>An unread badge counts the entries the visitor hasn’t seen.</li>
-          <li>
-            Read state is stored in the browser and survives new sessions.
+            Explicitly opening the panel or dismissing the card marks fetched
+            entries as read. markAsRead does the same; auto-open does not.
           </li>
           <li>
-            window.Reflet("open_changelog") and window.Reflet("close_changelog")
-            control the widget from your code.
+            localStorage stores the latest seen publication timestamp under
+            reflet_changelog_seen_ plus the public key. Counts include only
+            fetched entries newer than that timestamp, not your entire release
+            history.
+          </li>
+          <li>
+            No user token is sent. Read state is shared by visitors using the
+            same browser origin/key and does not sync between devices. When
+            storage is blocked, read state lasts only in memory for this
+            instance.
+          </li>
+          <li>
+            Render triggers before initialization; later elements are not bound.
+            The trigger panel uses a fixed position, not the clicked button's
+            position.
+          </li>
+          <li>
+            Explicit open() focuses the close button, Escape closes the panel
+            and close restores previous focus. The widget does not implement a
+            full focus trap; test keyboard navigation in your host app.
+          </li>
+          <li>
+            Data loads on initialization, not on a polling interval. Failed
+            requests appear in the panel with Retry. A private organization
+            cannot publish its changelog through a public-key embed.
           </li>
         </DocsList>
-      </DocsSection>
-
-      <DocsSection id="configuration" sections={SECTIONS}>
-        <ReferenceTable columns={COLUMNS} rows={ROWS} />
+        <DocsText>
+          See{" "}
+          <DocsLink href="/docs/api">API authentication and errors</DocsLink>{" "}
+          for origin restrictions. For publishing workflow, read{" "}
+          <DocsLink href="/docs/using-reflet">using Reflet</DocsLink>.
+        </DocsText>
       </DocsSection>
     </DocsPage>
   );

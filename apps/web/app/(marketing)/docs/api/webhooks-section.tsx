@@ -1,7 +1,5 @@
-import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import { CodeBlock } from "@/components/docs/code-block";
 import {
-  DocsLink,
   DocsNote,
   DocsSection,
   type DocsSections,
@@ -11,124 +9,109 @@ import {
 import { ReferenceTable } from "@/components/docs/reference-table";
 
 const EVENTS = [
-  ["feedback.created", "Feedback became visible (created and approved)."],
   [
-    "feedback.status_changed",
-    "The status or custom status changed: by a member, the API, an agent, GitHub, a release or the automatic close of stale feedback.",
+    "feedback.created",
+    "Feedback becomes approved and publishable, not merely when the create request returns.",
   ],
+  ["feedback.status_changed", "The lifecycle or custom board status changes."],
   [
     "feedback.github_issue_created",
-    "A GitHub issue was created for or linked to the feedback.",
+    "A GitHub issue is created for or linked to feedback.",
   ],
-  [
-    "survey.response.completed",
-    "A respondent finished a survey. The payload data holds the survey (id, title) and the response (channel, ending, respondent and answers) instead of feedback.",
-  ],
+  ["survey.response.completed", "A respondent completes a survey."],
 ] as const;
-
-const PAYLOAD_EXAMPLE = `{
-  "id": "kd4n…",
-  "event": "feedback.status_changed",
-  "createdAt": 1757500000000,
-  "organizationId": "k57e4b1n8q2x9c0r3t6w5y7z1m",
-  "data": {
-    "feedback": {
-      "id": "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
-      "title": "Draft lost on save",
-      "description": "Typing in the editor and hitting save clears the draft.",
-      "status": "in_progress",
-      "organizationStatus": { "id": "kx73…", "name": "In Progress", "color": "purple" },
-      "tags": [{ "id": "kt32…", "name": "Bug", "slug": "bug", "color": "red" }],
-      "author": { "name": "Jane Doe", "email": "jane@acme.com", "isExternal": true },
-      "voteCount": 12,
-      "commentCount": 3,
-      "isPinned": false,
-      "isInternal": false,
-      "publication": "approved",
-      "assigneeId": "user_42",
-      "claimedBy": "agent@ci",
-      "githubIssueNumber": 42,
-      "githubHtmlUrl": "https://github.com/acme/app/issues/42",
-      "context": { "url": "https://app.acme.com/editor", "browser": "Chrome 128" },
-      "createdAt": 1757100000000,
-      "updatedAt": 1757500000000
-    }
-  }
-}`;
 
 const VERIFY_EXAMPLE = `import { createHmac, timingSafeEqual } from "node:crypto";
 
-export function verifyReflet(rawBody: string, signature: string, secret: string) {
-  const expected = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex");
-  return expected.length === signature.length &&
-    timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+// Call with the original request bytes, before JSON parsing.
+export function verifyReflet(rawBody: Buffer, signature: string, secret: string) {
+  const expected = Buffer.from(
+    "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex"),
+    "utf8"
+  );
+  const received = Buffer.from(signature, "utf8");
+  return received.length === expected.length && timingSafeEqual(received, expected);
 }`;
-
-const EVENT_COLUMNS = [
-  { kind: "name", label: "Event" },
-  { kind: "text", label: "Sent when" },
-] as const;
 
 export function WebhooksSection({ sections }: { sections: DocsSections }) {
   return (
     <DocsSection id="webhooks" sections={sections}>
       <DocsText>
-        Reflet POSTs a JSON payload to your endpoint when feedback changes. Add
-        endpoints in the Webhooks section of{" "}
-        <strong className="font-medium text-foreground">
-          Dashboard → Project → API keys
-        </strong>
-        . Each webhook has its own signing secret, shown once at creation.
+        An organization owner or administrator configures outbound webhooks in
+        the dashboard API key settings. Choose events and a publicly reachable
+        HTTP(S) receiver. Copy the signing secret at creation; it is not shown
+        in the webhook list. This secret is separate from organization API keys.
+        Private network targets are rejected and redirects are not followed.
       </DocsText>
-
-      <DocsSubsection id="webhook-events" title="Events">
-        <ReferenceTable
-          columns={EVENT_COLUMNS}
-          rows={EVENTS.map(([event, description]) => ({
-            cells: [event, description],
-            key: event,
-          }))}
+      <ReferenceTable
+        columns={[
+          { kind: "name", label: "Event" },
+          { kind: "text", label: "Sent when" },
+        ]}
+        rows={EVENTS.map(([event, description]) => ({
+          cells: [event, description],
+          key: event,
+        }))}
+      />
+      <DocsSubsection id="webhook-request" title="Request and payload">
+        <DocsText>
+          Reflet sends a JSON POST with Content-Type: application/json,
+          User-Agent: Reflet-Webhooks/1.0, X-Reflet-Event, X-Reflet-Delivery and
+          X-Reflet-Signature. The delivery header matches the payload id and is
+          stable across retries. The signature is sha256= followed by the
+          lowercase hexadecimal HMAC-SHA256 of the exact body bytes, keyed with
+          the webhook secret.
+        </DocsText>
+        <CodeBlock
+          code={`{
+  "id": "<delivery ID>",
+  "event": "feedback.status_changed",
+  "createdAt": 1793000000000,
+  "organizationId": "<organization ID>",
+  "data": { "feedback": { "id": "<feedback ID>", "title": "Export invoices", "status": "planned" } }
+}`}
+          title="Envelope with abbreviated feedback data"
         />
-      </DocsSubsection>
-
-      <DocsSubsection id="webhook-request" title="Request">
         <DocsText>
-          Headers:{" "}
-          <MarkdownInlineCode>
-            Content-Type: application/json
-          </MarkdownInlineCode>
-          ,{" "}
-          <MarkdownInlineCode>
-            User-Agent: Reflet-Webhooks/1.0
-          </MarkdownInlineCode>
-          , <MarkdownInlineCode>X-Reflet-Event</MarkdownInlineCode>,{" "}
-          <MarkdownInlineCode>X-Reflet-Delivery</MarkdownInlineCode> (the same
-          on every retry, use it to dedupe) and{" "}
-          <MarkdownInlineCode>X-Reflet-Signature</MarkdownInlineCode> (
-          <MarkdownInlineCode>sha256=</MarkdownInlineCode> followed by the hex
-          HMAC-SHA256 of the raw body, keyed with the webhook secret).
+          Feedback events contain data.feedback in the secret-key feedback
+          detail shape, including private context, GitHub fields and author
+          email when present. Survey completion contains data.survey with _id
+          and title, and data.response with _id, channel, startedAt,
+          completedAt, endingId, respondentId, externalUserId, pageUrl and
+          answers. Each answer has questionId, questionTitle, questionType and
+          value. Optional fields may be absent.
         </DocsText>
         <DocsText>
-          <MarkdownInlineCode>data.feedback</MarkdownInlineCode> has the same
-          shape as{" "}
-          <DocsLink href="#get-feedback">
-            <MarkdownInlineCode>GET /feedback/item</MarkdownInlineCode>
-          </DocsLink>{" "}
-          with a secret key, including the author’s email and the private
-          fields.
+          Payload data is loaded when each attempt runs, not frozen at event
+          time. A retry can therefore have the same delivery ID but newer data
+          and a different signature. Missing subjects, disabled receivers and
+          feedback no longer approved for publication are skipped. Internal
+          feedback is not delivered. Treat receiver storage and logs as private
+          organization data.
         </DocsText>
-        <CodeBlock code={PAYLOAD_EXAMPLE} title="Payload" />
       </DocsSubsection>
-
-      <DocsSubsection id="webhook-verify" title="Verify the signature">
+      <DocsSubsection
+        id="webhook-verify"
+        title="Verify, deduplicate and acknowledge"
+      >
         <CodeBlock code={VERIFY_EXAMPLE} />
+        <DocsText>
+          Reject missing or invalid signatures before processing JSON. The
+          signature has no signed timestamp or replay-expiry field: persist
+          processed delivery IDs and ignore duplicates. After signature
+          verification, durably enqueue the event and return a 2xx within 10
+          seconds. Do longer work outside the request. Do not assume events
+          arrive in order or contain the previous status.
+        </DocsText>
       </DocsSubsection>
-
       <DocsNote>
-        Respond with any 2xx within 10 seconds. A failed delivery is retried
-        after 1 minute and again after 10 minutes. A webhook is disabled after
-        20 failed attempts in a row, retries included; re-enabling it resets the
-        count. Only approved, non-internal feedback is delivered.
+        Non-2xx responses, network failures and the 10-second timeout trigger up
+        to two retries: 1 minute after the first failure, then 10 minutes after
+        the second. Any 2xx succeeds. Twenty consecutive failed attempts across
+        a webhook, including retries, disable it; a success resets the count.
+        Review recent delivery results in the dashboard, fix the receiver and
+        re-enable it to reset the failure count. Re-enabling does not replay
+        exhausted deliveries.
       </DocsNote>
     </DocsSection>
   );

@@ -1,33 +1,38 @@
 # Reflet
 
-> Product feedback, roadmaps, and changelogs for developer-led teams.
+> Collect product feedback, plan work, and publish release notes.
 
-Collect feedback through public boards and an embedded widget, organize it with votes and tags, prioritize work on a roadmap, and close the loop with release notes. Organizations choose which content is public and manage access for their team.
+Reflet has public feedback pages, an embeddable collector, support chat, surveys, status monitoring, and team tools for notes and voice sessions. Organizations control publication and access. Private session drafts are not visible to other members until shared.
 
-## Explore
+## Guides
 
-- [Features](https://www.reflet.app/features)
-- [Pricing and current plan limits](https://www.reflet.app/pricing)
 - [Documentation](https://www.reflet.app/docs)
-- [Blog](https://www.reflet.app/blog)
-- [Get started](https://www.reflet.app/auth/sign-up)
+- [Using Reflet](https://www.reflet.app/docs/using-reflet)
+- [SDK setup and trusted identity](https://www.reflet.app/docs/sdk/installation)
+- [JavaScript client](https://www.reflet.app/docs/sdk/client)
+- [React hooks](https://www.reflet.app/docs/sdk/react-hooks)
+- [Surveys](https://www.reflet.app/docs/sdk/surveys)
+- [Devtools, team access, and sessions](https://www.reflet.app/docs/sdk/devtools)
+- [Desktop and Live bridges](https://www.reflet.app/docs/sdk/desktop-live)
+- [Widgets](https://www.reflet.app/docs/widget)
+- [UI components](https://www.reflet.app/docs/components)
+- [REST API and webhooks](https://www.reflet.app/docs/api)
+- [CLI and agent workflows](https://www.reflet.app/docs/cli)
 
-## Integrate and automate
+## Authentication and discovery
 
-- [CLI documentation](https://www.reflet.app/docs/cli)
-- [API documentation](https://www.reflet.app/docs/api)
-- [SDK installation](https://www.reflet.app/docs/sdk/installation)
-- [In-app surveys with the SDK](https://www.reflet.app/docs/sdk/surveys)
-- [Feedback widget](https://www.reflet.app/docs/widget/feedback-widget)
-- [Authentication](https://www.reflet.app/auth.md)
+Browser integrations use public keys. Administrative APIs require a secret key. Votes, comments, and subscriptions require server-signed user identity; an unsigned profile is not authentication. Reflet team access uses its own member login.
+
+- [Authentication reference](https://www.reflet.app/auth.md)
 - [Agent skills](https://www.reflet.app/.well-known/agent-skills/index.json)
 - [API catalog](https://www.reflet.app/.well-known/api-catalog)
 - [Sitemap](https://www.reflet.app/sitemap.xml)
 
-Public pages require no login. Organization administration requires a secret API key. Public widget keys cannot administer feedback. Private boards and dashboard data remain subject to authorization.
-
 ## Project
 
-- [Source code](https://github.com/damien-schneider/reflet)
+- [Repository documentation](https://github.com/damien-schneider/reflet/blob/main/docs/README.md)
+- [Contributing](https://github.com/damien-schneider/reflet/blob/main/CONTRIBUTING.md)
+- [Self-hosting](https://github.com/damien-schneider/reflet/blob/main/docs/self-hosting.md)
+- [Pricing and plan limits](https://www.reflet.app/pricing)
 - [Privacy](https://www.reflet.app/privacy)
 - [Terms](https://www.reflet.app/terms)

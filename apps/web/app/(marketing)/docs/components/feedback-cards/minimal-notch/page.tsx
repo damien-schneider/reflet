@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import { MINIMAL_NOTCH_CODE } from "@/components/docs/feedback-card-codes";
 import { MinimalNotchPreview } from "@/components/docs/feedback-card-previews";
 import {
@@ -10,86 +9,83 @@ import { voteRootProps } from "@/components/docs/vote-root-props";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  description: "A minimal feedback card with a side notch vote indicator.",
+  description:
+    "Install a feedback card with a side vote column, status and tags.",
   path: "/docs/components/feedback-cards/minimal-notch",
-  title: "Minimal notch – feedback card",
+  title: "Minimal notch",
 });
-
 const IMPORT_CODE = `import {
-  MinimalNotch,
-  MinimalNotchCard,
-  MinimalNotchMeta,
-  MinimalNotchStatus,
-  MinimalNotchTag,
-  MinimalNotchTags,
-  MinimalNotchTitle,
-  MinimalNotchVote,
+  MinimalNotch, MinimalNotchCard, MinimalNotchMeta, MinimalNotchStatus,
+  MinimalNotchTag, MinimalNotchTags, MinimalNotchTitle, MinimalNotchVote,
 } from "@/components/ui/feedback-minimal-notch";`;
-
 const COLOR_TYPE =
   '"blue" | "brown" | "green" | "orange" | "pink" | "purple" | "red" | "yellow" | "gray" | "default"';
-
 const FEATURES = [
-  "Side vote column with up and down buttons, each showing its own count.",
-  "A notch bar lights up in the primary color on upvote and the destructive color on downvote.",
-  "Status and tag pills share one color scale built on the --tag-* tokens.",
-  "Works uncontrolled out of the box, or controlled from your own vote state.",
+  "Render the card and vote column as siblings inside MinimalNotch.",
+  "The notch uses primary for upvotes and destructive for downvotes.",
+  "For navigation, place a link inside the h3 title rather than wrapping the card and its vote buttons in another button.",
 ] as const;
-
 const SUBCOMPONENTS: readonly Subcomponent[] = [
   {
     description:
-      "Root. Holds vote state and shares it with the vote column through React context.",
+      "Vote context and flex wrapper. Accepts children and className.",
     name: "MinimalNotch",
     props: voteRootProps({
-      description:
-        "Called with the new vote and totals after an uncontrolled vote.",
+      description: "New local vote and totals. Not called in controlled mode.",
       name: "onVoteChange",
-      type: "(voteType, upvotes: number, downvotes: number) => void",
+      type: '(voteType: "upvote" | "downvote" | null, upvotes: number, downvotes: number) => void',
     }),
   },
   {
-    description: "Card body with border, hover shadow and inner spacing.",
+    description:
+      "Card surface and content spacing. Accepts children and className.",
     name: "MinimalNotchCard",
   },
-  { description: "Title, rendered as an h3.", name: "MinimalNotchTitle" },
   {
-    description: "A colored status pill.",
+    description:
+      "h3 heading with children and className. Change the installed heading level if your page hierarchy requires it.",
+    name: "MinimalNotchTitle",
+  },
+  {
+    description: "Status pill with children and className.",
     name: "MinimalNotchStatus",
     props: [
       {
         default: '"blue"',
-        description: "Pill color.",
+        description: "Theme color key, not a CSS color.",
         name: "color",
         type: COLOR_TYPE,
       },
     ],
   },
-  { description: "Wrapping row for tags.", name: "MinimalNotchTags" },
   {
-    description: "A colored tag pill.",
+    description: "Wrapping tag row with children and className.",
+    name: "MinimalNotchTags",
+  },
+  {
+    description: "Tag pill with children and className.",
     name: "MinimalNotchTag",
     props: [
       {
         default: '"gray"',
-        description: "Pill color.",
+        description: "Theme color key. gray and default are neutral.",
         name: "color",
         type: COLOR_TYPE,
       },
     ],
   },
   {
-    description: "Row with comment count and relative time.",
+    description: "Static comment count and time. Accepts className.",
     name: "MinimalNotchMeta",
     props: [
       {
-        description: "Number of comments.",
+        description: "Display count, not a comment button.",
         name: "comments",
         required: true,
         type: "number",
       },
       {
-        description: 'Relative time, e.g. "3 days ago".',
+        description: "Already formatted text.",
         name: "time",
         required: true,
         type: "string",
@@ -98,7 +94,7 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
   },
   {
     description:
-      "Vote column with the notch bar and up and down buttons. Reads vote state from context.",
+      "Vote column and notch indicator. Takes no props; reads the root context.",
     name: "MinimalNotchVote",
   },
 ];
@@ -106,13 +102,13 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
 export default function MinimalNotchPage() {
   return (
     <RegistryDocPage
-      description="A quiet feedback card with a side vote column. A notch bar next to the score lights up to show the current vote."
+      description="A feedback card with a separate vote column. Supply your own persistence and use the status and tag parts only where needed."
       features={FEATURES}
       importCode={IMPORT_CODE}
       preview={<MinimalNotchPreview />}
       registryName="feedback-minimal-notch"
       subcomponents={SUBCOMPONENTS}
-      title="Minimal Notch"
+      title="Minimal notch"
       usageCode={MINIMAL_NOTCH_CODE}
     />
   );

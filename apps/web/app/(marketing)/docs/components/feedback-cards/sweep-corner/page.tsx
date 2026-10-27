@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import { SWEEP_CORNER_CODE } from "@/components/docs/feedback-card-codes";
 import { SweepCornerPreview } from "@/components/docs/feedback-card-previews";
 import {
@@ -11,71 +10,63 @@ import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "A feedback card with a corner vote badge and sweep animation effect.",
+    "Install a feedback card with controlled or local votes, a corner badge and footer totals.",
   path: "/docs/components/feedback-cards/sweep-corner",
-  title: "Sweep corner – feedback card",
+  title: "Sweep corner",
 });
-
 const IMPORT_CODE = `import {
-  SweepCorner,
-  SweepCornerBadge,
-  SweepCornerCard,
-  SweepCornerContent,
-  SweepCornerFooter,
-  SweepCornerTag,
-  SweepCornerTags,
-  SweepCornerTitle,
+  SweepCorner, SweepCornerBadge, SweepCornerCard, SweepCornerContent,
+  SweepCornerFooter, SweepCornerTag, SweepCornerTags, SweepCornerTitle,
 } from "@/components/ui/feedback-sweep-corner";`;
-
 const FEATURES = [
-  "Corner badge with up and down vote buttons and a net count that rolls on change.",
-  "A gradient sweeps across the footer each time the vote changes.",
-  "Works uncontrolled out of the box, or controlled from your own vote state.",
-  "Tag pills read the --tag-* color tokens installed with the component.",
+  "The badge shows net votes. The footer shows separate totals and upvote share, with 50% when there are no votes.",
+  "Title onClick creates a card-wide button overlay. Keep additional controls clear of the overlay, and never wrap vote buttons in another button.",
 ] as const;
-
 const SUBCOMPONENTS: readonly Subcomponent[] = [
   {
     description:
-      "Root. Holds vote state and shares it with the badge and footer through React context.",
+      "Required vote context and positioned wrapper. Accepts children and className.",
     name: "SweepCorner",
     props: voteRootProps({
-      description: "Called with the new vote after an uncontrolled vote.",
+      description:
+        "Local-mode callback after the vote changes. Not called in controlled mode.",
       name: "onVoteChange",
       type: '(voteType: "upvote" | "downvote" | null) => void',
     }),
   },
   {
-    description: "Card surface with border and hover shadow.",
+    description: "Card surface. Accepts children and className.",
     name: "SweepCornerCard",
   },
   {
-    description: "Padded content area that leaves room for the corner badge.",
+    description:
+      "Content region with room reserved for the corner badge. Accepts children and className.",
     name: "SweepCornerContent",
   },
   {
-    description: "Title, rendered as an h3.",
+    description:
+      "h3 heading. Accepts children and className; adjust the installed heading if your page hierarchy needs another level.",
     name: "SweepCornerTitle",
     props: [
       {
         description:
-          "Turns the title into a button that covers the whole card and calls this on click.",
+          "Optional button action covering the card. Without it the title is static.",
         name: "onClick",
         type: "() => void",
       },
     ],
   },
   {
-    description: "Wrapping row for tag pills.",
+    description: "Wrapping tag row. Accepts children and className.",
     name: "SweepCornerTags",
   },
   {
-    description: "A colored tag pill.",
+    description: "Tag pill. Accepts children and className.",
     name: "SweepCornerTag",
     props: [
       {
         description:
-          "Color key: blue, brown, green, orange, pink, purple, red, yellow, gray or default.",
+          "blue, brown, green, orange, pink, purple, red or yellow. gray, default and unknown strings use neutral styling.",
         name: "color",
         required: true,
         type: "string",
@@ -84,22 +75,21 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
   },
   {
     description:
-      "Corner vote badge with up and down buttons and the net count. Reads vote state from context.",
+      "Context-bound vote buttons and net count. Takes no props; must be inside SweepCorner.",
     name: "SweepCornerBadge",
   },
   {
-    description:
-      "Footer with comment count, time, vote totals and upvote share. Plays the sweep when the user votes.",
+    description: "Context-bound totals, comments and time. Accepts className.",
     name: "SweepCornerFooter",
     props: [
       {
-        description: "Number of comments.",
+        description: "Display count; no comment action is attached.",
         name: "comments",
         required: true,
         type: "number",
       },
       {
-        description: 'Relative time, e.g. "3 days ago".',
+        description: "Already formatted display text.",
         name: "time",
         required: true,
         type: "string",
@@ -111,13 +101,13 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
 export default function SweepCornerPage() {
   return (
     <RegistryDocPage
-      description="A feedback card with a corner vote badge. A gradient sweeps across the card whenever the vote changes."
+      description="A composable feedback card with a corner vote badge. Votes stay in React state until your app persists them."
       features={FEATURES}
       importCode={IMPORT_CODE}
       preview={<SweepCornerPreview />}
       registryName="feedback-sweep-corner"
       subcomponents={SUBCOMPONENTS}
-      title="Sweep Corner"
+      title="Sweep corner"
       usageCode={SWEEP_CORNER_CODE}
     />
   );

@@ -1,193 +1,297 @@
 import type { Metadata } from "next";
-
 import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsLink,
+  DocsList,
   DocsPage,
   DocsSection,
   DocsText,
 } from "@/components/docs/docs-page";
+import { InstallCommand } from "@/components/docs/install-command";
 import { ReferenceTable } from "@/components/docs/reference-table";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "Add a floating feedback button to your website for collecting feature requests and bug reports.",
+    "Embed a feedback board, identify visitors, trigger surveys, or use a React submission dialog.",
   path: "/docs/widget/feedback-widget",
   title: "Feedback widget",
 });
 
 const SECTIONS = [
-  { id: "script-tag", label: "Script tag embed" },
-  { id: "react", label: "React component" },
+  { id: "script-tag", label: "Embed the board" },
   { id: "configuration", label: "Configuration" },
-  { id: "user-identification", label: "User identification" },
+  { id: "user-identification", label: "Identity and access" },
+  { id: "api", label: "Methods and callbacks" },
   { id: "surveys", label: "Surveys" },
+  { id: "react", label: "React submission dialog" },
+  { id: "limits", label: "Limits and privacy" },
 ] as const;
 
-const SCRIPT_TAG = `<script
-  src="https://www.reflet.app/widget/feedback.js"
-  data-key="fb_pub_xxx"
-  data-position="bottom-right"
-  async
-></script>`;
+const EMBED = `<script>
+  window.RefletFeedbackConfig = {
+    publicKey: "fb_pub_xxx",
+    theme: "auto",
+    features: {
+      createFeedback: true,
+      voting: true,
+      surveys: true
+    }
+  };
+</script>
+<script src="https://www.reflet.app/widget/reflet-feedback.v1.js" async></script>`;
 
-const REACT_USAGE = `import { RefletProvider, FeedbackButton } from "reflet-sdk/react";
+const INLINE = `<div id="feedback-board"></div>
+<script>
+  window.RefletFeedbackConfig = {
+    publicKey: "fb_pub_xxx",
+    mode: "inline",
+    targetId: "feedback-board",
+    features: { createFeedback: true, voting: true }
+  };
+</script>
+<script src="https://www.reflet.app/widget/reflet-feedback.v1.js" async></script>`;
 
-function App() {
-  return (
-    <RefletProvider publicKey="fb_pub_xxx">
-      <FeedbackButton position="bottom-right" />
-    </RefletProvider>
-  );
+const OPTIONS = [
+  ["publicKey", "string, required", "Organization fb_pub_ key."],
+  [
+    "mode",
+    '"floating" | "inline"',
+    "Default floating. Inline attaches a closed shadow root to targetId; the target must exist before initialization.",
+  ],
+  [
+    "targetId",
+    "string",
+    "Existing element id for inline mode. A missing target falls back to a body-mounted container.",
+  ],
+  [
+    "position",
+    '"bottom-right" | "bottom-left"',
+    "Default bottom-right; used by floating mode.",
+  ],
+  [
+    "theme",
+    '"light" | "dark" | "auto"',
+    "Default light. Auto resolves the system preference at initialization.",
+  ],
+  [
+    "primaryColor",
+    "CSS color",
+    "Accent color. Host CSS does not reach the shadow root.",
+  ],
+  [
+    "userToken",
+    "string",
+    "Verified token signed by your server. Takes precedence over user.",
+  ],
+  [
+    "user",
+    "{ id, email?, name?, avatar? }",
+    "Unsigned browser identity; not authorization for votes or comments.",
+  ],
+  [
+    "loginUrl",
+    "string",
+    "Redirect for sign-in. Optional {url} placeholder receives the encoded current page URL.",
+  ],
+  [
+    "features.createFeedback / voting",
+    "boolean",
+    "Show the creation action and list vote buttons. Set these explicitly; supplied feature objects are not deep-merged.",
+  ],
+  [
+    "features.surveys",
+    "boolean",
+    "Automatic survey delivery is on unless false. Independent of board visibility.",
+  ],
+] as const;
+
+const METHODS = `// Run after the script has loaded and initialized.
+const widget = window.__refletFeedbackWidgetInstance;
+widget.open();
+widget.close();
+widget.track("checkout_completed");
+const shown = await widget.showSurvey("survey_id");
+widget.dismissSurvey();
+// Remove a floating widget when its host page unmounts.
+widget.destroy();`;
+
+const REACT = `"use client";
+
+import { FeedbackButton } from "reflet-sdk/react";
+
+export function SendFeedback() {
+  return <FeedbackButton publicKey="fb_pub_xxx" />;
 }`;
 
-const SURVEY_CONFIG = `window.Reflet = {
-  publicKey: "fb_pub_xxx",
-  // Set to false to stop surveys from showing automatically
-  features: { surveys: true },
-  survey: {
-    onSurveyStart: ({ surveyId, responseId, title }) => {},
-    onQuestionAnswer: ({ surveyId, questionId, value }) => {},
-    onSurveyComplete: ({ surveyId, responseId, endingId }) => {},
-    onSurveyDismiss: ({ surveyId, responseId, answeredCount }) => {},
-  },
-};`;
+const DIALOG = `"use client";
 
-const SURVEY_METHODS = `const reflet = window.__refletFeedbackWidgetInstance;
+import { useState } from "react";
+import { FeedbackDialog } from "reflet-sdk/react";
 
-// Shows surveys whose trigger is the custom event "checkout_completed"
-reflet.track("checkout_completed");
-
-// Shows a survey on demand, including manual ones. Resolves false when it can't be shown now.
-await reflet.showSurvey("survey_id");
-
-// Closes the open survey
-reflet.dismissSurvey();`;
-
-const SURVEY_METHOD_ROWS = [
-  {
-    cells: [
-      "track(eventName)",
-      "string",
-      "Shows surveys triggered by this custom event, if the visitor is eligible.",
-    ],
-    key: "track",
-  },
-  {
-    cells: [
-      "showSurvey(surveyId)",
-      "string → Promise<boolean>",
-      "Shows one survey now. Works for manual surveys. Only one survey is open at a time.",
-    ],
-    key: "showSurvey",
-  },
-  {
-    cells: [
-      "dismissSurvey()",
-      "—",
-      "Closes the open survey and records it as dismissed.",
-    ],
-    key: "dismissSurvey",
-  },
-  {
-    cells: [
-      "features.surveys",
-      "boolean",
-      "Set to false to turn off automatic surveys. Defaults to true.",
-    ],
-    key: "features-surveys",
-  },
-] as const;
-
-const COLUMNS = [
-  { kind: "name", label: "Attribute / prop" },
-  { kind: "code", label: "Values" },
-  { kind: "text", label: "Description" },
-] as const;
-
-const ROWS = [
-  {
-    cells: [
-      "data-key / publicKey",
-      "string",
-      "Your organization’s public API key. Required.",
-    ],
-    key: "key",
-  },
-  {
-    cells: [
-      "data-position / position",
-      "bottom-right | bottom-left",
-      "Where the floating button appears. Defaults to bottom-right.",
-    ],
-    key: "position",
-  },
-  {
-    cells: [
-      "data-theme / theme",
-      "light | dark | auto",
-      "Widget color scheme. Defaults to auto, which follows the system.",
-    ],
-    key: "theme",
-  },
-] as const;
+export function SendFeedback() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>Send feedback</button>
+      <FeedbackDialog
+        publicKey="fb_pub_xxx"
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
+  );
+}`;
 
 export default function FeedbackWidgetPage() {
   return (
     <DocsPage
-      description="A floating button that opens a feedback form. Supports feature requests, bug reports and general feedback."
+      description="The script widget shows a public feedback list, item details and a submission form. The SDK also has a smaller React-only submission dialog; it is not the same UI."
       sections={SECTIONS}
       title="Feedback widget"
     >
       <DocsSection id="script-tag" sections={SECTIONS}>
         <DocsText>
-          Add this script tag to your HTML to load the widget.
+          Create a public API key for a public organization, replace fb_pub_xxx,
+          and place the config before the loader. The floating button appears
+          after the board configuration loads.
         </DocsText>
-        <CodeBlock code={SCRIPT_TAG} />
-      </DocsSection>
-
-      <DocsSection id="react" sections={SECTIONS}>
+        <CodeBlock code={EMBED} />
         <DocsText>
-          In React projects, use the SDK’s FeedbackButton component instead.
+          Use a global config for a loader in the document head as well as at
+          the end of the body. window.Reflet takes precedence over
+          window.RefletFeedbackConfig; do not define both for this widget.
         </DocsText>
-        <CodeBlock code={REACT_USAGE} />
+        <DocsText>To display the board in a page region instead:</DocsText>
+        <CodeBlock code={INLINE} />
       </DocsSection>
-
       <DocsSection id="configuration" sections={SECTIONS}>
-        <ReferenceTable columns={COLUMNS} rows={ROWS} />
+        <ReferenceTable
+          columns={[
+            { kind: "name", label: "Option" },
+            { kind: "code", label: "Value" },
+            { kind: "text", label: "Behavior" },
+          ]}
+          rows={OPTIONS.map(([name, type, description]) => ({
+            cells: [name, type, description],
+            key: name,
+          }))}
+        />
+        <DocsText>
+          The loader also reads data-public-key, data-mode, data-position,
+          data-theme and data-color from its script when initialization runs
+          during script execution. It does not read data-key, user attributes or
+          data-target-id. Global config avoids dependence on
+          document.currentScript timing.
+        </DocsText>
+        <DocsText>
+          The type includes portal, locale, comments, roadmap and changelog
+          options, but these are not complete controls in the current renderer.
+          Portal has no automatic launcher, locale does not translate labels,
+          comments are still rendered in details, and roadmap/changelog tabs
+          reuse the feedback list. Do not use them as separate views or access
+          controls.
+        </DocsText>
       </DocsSection>
-
       <DocsSection id="user-identification" sections={SECTIONS}>
         <DocsText>
-          To tie feedback to signed-in users, pass user data through the SDK or
-          data attributes. The{" "}
+          The creation form requires user or userToken in config. Votes and
+          comments require a verified signed userToken, not an unsigned user
+          object. Generate the token on your server from the authenticated
+          session, then include it in the config. Follow{" "}
           <DocsLink href="/docs/sdk/installation#user-signing">
-            SDK installation guide
+            user signing
+          </DocsLink>
+          ; never expose the signing secret.
+        </DocsText>
+        <DocsText>
+          Public keys cannot read a private organization's board. The board UI
+          stays hidden if configuration fails; surveys can still run. For
+          anonymous reports or a private organization, use{" "}
+          <DocsLink href="/docs/widget/floating-feedback">
+            floating feedback
           </DocsLink>{" "}
-          covers SSO user signing.
+          or the React dialog below.
         </DocsText>
       </DocsSection>
-
+      <DocsSection id="api" sections={SECTIONS}>
+        <CodeBlock code={METHODS} />
+        <DocsText>
+          Set onOpen() and onClose() in the initial config for lifecycle events,
+          onVote(feedbackId, voted) after a successful vote, and
+          onFeedbackCreated(result) after creation. The result contains id and
+          title. Callbacks are functions in global config, not script
+          attributes. There is no runtime identity/config setter: recreate the
+          widget when the signed-in account changes.
+        </DocsText>
+      </DocsSection>
       <DocsSection id="surveys" sections={SECTIONS}>
         <DocsText>
-          Active surveys show up on their own. The widget loads the surveys each
-          visitor may see, then shows one when its trigger fires: a page visit,
-          time on page, exit intent, a custom event or a submitted feedback
-          post. Display frequency, sampling, schedule and response limits come
-          from the survey settings in your dashboard. Answers branch to the
-          right next question and ending as the visitor goes.
+          Automatic delivery checks survey eligibility and triggers.
+          track(eventName) fires custom-event triggers. showSurvey(id) returns
+          Promise&lt;boolean&gt; and can show a manual survey; false means it
+          cannot show now. Only one survey opens at a time. dismissSurvey()
+          closes it and records dismissal.
         </DocsText>
-        <CodeBlock code={SURVEY_CONFIG} />
         <DocsText>
-          Use the widget instance to trigger surveys from your app.
+          The survey config accepts onSurveyStart, onQuestionAnswer,
+          onSurveyComplete and onSurveyDismiss callbacks. Each receives an
+          object with surveyId and event-specific fields: responseId/title,
+          questionId/value, responseId/endingId, or responseId/answeredCount,
+          respectively. Dismissed responseId can be null. For trigger rules,
+          respondent storage and custom React UI, see{" "}
+          <DocsLink href="/docs/sdk/surveys">surveys</DocsLink>.
         </DocsText>
-        <CodeBlock code={SURVEY_METHODS} />
-        <ReferenceTable columns={COLUMNS} rows={SURVEY_METHOD_ROWS} />
+      </DocsSection>
+      <DocsSection id="react" sections={SECTIONS}>
+        <InstallCommand command="npm install reflet-sdk" />
+        <CodeBlock code={REACT} />
         <DocsText>
-          Building with React? The{" "}
-          <DocsLink href="/docs/sdk/surveys">SDK surveys guide</DocsLink> covers
-          the same surveys as a component, plus custom survey UIs.
+          FeedbackButton renders an inline trigger and a native dialog, not a
+          floating board. It collects a required title and optional
+          description/email, without screenshot or element capture. publicKey,
+          user and userToken can come from RefletProvider. For controlled
+          visibility:
+        </DocsText>
+        <CodeBlock code={DIALOG} />
+        <DocsText>
+          Both accept theme (default auto), primaryColor, labels, baseUrl,
+          onOpen, onClose and onSubmit(result). FeedbackButton also accepts
+          className, children and asChild. With asChild, pass one accessible
+          button; the component replaces that child's onClick rather than
+          composing it. FeedbackDialog requires open and onOpenChange.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="limits" sections={SECTIONS}>
+        <DocsList>
+          <li>
+            The board loads up to 50 feedback items sorted by votes. It has no
+            pagination control.
+          </li>
+          <li>
+            The script creation form requires both title and description. Failed
+            submissions show the API error. An attachment upload failure does
+            not undo a created report.
+          </li>
+          <li>
+            Script screenshots serialize page HTML into an image. They do not
+            use the floating React widget's markup filters or annotation tools.
+            Check for sensitive content before offering capture.
+          </li>
+          <li>
+            Floating mode manages focus and Escape dismissal. Inline mode is not
+            a modal. Keep the target visible and give its surrounding region an
+            accessible heading.
+          </li>
+          <li>
+            Use one instance. With a changelog embed, initialize feedback first:
+            changelog replaces window.Reflet and can prevent feedback's global
+            config fallback from being read.
+          </li>
+        </DocsList>
+        <DocsText>
+          For origin restrictions and API errors, see the{" "}
+          <DocsLink href="/docs/api">API reference</DocsLink>.
         </DocsText>
       </DocsSection>
     </DocsPage>

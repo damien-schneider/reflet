@@ -3,105 +3,7 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import Link from "next/link";
 import { useId } from "react";
-
-interface NavLink {
-  href: string;
-  label: string;
-}
-
-interface NavGroup {
-  label: string;
-  links: readonly NavLink[];
-}
-
-interface NavSection {
-  groups?: readonly NavGroup[];
-  links: readonly NavLink[];
-  title: string;
-}
-
-const NAV_SECTIONS: readonly NavSection[] = [
-  {
-    links: [{ href: "/docs", label: "Introduction" }],
-    title: "Getting started",
-  },
-  {
-    links: [
-      { href: "/docs/sdk", label: "Overview" },
-      { href: "/docs/sdk/installation", label: "Installation" },
-      { href: "/docs/sdk/react-hooks", label: "React hooks" },
-      { href: "/docs/sdk/surveys", label: "Surveys" },
-    ],
-    title: "SDK",
-  },
-  {
-    links: [
-      { href: "/docs/widget", label: "Overview" },
-      {
-        href: "/docs/widget/floating-feedback",
-        label: "Floating feedback button",
-      },
-      { href: "/docs/widget/feedback-widget", label: "Feedback widget" },
-      { href: "/docs/widget/changelog-widget", label: "Changelog widget" },
-    ],
-    title: "Widgets",
-  },
-  {
-    groups: [
-      {
-        label: "Feedback cards",
-        links: [
-          {
-            href: "/docs/components/feedback-cards/sweep-corner",
-            label: "Sweep Corner",
-          },
-          {
-            href: "/docs/components/feedback-cards/minimal-notch",
-            label: "Minimal Notch",
-          },
-          {
-            href: "/docs/components/feedback-cards/editorial-feed",
-            label: "Editorial Feed",
-          },
-        ],
-      },
-      {
-        label: "Milestone views",
-        links: [
-          {
-            href: "/docs/components/milestone-views",
-            label: "Overview",
-          },
-          {
-            href: "/docs/components/milestone-views/track",
-            label: "Horizontal Track",
-          },
-          {
-            href: "/docs/components/milestone-views/editorial-accordion",
-            label: "Editorial Accordion",
-          },
-          {
-            href: "/docs/components/milestone-views/dashboard-timeline",
-            label: "Dashboard Timeline",
-          },
-        ],
-      },
-    ],
-    links: [
-      { href: "/docs/components", label: "Overview" },
-      { href: "/docs/components/installation", label: "Installation" },
-      { href: "/docs/components/theming", label: "Theming" },
-    ],
-    title: "Components",
-  },
-  {
-    links: [
-      { href: "/docs/api", label: "REST API" },
-      { href: "/docs/cli", label: "CLI for agents" },
-    ],
-    title: "Reference",
-  },
-];
+import { DOCS_NAVIGATION, type NavLink } from "./navigation";
 
 interface SidebarLinkListProps {
   className?: string;
@@ -147,7 +49,6 @@ function SidebarLinkList({
 const slug = (label: string) => label.toLowerCase().replaceAll(" ", "-");
 
 interface DocsSidebarProps {
-  /** Called after a link is chosen, e.g. to close the mobile sheet. */
   onNavigate?: () => void;
   pathname: string;
 }
@@ -158,7 +59,7 @@ function DocsSidebar({ pathname, onNavigate }: DocsSidebarProps) {
 
   return (
     <nav aria-label="Documentation" className="flex flex-col gap-6">
-      {NAV_SECTIONS.map((section) => (
+      {DOCS_NAVIGATION.map((section) => (
         <div className="flex flex-col gap-1" key={section.title}>
           <p
             className="px-3 font-medium text-caption text-foreground"

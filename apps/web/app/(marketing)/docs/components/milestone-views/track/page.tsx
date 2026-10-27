@@ -1,36 +1,71 @@
 import type { Metadata } from "next";
-
-import { TRACK_VIEW_CODE } from "@/components/docs/milestone-view-codes";
 import { TrackViewPreview } from "@/components/docs/milestone-view-previews";
 import { RegistryDocPage } from "@/components/docs/registry-doc-page";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "A horizontal track layout that groups milestones by time horizon.",
+    "Install a horizontal milestone track and map exact time-horizon values.",
   path: "/docs/components/milestone-views/track",
-  title: "Horizontal track – milestone view",
+  title: "Horizontal track",
 });
+const IMPORT_CODE = `import {
+  MilestoneTrackView,
+  type Milestone,
+} from "@/components/ui/milestone-track-view";`;
+const USAGE = `const milestones: Milestone[] = [
+  {
+    id: "keyboard",
+    name: "Keyboard navigation",
+    emoji: "",
+    colorHex: "#0b6e99",
+    horizonLabel: "This month",
+    horizonShort: "Now",
+    targetDate: null,
+    progress: { total: 8, completed: 4, inProgress: 2, percentage: 50 },
+  },
+];
 
-const IMPORT_CODE = `import { MilestoneTrackView } from "@/components/ui/milestone-track-view";`;
-
+export function Roadmap() {
+  return <MilestoneTrackView milestones={milestones} />;
+}`;
 const FEATURES = [
-  'Milestones sit in three zones by horizonShort: "Now", "3mo" (Next Quarter) and "6mo" (6 Months).',
-  "Farther zones get slightly more width, so the track reads as time stretching out.",
-  "Each milestone is tinted with its own colorHex.",
-  "Click a milestone to show its completed and total item counts; click again to hide them.",
+  'horizonShort groups "Now", "3mo" and "6mo" into Now, Next Quarter and 6 Months. Other values are omitted.',
+  "Within each group, input order is preserved. targetDate does not determine position on the track.",
+  "The selected milestone shows its name and completed/total counts below the track.",
 ] as const;
 
 export default function TrackViewPage() {
   return (
     <RegistryDocPage
-      description="Milestones laid out on a horizontal track, grouped by time horizon from now to six months out."
+      description="Milestones grouped into three fixed time horizons, with a selectable completion detail. Supply data and empty/loading states from your app."
       features={FEATURES}
       importCode={IMPORT_CODE}
       preview={<TrackViewPreview />}
       registryName="milestone-track-view"
-      title="Horizontal Track"
-      usageCode={TRACK_VIEW_CODE}
+      subcomponents={[
+        {
+          description:
+            "Client component with internal selection state. Exports MilestoneTrackViewProps and Milestone types.",
+          name: "MilestoneTrackView",
+          props: [
+            {
+              description:
+                "Unique ids, six-digit colors and exact horizonShort keys. See the milestone views overview for the full data contract.",
+              name: "milestones",
+              required: true,
+              type: "Milestone[]",
+            },
+            {
+              description: "Classes merged onto the outer wrapper.",
+              name: "className",
+              type: "string",
+            },
+          ],
+        },
+      ]}
+      title="Horizontal track"
+      usageCode={USAGE}
     />
   );
 }

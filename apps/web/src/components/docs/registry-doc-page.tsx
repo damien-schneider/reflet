@@ -11,7 +11,7 @@ const SECTIONS = [
   { id: "preview", label: "Preview" },
   { id: "installation", label: "Installation" },
   { id: "usage", label: "Usage" },
-  { id: "features", label: "Features" },
+  { id: "features", label: "Behavior and limits" },
   { id: "api-reference", label: "API reference" },
 ] as const;
 
@@ -26,7 +26,6 @@ interface RegistryDocPageProps {
   features: readonly string[];
   importCode: string;
   preview: ReactNode;
-  /** Registry item name; also the source file name in packages/ui/registry. */
   registryName: string;
   subcomponents?: readonly Subcomponent[];
   title: string;
@@ -116,9 +115,9 @@ function RegistryDocPage({
         <DocsSection id="api-reference" sections={sections}>
           <SubcomponentReference subcomponents={subcomponents} />
           <DocsText>
-            Every subcomponent also accepts{" "}
-            <MarkdownInlineCode>className</MarkdownInlineCode>, merged with its
-            default classes.
+            Check the installed source for each component's{" "}
+            <MarkdownInlineCode>className</MarkdownInlineCode> and HTML props.
+            Vote controls do not accept arbitrary HTML props.
           </DocsText>
         </DocsSection>
       )}

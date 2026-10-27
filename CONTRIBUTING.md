@@ -1,357 +1,97 @@
 # Contributing to Reflet
 
-Thank you for your interest in contributing to Reflet! This document will help you get set up to contribute effectively.
+Use a development Convex deployment and test service credentials. Do not connect local development or browser tests to production data.
 
-## Table of Contents
+## Run the app locally
 
-- [Code of Conduct](#code-of-conduct)
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Project Structure](#project-structure)
-- [Architecture Overview](#architecture-overview)
-- [Testing](#testing)
-- [Code Style](#code-style)
-- [Submitting Changes](#submitting-changes)
+You need Git, Bun 1.3.14 (the version in `package.json`), and Node.js `^22.18.0 || >=24.11.0`. The setup below uses a managed [Convex](https://www.convex.dev/) project. See [self-hosting](docs/self-hosting.md) for deployment options.
 
-## Code of Conduct
-
-Be respectful, inclusive, and collaborative. We welcome contributors from all backgrounds and experience levels.
-
-## Getting Started
-
-### Prerequisites
-
-- **Bun** 1.3.5+ (package manager)
-- **Node.js** 20+ (for compatibility)
-- **Convex account** (free tier works)
-
-### Initial Setup
-
-```bash
-# Clone the repository
+```sh
 git clone https://github.com/damien-schneider/reflet.git
 cd reflet
-
-# Install dependencies
-bun install
-
-# Set up Convex backend
+bun install --frozen-lockfile
 bun run dev:setup
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-The `dev:setup` script will:
-1. Prompt you to create or link a Convex project
-2. Set up your Convex environment variables
-3. Generate the necessary type definitions
+`dev:setup` runs `convex dev --configure --until-success` in `packages/backend`. Select or create a development project. Convex writes its CLI deployment configuration to `packages/backend/.env.local` and generates backend types.
 
-### Environment Setup
+### Configure the two environments
 
-Copy environment variables from `packages/backend/.env.local` to `apps/web/.env`:
+Do not copy the backend environment file into the web app. The Convex deployment runs backend functions; Next.js runs the web server. They have separate environment stores.
 
-```bash
-cp packages/backend/.env.local apps/web/.env
+1. In `apps/web/.env.local`, set `NEXT_PUBLIC_CONVEX_URL` to the deployment's client API URL and `NEXT_PUBLIC_CONVEX_SITE_URL` to its HTTP actions URL. Get both from the Convex dashboard. Keep `NEXT_PUBLIC_SITE_URL=http://localhost:3003`.
+2. Generate a VAPID pair with `bunx web-push generate-vapid-keys`. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in the web file. It is required by `packages/env/src/web.ts`, even if you are not testing push delivery.
+3. Generate an auth secret with `openssl rand -base64 32`. From `packages/backend`, set the backend values using the CLI:
+
+```sh
+cd packages/backend
+bunx convex env set SITE_URL http://localhost:3003
+bunx convex env set BETTER_AUTH_SECRET '<generated secret>'
 ```
 
-### Development Server
+Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` on the same Convex deployment for normal email/password registration, verification, and password resets. Use a verified sender you control. Optional Google/GitHub sign-in and other integrations are listed in the [self-hosting guide](docs/self-hosting.md#enable-integrations).
 
-Start all applications:
+`packages/backend/.env.example` lists backend variables, but placing secrets in a local file does not upload them to Convex. Use `bunx convex env set NAME value` from `packages/backend` or the deployment dashboard. Never put secrets in `NEXT_PUBLIC_*` variables: those values are sent to browsers.
 
-```bash
+### Start development
+
+Return to the repository root:
+
+```sh
 bun run dev
 ```
 
-This runs:
-- Web app at http://localhost:3003
-- Convex dev server
-
-Run individual services:
-
-```bash
-bun run dev:web      # Web app only
-bun run dev:server   # Convex backend only
-```
-
----
-
-## Development Workflow
-
-### 1. Branching
-
-Create a branch for your feature or fix:
-
-```bash
-git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/your-fix-name
-```
-
-### 2. Making Changes
-
-- Make your changes following the code style guidelines
-- Test locally with `bun run dev`
-- Run type checking: `bun run check-types`
-
-### 3. Linting & Formatting
-
-Reflet uses **Ultracite** (powered by Biome) for automatic formatting and linting:
-
-```bash
-# Auto-fix all issues
-bun x ultracite fix
-
-# Check for issues without fixing
-bun x ultracite check
-```
-
-**Before committing**, always run `bun x ultracite fix` to ensure code compliance.
-
-### 4. Committing
-
-Write clear, descriptive commit messages:
-
-```
-feat(feedback): add bulk edit for feedback items
-fix(auth): resolve session expiration on page refresh
-docs(readme): update getting started instructions
-```
-
-Our pre-commit hook (Husky) will automatically run Ultracite on staged files.
-
----
-
-## Project Structure
-
-```
-reflet/
-├── apps/
-│   └── web/                      # Main web application
-│       ├── src/
-│       │   ├── components/       # React components
-│       │   │   ├── ui/          # App-specific UI pieces (typography, editors)
-│       │   │   ├── homepage/    # Landing page components
-│       │   │   └── ...
-│       │   ├── lib/             # Utilities and helpers
-│       │   ├── app/              # Next.js App Router routes
-│       │   │   ├── dashboard/   # Dashboard routes
-│       │   │   ├── $orgSlug/    # Organization public pages
-│       │   │   └── ...
-│       │   ├── store/           # Jotai state management
-│       │   ├── router.tsx       # Router configuration
-│       │   └── __root.tsx       # Root layout
-│       ├── public/              # Static assets
-│       └── package.json
-│
-├── packages/
-│   ├── backend/                 # Convex backend
-│   │   └── convex/
-│   │       ├── schema.ts        # Database schema
-│   │       ├── auth.ts          # Auth functions
-│   │       ├── feedback.ts      # Feedback queries/mutations
-│   │       ├── organizations.ts # Organization functions
-│   │       ├── boards.ts        # Board functions
-│   │       ├── comments.ts      # Comment functions
-│   │       ├── releases.ts      # Changelog/release functions
-│   │       └── ...
-│   │
-│   ├── env/                     # Environment variable handling
-│   └── config/                  # Shared configurations
-│
-├── AGENTS.md                    # AI assistant instructions
-├── biome.jsonc                  # Biome config
-├── turbo.json                   # Turborepo config
-├── tsconfig.json                # TypeScript root config
-└── package.json
-```
+Open [http://localhost:3003](http://localhost:3003). The web script binds to `127.0.0.1`; Convex watches backend changes, and the widget packages rebuild their static bundles. The first web start fetches missing Switzer font files from Fontshare, so it needs network access.
 
----
+To run only one part, use `bun run dev:web` or `bun run dev:server`. Restart the web process after changing its environment.
 
-## Architecture Overview
+## Find the code
 
-### Frontend (Next.js + React)
+| Path | Responsibility |
+| --- | --- |
+| `apps/web/app` | Next.js App Router pages, MDX docs/blog, and API routes |
+| `apps/web/src/features` | Feature UI and hooks |
+| `apps/web/src/lib` | Shared web utilities and auth clients |
+| `apps/web/proxy.ts` | Hostname routing and auth-page redirects |
+| `packages/backend/convex` | Database schema, queries, mutations, actions, scheduled jobs, and HTTP endpoints |
+| `packages/backend/convex/auth` | Better Auth configuration backed by a Convex component |
+| `packages/env/src` | Public and server-only web environment validation |
+| `packages/sdk`, `packages/cli` | Application integrations and command-line client |
+| `packages/widget`, `packages/feedback-widget`, `packages/changelog-widget` | Standalone browser bundles copied into the web app's public directory |
+| `packages/ui`, `packages/email`, `packages/survey-core` | Shared UI, email templates, and survey logic |
 
-- **Routing**: Next.js App Router with file-based routing
-- **State Management**: Jotai (atomic state)
-- **UI Components**: Control UI (`@ctrl-ui/react`, Base UI + Tailwind)
-- **Server Components**: Next.js Server Components and SSR
-- **Client-Server Sync**: Convex React hooks for real-time data
+The UI uses Convex React subscriptions. Convex owns application data and file storage. Next.js proxies Better Auth requests through `/api/auth`; the auth implementation and session data live in Convex. Organization membership and backend access checks determine permissions, not the presence of a browser cookie alone.
 
-### Backend (Convex)
+See [repository docs](docs/README.md) for design and operations references, including [feedback properties](docs/operations/feedback-properties.md).
 
-Convex is a reactive backend-as-a-service with:
-- **Real-time subscriptions**: UI updates automatically when data changes
-- **Type-safe API**: Generated TypeScript types from schema
-- **Edge functions**: Serverless compute close to users
-- **Database**: Built-in NoSQL with powerful indexing
+## Check a change
 
-#### Key Convex Files:
+Run commands from the repository root unless noted:
 
-| File | Purpose |
-|------|---------|
-| `schema.ts` | Database schema, indexes, and relationships |
-| `auth.ts` | Better-Auth integration and user sessions |
-| `feedback.ts` | Feedback queries, mutations, and validators |
-| `feedback_actions.ts` | Complex feedback operations (bulk actions, status changes) |
-| `organizations.ts` | Organization queries and membership management |
-| `boards.ts` | Board CRUD and permission checks |
-| `comments.ts` | Comment system with threading |
-| `releases.ts` | Changelog and release management |
-| `votes.ts` | Vote tracking and limits |
+| Command | What it does |
+| --- | --- |
+| `bun x ultracite check` | Checks formatting and lint rules |
+| `bun x ultracite fix` | Applies formatting and automatic lint fixes |
+| `bun run check-types` | Runs workspace type checks; the backend also runs Convex code generation |
+| `bun run test:unit` | Runs each workspace's `test:unit` script through Turbo |
+| `bun run build` | Builds workspace packages and the production web app |
+| `bun run test:e2e --project=chromium --workers=1` | Runs headless browser tests against local port 3003 |
 
-### Authentication
+For a narrower unit run, use the workspace script, for example `cd apps/web && bun run test:unit`, then pass Vitest's file filters as needed. There is no root `test` script.
 
-Better-Auth provides:
-- Email/password authentication
-- OAuth providers (Google, GitHub, etc.)
-- Session management
-- Organization-based access control
+### Prepare browser tests
 
-#### Auth Flow:
+Install browsers from `apps/web` with `bun run test:e2e:install`. Playwright can start Next.js or reuse the server on port 3003; it does not start Convex. Keep `bun run dev:server` running in another terminal.
 
-1. User signs in via `lib/auth-client.ts` (client-side)
-2. Better-Auth server routes handle credentials (`routes/api/auth/$.ts`)
-3. Convex middleware validates sessions (`convex/auth.ts`)
-4. Organization membership determines access to boards/features
+Authenticated tests create accounts and organizations. On a disposable development deployment only, set `SKIP_EMAIL_VERIFICATION=true` with the Convex CLI and `NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION=true` in `apps/web/.env.local`. Restart the web server. These flags must agree, and neither belongs in a public or production deployment. Remove the flags when finished.
 
-### Database Schema
+The Playwright configuration includes Chromium, Firefox, and WebKit. Omitting `--project=chromium` runs all three. It defaults to two local workers and one in CI.
 
-The schema is defined in `packages/backend/convex/schema.ts`:
+## Submit a contribution
 
-- **Organizations**: Multi-tenant workspace
-- **Members**: User roles in organizations (owner/admin/member)
-- **Invitations**: Pending team invitations
-- **Boards**: Feedback containers with public/private settings
-- **Feedback**: Feature requests with status, votes, comments
-- **Votes**: User upvotes on feedback
-- **Tags**: Categorization labels (including roadmap lanes)
-- **Comments**: Threaded discussions on feedback
-- **Releases**: Changelog entries linked to completed feedback
-- **Notifications**: User notifications for events
+Open an issue for a substantial behavior or API change before implementing it. Keep a pull request focused, explain the user-visible result, and include the checks you ran. Add regression coverage at the level that exercises the change, and update the relevant docs rather than duplicating instructions.
 
----
+The pre-commit hook checks whitespace and runs Ultracite plus backend type checking. It does not replace unit tests, browser tests, or a build. The checked-in GitHub Actions workflow submits the production sitemap to IndexNow; it is not a build/test pipeline.
 
-## Testing
-
-### Running Tests
-
-We use Playwright for end-to-end testing:
-
-```bash
-# Run all tests
-bunx playwright test
-
-# Run tests in headed mode
-bunx playwright test --headed
-
-# Run specific test file
-bunx playwright test feedback.spec.ts
-```
-
-### Test Structure
-
-```
-apps/web/
-└── e2e/              # Playwright tests
-    ├── auth.spec.ts
-    ├── feedback.spec.ts
-    └── ...
-```
-
-### Writing Tests
-
-```typescript
-import { test, expect } from "@playwright/test";
-
-test("user can submit feedback", async ({ page }) => {
-  await page.goto("/dashboard/demo/boards/feedback");
-  await page.click('button:has-text("New Feedback")');
-  await page.fill('[placeholder="Title"]', "Dark mode");
-  await page.click('button:has-text("Submit")');
-  await expect(page.locator("text=Dark mode")).toBeVisible();
-});
-```
-
----
-
-## Code Style
-
-Reflet uses **Ultracite** for consistent code quality. Key principles:
-
-### Type Safety
-
-- Use explicit types for function parameters and return values
-- Prefer `unknown` over `any`
-- Leverage TypeScript type narrowing
-- Avoid type assertions when possible
-
-### React & JSX
-
-- Use function components (no classes)
-- Call hooks at top level only
-- Include all dependencies in `useEffect`/`useMemo` arrays
-- Use semantic HTML and ARIA attributes
-- Provide meaningful alt text for images
-
-### Async & Performance
-
-- Always `await` promises in async functions
-- Use `async/await` over promise chains
-- Avoid spread syntax in accumulators
-- Use `const` by default, `let` only when reassigning
-
-### Best Practices
-
-- Extract complex conditions into named variables
-- Use early returns to reduce nesting
-- Keep functions focused and modular
-- Add comments for non-obvious logic
-
-For complete style guidelines, see [AGENTS.md](AGENTS.md).
-
----
-
-## Submitting Changes
-
-### Pull Request Process
-
-1. **Fork** the repository
-2. **Branch** off main: `git checkout -b feature/my-feature`
-3. **Commit** your changes with clear messages
-4. **Push** to your fork: `git push origin feature/my-feature`
-5. **Create PR** on GitHub
-
-### PR Guidelines
-
-- Title should be descriptive: `feat: add bulk edit for feedback items`
-- Link related issues in the description
-- Add screenshots for UI changes
-- Ensure all tests pass
-- Run `bun x ultracite fix` before submitting
-
-### Review Process
-
-- Automated checks will run (lint, typecheck, tests)
-- Maintainers will review your code
-- Address feedback and update your PR
-- Once approved, your PR will be merged
-
----
-
-## Getting Help
-
-- **Discussions**: [GitHub Discussions](https://github.com/damien-schneider/reflet/discussions)
-- **Issues**: [GitHub Issues](https://github.com/damien-schneider/reflet/issues)
-- **Discord**: Join our community (link coming soon)
-
----
-
-## Resources
-
-- [Next.js Docs](https://nextjs.org/docs)
-- [Convex Docs](https://docs.convex.dev)
-- [Control UI](https://control-ui.dev)
-- [Biome Docs](https://biomejs.dev)
-- [Ultracite Docs](https://ultracite.dev)
-
----
-
-Happy contributing! 🚀
+Follow [SECURITY.md](SECURITY.md) for vulnerabilities, not a public issue. Contributions are governed by the repository's [LICENSE](LICENSE), including its contribution and commercial-use terms.

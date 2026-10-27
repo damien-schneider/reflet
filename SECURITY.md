@@ -1,25 +1,19 @@
-# Security Policy
+# Security policy
 
-## Reporting a vulnerability
+## Report a vulnerability privately
 
-Please do not open a public issue for security problems.
+Use [GitHub's private vulnerability reporting form](https://github.com/damien-schneider/reflet/security/advisories/new). Do not include exploitable details, credentials, or another user's data in a public issue or pull request.
 
-Report privately through either channel:
+Include:
 
-- [GitHub private vulnerability reporting](https://github.com/damien-schneider/reflet/security/advisories/new)
-- Email [security@reflet.app](mailto:security@reflet.app)
+- The affected app, backend endpoint, SDK, widget, or CLI, with the version or commit if known.
+- Reproduction steps using accounts and data you control.
+- The access required, observed impact, and a minimal example or redacted evidence.
 
-Include the affected component (web app, Convex backend, SDK, widgets, CLI), steps to reproduce, and the impact you observed. You will get an answer from a person, usually within a few days.
+If private reporting is unavailable, ask the repository owner for a private channel through a contact on their [GitHub profile](https://github.com/damien-schneider).
 
-## Scope
+## Testing boundaries
 
-- The hosted service at reflet.app and its API
-- Code in this repository: `apps/web`, `packages/backend`, `packages/sdk`, the embeddable widgets, and `packages/cli`
+Do not access, change, or delete data belonging to others. Do not run denial-of-service tests, disruptive automated scans, or social engineering against the hosted service. Use a local instance or an environment you have permission to test whenever possible.
 
-Only the latest release of each published package receives security fixes.
-
-## Please avoid
-
-- Accessing, modifying, or deleting data that is not yours
-- Denial-of-service tests or automated scanning that degrades the service
-- Social engineering of users or the team
+Operators of their own instances are responsible for protecting deployment credentials, applying updates, and configuring their infrastructure and service providers. Deployment notes are in the [self-hosting guide](docs/self-hosting.md).

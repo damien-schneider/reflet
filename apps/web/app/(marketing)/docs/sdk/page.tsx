@@ -1,95 +1,137 @@
-import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
 import { CodeBlock } from "@/components/docs/code-block";
 import { DocsCardGrid } from "@/components/docs/docs-card-grid";
-import { DocsList, DocsPage, DocsSection } from "@/components/docs/docs-page";
+import {
+  DocsLink,
+  DocsPage,
+  DocsSection,
+  DocsText,
+} from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "The official Reflet SDK for integrating feedback collection, voting, and roadmaps into your app.",
-  keywords: ["sdk", "api", "react hooks", "integration"],
+    "Choose a Reflet SDK integration for feedback, React, surveys, or team tools.",
   path: "/docs/sdk",
-  title: "SDK overview",
+  title: "Reflet SDK",
 });
 
 const SECTIONS = [
-  { id: "features", label: "Features" },
-  { id: "quick-start", label: "Quick start" },
-  { id: "learn-more", label: "Learn more" },
+  { id: "quick-start", label: "Submit feedback" },
+  { id: "guides", label: "Choose an integration" },
+  { id: "entry-points", label: "Package entry points" },
 ] as const;
 
-const USAGE = `import { Reflet } from "reflet-sdk";
+const QUICKSTART = `import { Reflet } from "reflet-sdk";
 
-const reflet = new Reflet({
-  publicKey: "fb_pub_xxx",
-  user: { id: "user_123", email: "user@example.com" },
+const reflet = new Reflet({ publicKey: "fb_pub_YOUR_PUBLIC_KEY" });
+
+const { feedbackId, isApproved } = await reflet.create({
+  title: "Keep filters when returning to the list",
+  description: "Opening an item and going back resets my filters.",
 });
 
-// List feedback
-const { items } = await reflet.list({ status: "open" });
-
-// Vote
-await reflet.vote("feedback_id");
-
-// Submit feedback
-await reflet.create({
-  title: "Add dark mode",
-  description: "Please add a dark mode option.",
+const { items, total, hasMore } = await reflet.list({
+  sortBy: "newest",
+  limit: 20,
 });`;
 
-const NEXT_STEPS = [
+const GUIDES = [
   {
-    description: "Setup, configuration and SSO user signing.",
+    description:
+      "Configure a public key and sign trusted users on your server.",
     href: "/docs/sdk/installation",
-    title: "Installation",
+    title: "Installation and identity",
   },
   {
-    description: "Provider setup and every available hook.",
+    description:
+      "Read feedback, submit reports, vote, comment, and handle failures.",
+    href: "/docs/sdk/client",
+    title: "Client methods",
+  },
+  {
+    description:
+      "Use a provider, queries, and mutations in your own interface.",
     href: "/docs/sdk/react-hooks",
     title: "React hooks",
   },
   {
-    description:
-      "In-app NPS, CSAT and custom surveys, triggers and custom UIs.",
+    description: "Deliver surveys or render a response with your own UI.",
     href: "/docs/sdk/surveys",
     title: "Surveys",
+  },
+  {
+    description: "Connect Next.js or Vite, take notes, and record a review.",
+    href: "/docs/sdk/devtools",
+    title: "Devtools and sessions",
+  },
+  {
+    description: "Bridge desktop team tools or consume the local Live hub.",
+    href: "/docs/sdk/desktop-live",
+    title: "Desktop and Live",
   },
 ] as const;
 
 export default function SdkOverviewPage() {
   return (
     <DocsPage
-      description={
-        <>
-          The official SDK for bringing Reflet feedback into your application.
-          Published on npm as{" "}
-          <MarkdownInlineCode>reflet-sdk</MarkdownInlineCode>.
-        </>
-      }
+      description="The npm package for feedback clients, React interfaces, surveys, and team tools. Import only the entry point your integration needs."
       sections={SECTIONS}
       title="Reflet SDK"
     >
-      <DocsSection id="features" sections={SECTIONS}>
-        <DocsList>
-          <li>List, create and vote on feedback</li>
-          <li>Manage comments and subscriptions</li>
-          <li>Show in-app surveys with branching, targeting and custom UIs</li>
-          <li>Fetch roadmap lanes and changelog entries</li>
-          <li>React hooks with caching and optimistic updates</li>
-          <li>Server-side user signing for secure SSO</li>
-          <li>Written in TypeScript, fully typed</li>
-        </DocsList>
-      </DocsSection>
-
       <DocsSection id="quick-start" sections={SECTIONS}>
         <InstallCommand command="npm install reflet-sdk" />
-        <CodeBlock code={USAGE} title="Basic usage" />
+        <DocsText>
+          Create an API key in your organization's settings and allow your app's
+          origin. Replace the public key below. This example can submit
+          anonymously; voting, comments, and subscriptions need a server-signed
+          user token.
+        </DocsText>
+        <CodeBlock code={QUICKSTART} />
+        <DocsText>
+          Check <code>isApproved</code> before promising that a report is
+          public. See{" "}
+          <DocsLink href="/docs/sdk/client#errors">error handling</DocsLink> for
+          rejected requests and network failures.
+        </DocsText>
       </DocsSection>
-
-      <DocsSection id="learn-more" sections={SECTIONS}>
-        <DocsCardGrid headingLevel="h3" items={NEXT_STEPS} />
+      <DocsSection id="guides" sections={SECTIONS}>
+        <DocsCardGrid headingLevel="h3" items={GUIDES} />
+      </DocsSection>
+      <DocsSection id="entry-points" sections={SECTIONS}>
+        <DocsText>
+          <code>reflet-sdk</code> exports the client, public types, and error
+          classes. <code>reflet-sdk/server</code> exports token signing and
+          verification. <code>reflet-sdk/react</code> adds the provider, hooks,
+          feedback components, changelog component, and survey delivery.
+        </DocsText>
+        <DocsText>
+          For ready-made UI, use <code>reflet-sdk/feedback</code> for the{" "}
+          <DocsLink href="/docs/widget/floating-feedback">
+            floating widget
+          </DocsLink>
+          , or see the{" "}
+          <DocsLink href="/docs/widget/feedback-widget">
+            feedback components
+          </DocsLink>{" "}
+          and{" "}
+          <DocsLink href="/docs/widget/changelog-widget">
+            changelog widget
+          </DocsLink>
+          . The feedback entry also exports capture helpers and team-bridge
+          types.
+          <code>reflet-sdk/surveys</code> provides survey rendering without
+          automatic delivery.
+        </DocsText>
+        <DocsText>
+          <code>reflet-sdk/devtools/next</code> and{" "}
+          <code>reflet-sdk/devtools/vite</code> run on a development server.
+          <code>reflet-sdk/desktop</code> and <code>reflet-sdk/live-hub</code>{" "}
+          are privileged Node integrations, not browser imports. For operating
+          Live rather than embedding its hub, use the{" "}
+          <DocsLink href="/docs/cli">CLI guide</DocsLink>.
+        </DocsText>
       </DocsSection>
     </DocsPage>
   );

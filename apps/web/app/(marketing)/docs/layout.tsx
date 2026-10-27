@@ -6,7 +6,7 @@ import { DocsMobileNav, DocsSidebarWrapper } from "./docs-sidebar-wrapper";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "Complete documentation for Reflet SDK, widgets, and component library.",
+    "Guides for using Reflet, integrating feedback, and running your own deployment.",
   keywords: ["documentation", "sdk", "components", "api reference"],
   path: "/docs",
   title: "Documentation",

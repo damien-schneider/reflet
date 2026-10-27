@@ -1,148 +1,68 @@
 # reflet-cli
 
-Adds the [Reflet](https://reflet.app) feedback widget to a React app in one command.
+Install Reflet's feedback widget, manage an organization and hand recording context to a coding agent.
 
-```bash
-npx reflet-cli init
+Requires Node.js 18 or later. Run without installing globally:
+
+```sh
+npx reflet-cli@latest --help
 ```
 
-The widget is a floating button. When a user opens it, the panel screenshots the
-current viewport, lets them draw on that screenshot, and lets them point at an
-element so the report carries the React component behind it — along with the
-URL, the browser, the viewport and the console errors the page logged.
+For the `reflet` executable, install with `npm install -g reflet-cli`.
 
-## Commands
+## Set up a widget
 
-### `reflet init`
+Run at the React app root with a public `fb_pub_` key from your organization settings:
 
-Installs `reflet-sdk`, mounts `<RefletFeedback />` in your app entry file and
-writes the public key to the env file your framework reads.
-
-| Option | Description |
-| --- | --- |
-| `--public-key <key>` | Your `fb_pub_…` key. Prompted for when omitted on a TTY. |
-| `--position <corner>` | `bottom-right` (default), `bottom-left`, `top-right`, `top-left`. |
-| `--dry-run` | Print what would change, write nothing. |
-| `--skip-install` | Do not run the package manager. |
-| `--yes` | Never prompt. Use this in scripts and agent runs. |
-| `--cwd <dir>` | Project root. Defaults to the current directory. |
-
-Detected setups:
-
-| Framework | Entry file | Env file |
-| --- | --- | --- |
-| Next.js App Router | `app/layout.tsx` or `src/app/layout.tsx` | `.env.local` |
-| Next.js Pages Router | `pages/_app.tsx` or `src/pages/_app.tsx` | `.env.local` |
-| React Router | `app/root.tsx` | `.env` |
-| Vite + React | `src/main.tsx` | `.env` |
-
-Running it twice changes nothing. If the entry file has no obvious place to
-mount the widget, the CLI leaves the file alone and prints the snippet to paste.
-
-### `reflet doctor`
-
-Checks an existing setup: the SDK is installed, the widget is mounted, the key
-is set. Exits non-zero when something is missing.
-
-### `reflet prompt`
-
-Prints a setup prompt for a coding agent (Claude Code, Cursor, …), for when you
-would rather have the agent do the wiring.
-
-```bash
-npx reflet-cli prompt | pbcopy
+```sh
+npx reflet-cli init --public-key fb_pub_your_key --dry-run
+npx reflet-cli init --public-key fb_pub_your_key --yes
+npx reflet-cli doctor
 ```
 
-### `reflet agent install`
+`init` can install `reflet-sdk`, edit the detected entry file and write a public-key environment variable. Review the changes. `doctor` checks local files, not the live service. See [widget setup](https://www.reflet.app/docs/cli#widget) for supported entry points and setup flags.
 
-Writes the Reflet workflows where coding agents look for them, so any of them
-can run them without being told how:
+## Manage feedback
 
-| File | Read by |
-| --- | --- |
-| `.agents/skills/reflet/SKILL.md` | Codex (`$reflet`), omp, and anything else following the agent-skills layout |
-| `.claude/skills/reflet/SKILL.md` | Claude Code |
-| `.claude/commands/reflet.md` | Claude Code, as the `/reflet` slash command |
-| `.agents/skills/reflet-live/SKILL.md` | Codex (`$reflet-live`), omp, and the rest of the agent-skills layout |
-| `.claude/skills/reflet-live/SKILL.md` | Claude Code |
-| `.claude/commands/reflet-live.md` | Claude Code, as the `/reflet-live` slash command |
+An organization owner or administrator creates a secret `fb_sec_` key in Settings → Agents & CLI. Keep it out of browser code and git.
 
-It also adds `.reflet/` to `.gitignore`, where downloaded screenshots land.
-Running it twice changes nothing. `--dry-run` and `--cwd <dir>` behave as in
-`init`. `reflet prompt agent` and `reflet prompt live` print the same
-workflows to stdout.
-
-`--global` writes only the `reflet-live` workflow, once for every repository:
-`~/.agents/skills/reflet-live/SKILL.md`, `~/.claude/skills/reflet-live/SKILL.md`
-and `~/.claude/commands/reflet-live.md`. It leaves `.gitignore` alone; the
-feedback workflow stays per repository.
-
-`reflet` claims one item, reads its screenshots, element source locations and
-console errors, fixes it, opens the pull request, comments and moves the
-status — then repeats until the queue is empty. Pass a feedback id (`/reflet
-fb_…`) to work just that one.
-
-`reflet-live` follows what you say while Reflet Live records you: you talk
-through what is wrong while moving between your apps, the agent changes the
-code of the app each passage is about while you keep recording, and it
-summarises what it did when you stop. Start the agent over the folder that
-holds your repositories (`claude --add-dir ~/Documents/GitHub`) so it can edit
-each of them.
-
-### `reflet live`
-
-Starts Reflet Live on this machine and opens its window (Chrome or Edge as an
-app window, else your default browser). Press Record there once: the
-recording lives in that window, so reloads, restarts and crashes of your apps
-never touch it. Every app in development with the `reflet-sdk` devtools route
-joins on its own when its panel loads, and its devtools bar gains Live
-controls (Point at, Pause, Stop).
-
-```bash
-npx reflet-cli live            # Reflet Live · http://localhost:47417
+```sh
+npx reflet-cli login
+npx reflet-cli feedback next --json
+npx reflet-cli feedback claim-next --as my-agent --json
 ```
 
-The terminal prints each app that joins and each Record, Pause and Stop.
-Ctrl+C stops the recording, waits up to 15 seconds for the window to finish
-uploading, then exits; a second Ctrl+C exits at once. Running it again while
-it runs reopens the window. `--port <n>` picks another port when 47417 is
-taken; `--no-open` skips opening the window. Transcription runs in Reflet's
-cloud, billed to the organization you pick in the window. Live recordings never
-show in the Sessions tab and are erased 24 hours after their last update.
+Login validates the key and saves `~/.reflet/config.json` with mode `0600`. The interactive prompt is not masked. In automation, supply `REFLET_API_KEY` through a secret store instead. `REFLET_API_URL` overrides the backend origin for self-hosting, without `/api/v1`.
 
-### `reflet live watch`
+Commands can mutate feedback, create GitHub issues, invite members and publish releases. `claim-next` is a write and moves an item to `in_progress`. JSON is automatic when piped; use `--json` interactively to retain pagination fields. `feedback comment` and `feedback vote` are registered but currently lack the signed-user token their API routes require and return `401`.
 
-Waits for what you say while Reflet Live records, then prints each new passage
-under the app it is about (`in one-rec/apps/electron · Export (/export)`, or
-`outside your apps (last: …)` while you were in your editor or terminal), with
-what you clicked or pointed at, its selector and source location, and the
-screenshots around it, saved under `.reflet/live/<session>/`. An `Apps` legend
-maps each app to its folder. It returns once you pause, when the recording
-ends, or after `--timeout` seconds (default 90) with nothing new, and never
-prints the same passage twice. `--json` gives each entry its `place`.
-`reflet-live` runs it in a loop.
+## Install agent instructions
 
-```bash
-npx reflet-cli live watch
+```sh
+npx reflet-cli agent install --dry-run
+npx reflet-cli agent install
+npx reflet-cli agent install --global
 ```
 
-When Reflet Live is not running it keeps waiting until the timeout, then says
-so. A recording already ended when it first looks is left alone. Delete
-`.reflet/live/watch.json` to read the current recording from the start again.
+Repository installation writes feedback/live skills and Claude slash commands, replacing differing files, and adds `.reflet/` to an existing `.gitignore`. Global installation writes only the live workflow in your home directory. These commands install instructions; they do not start an autonomous worker.
 
-### Admin API
+## Follow a recording
 
-`REFLET_API_KEY`, or `reflet login --api-key fb_sec_…` once. Every command
-prints JSON when piped or given `--json`.
+```sh
+# Keep this running, connect an app through its devtools, then press Record.
+npx reflet-cli live
 
-```bash
-npx reflet-cli feedback claim-next --json
-npx reflet-cli feedback get <id> --json
-npx reflet-cli screenshot download <id>      # → .reflet/screenshots/<id>/
-npx reflet-cli feedback status <id> completed
+# In another terminal or from your coding agent:
+npx reflet-cli live watch --json
 ```
 
-`npx reflet-cli` lists the resources, `npx reflet-cli <resource>` its actions.
+The local hub hands passages and cited screenshots to the agent. Recording/transcription uses the connected organization's backend, not local-only storage. `watch` writes a cursor and screenshots under `.reflet/live/`; keep this directory out of git. Ctrl+C requests a recording stop and waits briefly for uploads.
+
+## Reference
+
+The [CLI guide](https://www.reflet.app/docs/cli) is the canonical command-family, workflow, privacy and troubleshooting reference. See the [HTTP API](https://www.reflet.app/docs/api) for endpoints, authentication, pagination and limits.
+
+Use `reflet --help`, `reflet live --help` or `reflet <resource> <action> --help` for flags. API failures print to stderr and exit nonzero; the CLI does not retry them automatically.
 
 ## License
 

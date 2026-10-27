@@ -1,4 +1,3 @@
-import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
 import { CodeBlock } from "@/components/docs/code-block";
 import {
@@ -6,7 +5,6 @@ import {
   DocsList,
   DocsPage,
   DocsSection,
-  DocsSubsection,
   DocsText,
 } from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
@@ -14,115 +12,103 @@ import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "How to install Reflet UI components into your project using the shadcn registry.",
+    "Install React feedback and milestone components as editable source through the shadcn registry.",
   path: "/docs/components/installation",
   title: "Component installation",
 });
-
 const SECTIONS = [
-  { id: "prerequisites", label: "Prerequisites" },
-  { id: "install", label: "Install a component" },
-  { id: "installed-files", label: "What gets installed" },
-  { id: "usage", label: "Usage" },
-  { id: "reflet-data", label: "Connect to Reflet data" },
+  { id: "prerequisites", label: "Prepare your app" },
+  { id: "install", label: "Install and render" },
+  { id: "reflet-data", label: "Connect your data" },
 ] as const;
+const USAGE = `"use client";
 
-const REGISTRY_ITEMS = [
-  { label: "Sweep Corner", name: "feedback-sweep-corner" },
-  { label: "Minimal Notch", name: "feedback-minimal-notch" },
-  { label: "Editorial Feed", name: "feedback-editorial-feed" },
-  { label: "Horizontal Track", name: "milestone-track-view" },
-  { label: "Editorial Accordion", name: "milestone-editorial-accordion" },
-  { label: "Dashboard Timeline", name: "milestone-dashboard-timeline" },
-] as const;
-
-const FILE_TREE = `components/
-  ui/
-    feedback-sweep-corner.tsx
-    feedback-minimal-notch.tsx
-    feedback-editorial-feed.tsx`;
-
-const USAGE = `import {
-  SweepCorner,
-  SweepCornerBadge,
-  SweepCornerCard,
-  SweepCornerContent,
-  SweepCornerFooter,
-  SweepCornerTitle,
+import {
+  SweepCorner, SweepCornerBadge, SweepCornerCard,
+  SweepCornerContent, SweepCornerTitle,
 } from "@/components/ui/feedback-sweep-corner";
 
-<SweepCorner defaultUpvotes={42} onVoteChange={(vote) => console.log(vote)}>
-  <SweepCornerCard>
-    <SweepCornerContent>
-      <SweepCornerTitle>Add dark mode support</SweepCornerTitle>
-    </SweepCornerContent>
-    <SweepCornerBadge />
-    <SweepCornerFooter comments={7} time="1 day ago" />
-  </SweepCornerCard>
-</SweepCorner>`;
+export function FeedbackCard() {
+  return (
+    <SweepCorner defaultUpvotes={12}>
+      <SweepCornerCard>
+        <SweepCornerContent>
+          <SweepCornerTitle>Add keyboard shortcuts</SweepCornerTitle>
+        </SweepCornerContent>
+      </SweepCornerCard>
+      <SweepCornerBadge />
+    </SweepCorner>
+  );
+}`;
 
 export default function InstallationPage() {
   return (
     <DocsPage
-      description="Add Reflet UI components to any project that uses shadcn/ui."
+      description="The registry copies React components into your project. They render data you supply and do not need a Reflet account or API key."
       sections={SECTIONS}
       title="Installation"
     >
       <DocsSection id="prerequisites" sections={SECTIONS}>
         <DocsList>
           <li>
-            A project with{" "}
+            A React app with{" "}
             <DocsLink href="https://ui.shadcn.com/docs/installation">
               shadcn/ui initialized
             </DocsLink>
+            , Tailwind CSS v4 and theme tokens.
           </li>
-          <li>React 18 or 19</li>
-          <li>Tailwind CSS v4</li>
+          <li>
+            A working @/lib/utils import that exports cn. The registry installs
+            clsx and tailwind-merge, but does not include a replacement utils
+            file.
+          </li>
+          <li>
+            A client component boundary for event handlers and state. Installed
+            components include their own use client directive.
+          </li>
         </DocsList>
       </DocsSection>
-
       <DocsSection id="install" sections={SECTIONS}>
-        <DocsText>
-          Install any component from the Reflet registry with the shadcn CLI.
-        </DocsText>
-        {REGISTRY_ITEMS.map((item) => (
-          <DocsSubsection key={item.name} title={item.label}>
-            <InstallCommand
-              command={`npx shadcn add https://www.reflet.app/r/${item.name}.json`}
-            />
-          </DocsSubsection>
-        ))}
-      </DocsSection>
-
-      <DocsSection id="installed-files" sections={SECTIONS}>
-        <DocsText>
-          Each command adds one component file to your{" "}
-          <MarkdownInlineCode>components/ui/</MarkdownInlineCode> directory,
-          adds the <MarkdownInlineCode>--tag-*</MarkdownInlineCode> color tokens
-          to your CSS, and installs the packages the component needs:{" "}
-          <MarkdownInlineCode>motion</MarkdownInlineCode>,{" "}
-          <MarkdownInlineCode>clsx</MarkdownInlineCode>,{" "}
-          <MarkdownInlineCode>tailwind-merge</MarkdownInlineCode> and, for the
-          feedback cards,{" "}
-          <MarkdownInlineCode>@phosphor-icons/react</MarkdownInlineCode>.
-        </DocsText>
-        <CodeBlock code={FILE_TREE} title="Project tree" />
-      </DocsSection>
-
-      <DocsSection id="usage" sections={SECTIONS}>
-        <DocsText>
-          Compose the subcomponents and pass your data as children and props.
-        </DocsText>
+        <InstallCommand command="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json" />
         <CodeBlock code={USAGE} />
+        <DocsText>
+          The command writes components/ui/feedback-sweep-corner.tsx, adds tag
+          color tokens for light and dark themes, and installs motion,
+          @phosphor-icons/react, clsx and tailwind-merge. Milestone registry
+          items do not need the icon package. Check the CLI's changes if your
+          aliases or component directory differ.
+        </DocsText>
+        <DocsText>
+          Other registry names: feedback-minimal-notch, feedback-editorial-feed,
+          milestone-track-view, milestone-editorial-accordion and
+          milestone-dashboard-timeline. Replace the name before .json in the
+          command. Each component page includes its own install command and full
+          source for manual installation.
+        </DocsText>
+        <DocsText>
+          Missing styling usually means Tailwind is not scanning the installed
+          source or your theme tokens are absent. See{" "}
+          <DocsLink href="/docs/components/theming">theming</DocsLink>. A
+          missing cn import means your shadcn utility alias needs fixing.
+        </DocsText>
       </DocsSection>
-
       <DocsSection id="reflet-data" sections={SECTIONS}>
         <DocsText>
-          These components are presentational: they take data through props and
-          don’t call any backend. To show live Reflet data, fetch it with{" "}
-          <DocsLink href="/docs/sdk/react-hooks">Reflet SDK hooks</DocsLink>{" "}
-          such as <MarkdownInlineCode>useFeedbackList()</MarkdownInlineCode> and
-          pass the items in.
+          These are presentational components, not widgets. Fetch your data,
+          pass it as props and implement persistence, loading and error handling
+          in your app. For Reflet data use{" "}
+          <DocsLink href="/docs/sdk/react-hooks">SDK hooks</DocsLink> with
+          RefletProvider, or your own server endpoint. Never put secret API keys
+          in a component.
+        </DocsText>
+        <DocsText>
+          defaultUpvotes/defaultDownvotes initialize local state once. Repeating
+          a vote removes it; the opposite direction switches it. For persisted
+          data, pass upvotes, downvotes, voteType and onVote. onVote receives
+          the pressed direction; your handler updates all three state props.
+          onVoteChange runs only in local mode. Reflet's public vote endpoint
+          supports upvote toggles, not downvotes; adapt the controls before
+          connecting them.
         </DocsText>
       </DocsSection>
     </DocsPage>

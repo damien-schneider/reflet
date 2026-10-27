@@ -2,16 +2,15 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { fetchQuery } from "convex/nextjs";
 import type { MetadataRoute } from "next";
 
+import { DOCS_NAVIGATION } from "@/components/docs/navigation";
 import { getAllBlogPosts } from "@/lib/blog";
 import { BASE_URL } from "@/lib/seo-config";
 
-/** Revalidate sitemap periodically for fresh lastModified. */
-export const revalidate = 86_400; // 24 hours
+export const revalidate = 86_400;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  // Static marketing pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       changeFrequency: "weekly",
@@ -51,71 +50,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Docs pages
-  const docsPages: MetadataRoute.Sitemap = [
-    {
-      changeFrequency: "weekly",
-      lastModified: now,
-      priority: 0.8,
-      url: `${BASE_URL}/docs`,
-    },
-    {
-      changeFrequency: "weekly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/sdk`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/sdk/installation`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/sdk/react-hooks`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/sdk/surveys`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/api`,
-    },
-    {
-      changeFrequency: "weekly",
-      lastModified: now,
-      priority: 0.7,
-      url: `${BASE_URL}/docs/widget`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.6,
-      url: `${BASE_URL}/docs/widget/feedback-widget`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.6,
-      url: `${BASE_URL}/docs/widget/changelog-widget`,
-    },
-    {
-      changeFrequency: "monthly",
-      lastModified: now,
-      priority: 0.6,
-      url: `${BASE_URL}/docs/components`,
-    },
-  ];
+  const docsPaths = DOCS_NAVIGATION.flatMap((section) => [
+    ...section.links,
+    ...(section.groups?.flatMap((group) => group.links) ?? []),
+  ]);
+  const docsPages: MetadataRoute.Sitemap = docsPaths.map(({ href }) => ({
+    changeFrequency: "weekly",
+    lastModified: now,
+    priority: 0.7,
+    url: `${BASE_URL}${href}`,
+  }));
 
-  // Legal pages (low priority)
   const legalPages: MetadataRoute.Sitemap = [
     {
       changeFrequency: "yearly",
@@ -137,7 +82,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Blog posts (use actual post date for lastModified)
   const posts = await getAllBlogPosts();
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
     changeFrequency: "monthly" as const,
@@ -146,7 +90,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${BASE_URL}/blog/${post.slug}`,
   }));
 
-  // Public organization pages
   let orgPages: MetadataRoute.Sitemap = [];
   let feedbackPages: MetadataRoute.Sitemap = [];
 
@@ -178,7 +121,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${BASE_URL}/${entry.orgSlug}/feedback/${entry.feedbackId}`,
     }));
   } catch {
-    // Silently continue if Convex is unreachable during build
+    // Convex may be unavailable during static builds.
   }
 
   return [

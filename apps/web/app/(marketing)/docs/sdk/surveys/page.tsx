@@ -1,4 +1,3 @@
-import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
 import { CodeBlock } from "@/components/docs/code-block";
 import {
@@ -6,273 +5,208 @@ import {
   DocsList,
   DocsPage,
   DocsSection,
-  DocsSubsection,
   DocsText,
 } from "@/components/docs/docs-page";
-import { InstallCommand } from "@/components/docs/install-command";
-import { PropsTable } from "@/components/docs/props-table";
 import { ReferenceTable } from "@/components/docs/reference-table";
 import { generatePageMetadata } from "@/lib/seo-config";
 import {
-  API_COLUMNS,
-  CALLBACKS_CODE,
   CARD_CODE,
   CLIENT_CODE,
   CLIENT_ROWS,
-  HEADLESS_CODE,
   MOUNT_CODE,
   PREVIEW_CODE,
-  SESSION_ROWS,
+  REFERENCE_COLUMNS,
   SIGNALS_CODE,
-  SURVEYS_API_ROWS,
-  TARGETING_COLUMNS,
-  TARGETING_ROWS,
-  TRIGGER_COLUMNS,
   TRIGGER_ROWS,
 } from "./survey-docs-data";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "Show in-app NPS, CSAT and custom surveys with the Reflet SDK: triggers, targeting, callbacks, theming and fully custom survey UIs.",
-  keywords: ["in-app surveys", "nps", "csat", "react surveys", "sdk"],
+    "Deliver surveys in React, control triggers, or render a headless survey session.",
   path: "/docs/sdk/surveys",
   title: "Surveys",
 });
 
 const SECTIONS = [
-  { id: "setup", label: "Setup" },
-  { id: "triggers", label: "Triggers" },
-  { id: "targeting", label: "Who sees a survey" },
-  { id: "use-reflet-surveys", label: "useRefletSurveys" },
-  { id: "callbacks", label: "Callbacks" },
-  { id: "theming", label: "Theming" },
-  { id: "custom-ui", label: "Custom survey UI" },
-  { id: "javascript-client", label: "JavaScript client" },
-] as const;
-
-const SURVEYS_PROPS = [
-  {
-    default: "true",
-    description:
-      "Turn delivery off without unmounting, e.g. on pages where a survey would interrupt.",
-    name: "enabled",
-    type: "boolean",
-  },
-  {
-    default: "auto",
-    description: "auto follows the visitor’s light or dark system setting.",
-    name: "theme",
-    type: '"auto" | "light" | "dark"',
-  },
-  {
-    default: "Your brand color",
-    description: "Accent for buttons, selections and progress. Any CSS color.",
-    name: "primaryColor",
-    type: "string",
-  },
-  {
-    description: "Lifecycle callbacks, described below.",
-    name: "onSurveyStart, onSurveyAnswer, onSurveyComplete, onSurveyDismiss",
-    type: "function",
-  },
-] as const;
-
-const CARD_PROPS = [
-  {
-    description: "The value returned by useSurveySession.",
-    name: "session",
-    required: true,
-    type: "SurveySessionHandle",
-  },
-  {
-    default: "inline",
-    description:
-      "floating for an overlay card, inline inside your layout, page for a full-page survey.",
-    name: "variant",
-    type: '"floating" | "inline" | "page"',
-  },
-  {
-    default: "auto",
-    description: "auto follows the system setting.",
-    name: "theme",
-    type: '"auto" | "light" | "dark"',
-  },
-  {
-    description: "Accent color. Any CSS color.",
-    name: "primaryColor",
-    type: "string",
-  },
-  {
-    description:
-      "Shows a close button. Closing mid-survey marks the response abandoned first.",
-    name: "onClose",
-    type: "() => void",
-  },
-  {
-    description: "Extra class on the card’s root element.",
-    name: "className",
-    type: "string",
-  },
+  { id: "setup", label: "Deliver a survey" },
+  { id: "triggers", label: "Choose when it opens" },
+  { id: "targeting", label: "Understand eligibility" },
+  { id: "custom-ui", label: "Render a survey yourself" },
+  { id: "javascript-client", label: "Call the response API" },
 ] as const;
 
 export default function SdkSurveysPage() {
   return (
     <DocsPage
-      description={
-        <>
-          Show NPS, CSAT and custom surveys inside your React app. Build them in
-          the dashboard with branching and several endings, then mount{" "}
-          <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> once.
-        </>
-      }
+      description="Build and publish a survey in Reflet, then deliver it in your app or render its questions yourself."
       sections={SECTIONS}
       title="Surveys"
     >
       <DocsSection id="setup" sections={SECTIONS}>
-        <InstallCommand command="npm install reflet-sdk" />
         <DocsText>
-          Mount <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> once
-          inside <MarkdownInlineCode>RefletProvider</MarkdownInlineCode>. It
-          loads the surveys this visitor is eligible for, arms their triggers
-          and shows one survey at a time in a floating card. The card lives in
-          its own shadow root, so your CSS never restyles it.
+          Install <code>reflet-sdk</code> and React, configure your public key's
+          allowed origins, then mount <code>RefletSurveys</code> once inside a
+          provider. Publish an in-app survey in the dashboard. An unpublished or
+          ineligible survey will not appear.
         </DocsText>
         <CodeBlock code={MOUNT_CODE} />
-        <PropsTable props={SURVEYS_PROPS} />
         <DocsText>
-          Pass a signed <MarkdownInlineCode>userToken</MarkdownInlineCode> (see{" "}
-          <DocsLink href="/docs/sdk/installation#user-signing">
-            user signing
-          </DocsLink>
-          ) or <MarkdownInlineCode>user</MarkdownInlineCode> to credit responses
-          to your users and recognize them across devices. Anonymous visitors
-          get a stable ID in{" "}
-          <MarkdownInlineCode>localStorage</MarkdownInlineCode>, so “show once”
-          holds across visits. Not using React? The{" "}
-          <DocsLink href="/docs/widget/feedback-widget#surveys">
-            feedback widget
-          </DocsLink>{" "}
-          delivers the same surveys with a script tag.
+          Delivery loads eligible surveys and displays one floating card at a
+          time in a shadow root. It supports ratings (number, star, or emoji),
+          NPS, text, single choice, multiple choice, boolean, and statement
+          steps, including branching and multiple endings.
         </DocsText>
-      </DocsSection>
-
-      <DocsSection id="triggers" sections={SECTIONS}>
-        <DocsText>
-          Each survey has one trigger, picked in the dashboard. A survey shows
-          at most once per page load, and never while another survey is open: a
-          trigger that fires meanwhile stays armed.
-        </DocsText>
-        <ReferenceTable columns={TRIGGER_COLUMNS} rows={TRIGGER_ROWS} />
-      </DocsSection>
-
-      <DocsSection id="targeting" sections={SECTIONS}>
-        <DocsText>
-          The API decides who may see a survey before any trigger fires, so a
-          visitor outside the audience never sees it, whichever way it’s
-          triggered. A survey counts as seen once its first screen appears.
-        </DocsText>
-        <ReferenceTable columns={TARGETING_COLUMNS} rows={TARGETING_ROWS} />
-      </DocsSection>
-
-      <DocsSection id="use-reflet-surveys" sections={SECTIONS}>
-        <DocsText>
-          Drive <MarkdownInlineCode>RefletSurveys</MarkdownInlineCode> from any
-          component inside the provider: send custom events, open a manual
-          survey from a button, or close the survey on screen. Calls made before
-          surveys have loaded are queued and replayed.
-        </DocsText>
-        <CodeBlock code={SIGNALS_CODE} />
-        <ReferenceTable columns={API_COLUMNS} rows={SURVEYS_API_ROWS} />
-      </DocsSection>
-
-      <DocsSection id="callbacks" sections={SECTIONS}>
-        <DocsText>
-          Forward survey activity to your analytics. Answers arrive one at a
-          time as the respondent moves on.{" "}
-          <MarkdownInlineCode>endingId</MarkdownInlineCode> is the ending their
-          answers led to.{" "}
-          <MarkdownInlineCode>onSurveyDismiss</MarkdownInlineCode> fires only
-          when someone closes a survey before finishing it.
-        </DocsText>
-        <CodeBlock code={CALLBACKS_CODE} />
-      </DocsSection>
-
-      <DocsSection id="theming" sections={SECTIONS}>
         <DocsList>
           <li>
-            <MarkdownInlineCode>theme</MarkdownInlineCode> and{" "}
-            <MarkdownInlineCode>primaryColor</MarkdownInlineCode> set the look.
-            With a hex color, button text switches between dark and white to
-            stay readable.
+            <code>enabled</code> defaults to true. Set it false to stop delivery
+            and dismiss the active survey.
           </li>
           <li>
-            The position (bottom right, bottom left or centered) is set per
-            survey in the dashboard.
+            <code>theme</code> is auto (default), light, or dark.{" "}
+            <code>primaryColor</code> overrides the organization's brand color.
+            Position comes from the survey's display settings.
           </li>
-          <li>An ending without a button closes itself after a few seconds.</li>
           <li>
-            Respondents can use the keyboard throughout: Enter moves on, Escape
-            closes, number keys answer NPS, rating and single-choice questions,
-            and Y or N answers yes/no questions.
+            Callbacks are{" "}
+            <code>onSurveyStart({"{ responseId, surveyId }"})</code>,{" "}
+            <code>onSurveyAnswer({"{ questionId, surveyId, value }"})</code>,{" "}
+            <code>
+              onSurveyComplete({"{ endingId, responseId, surveyId }"})
+            </code>
+            , and{" "}
+            <code>
+              onSurveyDismiss({"{ answeredCount, responseId, surveyId }"})
+            </code>
+            . Dismiss responseId can be null when start never completed.
+          </li>
+          <li>
+            An ending without a button closes after six seconds. Closing a
+            completed ending does not emit onSurveyDismiss.
           </li>
         </DocsList>
-      </DocsSection>
-
-      <DocsSection id="custom-ui" sections={SECTIONS}>
-        <DocsSubsection id="survey-card" title="Embed the survey card">
-          <DocsText>
-            <MarkdownInlineCode>useSurveySession</MarkdownInlineCode> runs a
-            survey’s flow: branching, validation and saving answers. Pass the
-            session to <MarkdownInlineCode>SurveyCard</MarkdownInlineCode> to
-            render it anywhere, for example inline on a settings page. Inside{" "}
-            <MarkdownInlineCode>RefletProvider</MarkdownInlineCode>, answers are
-            saved to Reflet. The response starts on mount; pass{" "}
-            <MarkdownInlineCode>autoStart: false</MarkdownInlineCode> to start
-            it yourself.
-          </DocsText>
-          <CodeBlock code={CARD_CODE} />
-          <PropsTable props={CARD_PROPS} />
-        </DocsSubsection>
-
-        <DocsSubsection id="headless" title="Build your own UI">
-          <DocsText>
-            Render the session yourself for complete control. This example
-            handles text questions only. A new session begins whenever{" "}
-            <MarkdownInlineCode>survey</MarkdownInlineCode> or{" "}
-            <MarkdownInlineCode>transport</MarkdownInlineCode> changes identity,
-            so keep them stable.
-          </DocsText>
-          <CodeBlock code={HEADLESS_CODE} />
-          <ReferenceTable columns={API_COLUMNS} rows={SESSION_ROWS} />
-        </DocsSubsection>
-
-        <DocsSubsection id="preview" title="Preview without saving">
-          <DocsText>
-            <MarkdownInlineCode>reflet-sdk/surveys</MarkdownInlineCode> exports
-            the same session hook and card without needing the provider. With{" "}
-            <MarkdownInlineCode>previewTransport</MarkdownInlineCode>, nothing
-            is saved, which is useful for previews and tests.
-          </DocsText>
-          <CodeBlock code={PREVIEW_CODE} />
-        </DocsSubsection>
-      </DocsSection>
-
-      <DocsSection id="javascript-client" sections={SECTIONS}>
         <DocsText>
-          The <MarkdownInlineCode>Reflet</MarkdownInlineCode> client from{" "}
-          <MarkdownInlineCode>reflet-sdk</MarkdownInlineCode> wraps the{" "}
-          <DocsLink href="/docs/api#eligible-surveys">
-            survey endpoints
-          </DocsLink>{" "}
-          and works without React. It sends the visitor’s anonymous ID, page URL
-          and user agent for you. It doesn’t run the branching flow: walk it
-          yourself from each question’s{" "}
-          <MarkdownInlineCode>logic</MarkdownInlineCode> and{" "}
-          <MarkdownInlineCode>next</MarkdownInlineCode>. Completing fails if a
-          required question on the respondent’s path has no answer.
+          Automatic delivery does not expose a loading or error hook. If the
+          eligibility request fails, no survey opens. Use the client API below
+          when your interface must display those failures. Non-React sites can
+          use the{" "}
+          <DocsLink href="/docs/widget/feedback-widget#surveys">
+            script widget's survey delivery
+          </DocsLink>
+          .
         </DocsText>
+      </DocsSection>
+      <DocsSection id="triggers" sections={SECTIONS}>
+        <ReferenceTable columns={REFERENCE_COLUMNS} rows={TRIGGER_ROWS} />
+        <DocsText>
+          Use <code>useRefletSurveys()</code> inside the provider to send
+          events, open an eligible survey manually, close the active one, or
+          read its ID. Mount the delivery component as well; the hook alone
+          renders nothing.
+        </DocsText>
+        <CodeBlock code={SIGNALS_CODE} />
+        <DocsText>
+          Signals sent before eligibility loads are queued, up to the most
+          recent 50 calls. <code>showSurvey</code> is not a way around schedule,
+          sampling, or frequency limits. Automatic triggers fire each survey at
+          most once per delivery mount; a busy card prevents another from
+          opening.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="targeting" sections={SECTIONS}>
+        <DocsList>
+          <li>
+            The API applies publication state, delivery mode, schedule,
+            completed-response cap, frequency, and stable percentage sampling.
+            Response start checks eligibility again.
+          </li>
+          <li>
+            <code>once</code> prevents another showing after a response starts.{" "}
+            <code>until_completed</code> allows another showing after the
+            recontact delay unless completed. <code>recurring</code> allows
+            another after that delay.
+          </li>
+          <li>
+            Anonymous browser IDs are stored in localStorage under{" "}
+            <code>reflet:respondent-id</code>. If storage is blocked, the ID
+            lasts only for the current page. Clearing storage changes anonymous
+            frequency and sampling identity.
+          </li>
+          <li>
+            For identity across devices, pass a{" "}
+            <DocsLink href="/docs/sdk/installation#user-signing">
+              server-signed userToken
+            </DocsLink>
+            .
+          </li>
+          <li>
+            Page patterns accept comma- or newline-separated alternatives and{" "}
+            <code>*</code> wildcards. <code>/checkout/*</code> matches paths
+            (including <code>#/</code> routes); <code>app.example.com/*</code>{" "}
+            matches host and path; a pattern with a scheme matches origin and
+            path. Query parameters are not used for matching.
+          </li>
+        </DocsList>
+        <DocsText>
+          Responses are sent to Reflet. <code>pageUrl</code> defaults to the
+          full browser URL, so keep credentials and sensitive values out of page
+          addresses.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="custom-ui" sections={SECTIONS}>
+        <DocsText>
+          Import from <code>reflet-sdk/surveys</code> when you need rendering
+          without automatic delivery. <code>useSurveySession</code> manages
+          answers, required-field validation, branching, back navigation, saves,
+          and endings. Supply a survey returned by the API, not just its ID.
+        </DocsText>
+        <CodeBlock code={CARD_CODE} />
+        <DocsText>
+          <code>SurveyCard</code> accepts session, variant (<code>inline</code>{" "}
+          by default, <code>floating</code>, or <code>page</code>), theme,
+          primaryColor, className, and onClose. Closing dismisses an unfinished
+          response before calling onClose. Stable survey and transport
+          identities matter: replacing either creates a new response session.
+        </DocsText>
+        <DocsText>
+          For a preview that saves nothing, choose the preview transport
+          explicitly. Outside a provider it is also the default. Inside a
+          provider, the hook defaults to a real Reflet transport instead.
+        </DocsText>
+        <CodeBlock code={PREVIEW_CODE} />
+        <DocsText>
+          For your own UI, use the handle's <code>survey</code> and{" "}
+          <code>snapshot</code>, then call <code>setAnswer(value)</code>,{" "}
+          <code>next()</code>, <code>back()</code>, or <code>dismiss()</code>.{" "}
+          <code>setAnswer(undefined)</code> clears the current answer. Snapshot
+          fields are answers (a read-only Map), question, ending, phase,
+          progress (0 to 1), canGoBack, isLastStep, isSubmitting, and error.
+          Render the error and disable submission while isSubmitting.
+        </DocsText>
+        <DocsText>
+          Phases are starting, start_failed, question, ending, and dismissed.
+          <code>start()</code> retries a start failure. Pass{" "}
+          <code>autoStart: false</code> to wait for your own action. The
+          callbacks option uses onStart, onAnswer, onComplete, and onDismiss
+          with the payloads described above. For non-React rendering, construct{" "}
+          <code>new SurveySession({"{ survey, transport, callbacks }"})</code>{" "}
+          and subscribe to <code>getSnapshot()</code>;{" "}
+          <code>useSessionHandle</code> adapts that existing session to React. A
+          custom <code>SurveyTransport</code> must implement start, answer,
+          complete, and dismiss.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="javascript-client" sections={SECTIONS}>
         <CodeBlock code={CLIENT_CODE} />
-        <ReferenceTable columns={API_COLUMNS} rows={CLIENT_ROWS} />
+        <ReferenceTable columns={REFERENCE_COLUMNS} rows={CLIENT_ROWS} />
+        <DocsText>
+          These methods do not render questions or choose the next step. Prefer
+          SurveySession when building a custom UI so its flow and validation
+          stay consistent. The{" "}
+          <DocsLink href="/docs/api">HTTP API guide</DocsLink> covers direct
+          requests; the{" "}
+          <DocsLink href="/docs/sdk/client#errors">client error guide</DocsLink>{" "}
+          covers failed method calls.
+        </DocsText>
       </DocsSection>
     </DocsPage>
   );

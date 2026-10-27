@@ -1,5 +1,5 @@
-import { MarkdownInlineCode } from "@ctrl-ui/react/ui/markdown-elements";
 import type { Metadata } from "next";
+import { CodeBlock } from "@/components/docs/code-block";
 import {
   DocsList,
   DocsPage,
@@ -11,95 +11,105 @@ import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "How Reflet UI components adapt to your theme using CSS variables.",
+    "Configure theme tokens, milestone colors and accessible component states.",
   path: "/docs/components/theming",
   title: "Component theming",
 });
-
 const SECTIONS = [
-  { id: "how-it-works", label: "How it works" },
-  { id: "variables", label: "CSS variables used" },
-  { id: "customizing", label: "Customizing components" },
-  { id: "dark-mode", label: "Dark mode" },
+  { id: "variables", label: "Theme tokens" },
+  { id: "customizing", label: "Customize installed source" },
+  { id: "dark-mode", label: "Dark mode and accessibility" },
 ] as const;
-
-const CSS_VARIABLES = [
-  ["--background", "Page background"],
-  ["--foreground", "Primary text"],
-  ["--card", "Card background"],
-  ["--primary", "Active upvote state and accents"],
-  ["--secondary", "Track and summary surfaces in milestone views"],
-  ["--muted", "Subtle backgrounds and progress tracks"],
-  ["--muted-foreground", "Secondary text and metadata"],
-  ["--border", "Card borders and dividers"],
-  ["--destructive", "Active downvote state"],
-  ["--tag-<color>, --tag-<color>-text", "Tag and status pill colors"],
+const TOKENS = [
+  ["background, foreground, card", "Page, text and card surfaces."],
+  ["primary, primary-foreground", "Upvotes, accents and in-progress segments."],
+  ["destructive, destructive-foreground", "Downvote states."],
+  [
+    "secondary, muted, muted-foreground",
+    "Track surfaces, progress tracks and metadata.",
+  ],
+  [
+    "border, ring, accent",
+    "Dividers, keyboard focus and active timeline rows.",
+  ],
+  ["chart-1", "Completed segments in the dashboard timeline."],
+  [
+    "tag-<color>, tag-<color>-text",
+    "Colored status/tag backgrounds and text. Added by the registry with light, dark and Tailwind theme mappings.",
+  ],
 ] as const;
+const CSS = `/* Override these existing tokens in your theme stylesheet. */
+:root {
+  --tag-blue: oklch(0.55 0.12 240);
+  --tag-blue-text: oklch(0.38 0.10 240);
+}
+.dark {
+  --tag-blue: oklch(0.72 0.10 240);
+  --tag-blue-text: oklch(0.85 0.07 240);
+}`;
 
 export default function ThemingPage() {
   return (
     <DocsPage
-      description="Reflet UI components are styled with shadcn CSS variables, so they match your existing theme."
+      description="Registry components use your app's Tailwind theme. Unlike embedded widgets, they render in your document and can inherit or override its styles."
       sections={SECTIONS}
       title="Theming"
     >
-      <DocsSection id="how-it-works" sections={SECTIONS}>
-        <DocsText>
-          Components use Tailwind classes like{" "}
-          <MarkdownInlineCode>bg-card</MarkdownInlineCode>,{" "}
-          <MarkdownInlineCode>text-foreground</MarkdownInlineCode> and{" "}
-          <MarkdownInlineCode>border-border</MarkdownInlineCode>, which resolve
-          to the CSS variables in your{" "}
-          <MarkdownInlineCode>globals.css</MarkdownInlineCode>. Switch your
-          shadcn theme, say from Zinc to Slate, and the components follow.
-        </DocsText>
-        <DocsText>
-          Tag colors come from <MarkdownInlineCode>--tag-*</MarkdownInlineCode>{" "}
-          variables that the shadcn CLI adds to your CSS when you install a
-          component. Edit them there to retune the palette.
-        </DocsText>
-      </DocsSection>
-
       <DocsSection id="variables" sections={SECTIONS}>
         <ReferenceTable
           columns={[
-            { kind: "name", label: "Variable" },
-            { kind: "text", label: "Used for" },
+            { kind: "name", label: "Token name (CSS variables use --)" },
+            { kind: "text", label: "Use" },
           ]}
-          rows={CSS_VARIABLES.map(([name, usage]) => ({
+          rows={TOKENS.map(([name, usage]) => ({
             cells: [name, usage],
             key: name,
           }))}
         />
+        <DocsText>
+          Color keys are blue, brown, green, orange, pink, purple, red, yellow,
+          gray and default. Gray/default use neutral muted tokens. Milestone
+          colorHex is separate from these tokens: pass a six-digit hex value
+          such as #0b6e99, because the views append alpha suffixes to it.
+        </DocsText>
+        <CodeBlock code={CSS} />
       </DocsSection>
-
       <DocsSection id="customizing" sections={SECTIONS}>
         <DocsText>
-          Components are installed as source files in your project, so you can
-          edit them directly. Common changes:
+          Use className on components that expose it for spacing, width or
+          typography. Vote controls without a props interface cannot receive
+          arbitrary classes or HTML attributes. Edit the installed source when
+          you need to change their labels, disable voting, alter headings or
+          support additional DOM props.
         </DocsText>
+        <DocsText>
+          Tag/status color keys are not arbitrary CSS colors. Use the predefined
+          keys or extend the installed color map. Milestone targetDate and
+          horizon labels are display strings; format them before passing data.
+        </DocsText>
+      </DocsSection>
+      <DocsSection id="dark-mode" sections={SECTIONS}>
         <DocsList>
           <li>
-            Change the corner radius by adjusting the{" "}
-            <MarkdownInlineCode>rounded-*</MarkdownInlineCode> classes.
+            Apply your app's existing dark theme. The registry supplies tag
+            token values, not a theme toggle or detection hook.
           </li>
-          <li>Adjust padding and gaps.</li>
           <li>
-            Tune vote animations through the{" "}
-            <MarkdownInlineCode>transition</MarkdownInlineCode> props on the{" "}
-            <MarkdownInlineCode>motion</MarkdownInlineCode> elements.
+            Check text, status colors, milestone hex colors and focus rings
+            against both light and dark surfaces. A color prop does not
+            guarantee contrast.
           </li>
-          <li>Add or remove fields such as tags, author or description.</li>
+          <li>
+            Motion components use the user's reduced-motion preference; track
+            and expansion transitions include motion-reduce classes. Preserve
+            those paths when editing animations.
+          </li>
+          <li>
+            Vote buttons include accessible names and pressed states. Keep these
+            when changing icons. Do not wrap a card containing vote buttons
+            inside another button.
+          </li>
         </DocsList>
-      </DocsSection>
-
-      <DocsSection id="dark-mode" sections={SECTIONS}>
-        <DocsText>
-          Dark mode works without extra setup. Every color comes from your
-          theme’s CSS variables, including the{" "}
-          <MarkdownInlineCode>--tag-*</MarkdownInlineCode> set, which ships with
-          light and dark values.
-        </DocsText>
       </DocsSection>
     </DocsPage>
   );

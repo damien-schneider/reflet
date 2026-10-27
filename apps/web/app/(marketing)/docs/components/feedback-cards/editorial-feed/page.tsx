@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-
 import { EDITORIAL_FEED_CODE } from "@/components/docs/feedback-card-codes";
 import { EditorialFeedPreview } from "@/components/docs/feedback-card-previews";
 import {
@@ -11,72 +10,79 @@ import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "An editorial-style feedback list with margin vote annotations and vertical rules.",
+    "Install a feedback list with per-item vote state and composable metadata.",
   path: "/docs/components/feedback-cards/editorial-feed",
-  title: "Editorial feed – feedback card",
+  title: "Editorial feed",
 });
-
 const IMPORT_CODE = `import {
-  EditorialFeed,
-  EditorialFeedComments,
-  EditorialFeedContent,
-  EditorialFeedItem,
-  EditorialFeedMeta,
-  EditorialFeedRule,
-  EditorialFeedStatus,
-  EditorialFeedTag,
-  EditorialFeedTime,
-  EditorialFeedTitle,
-  EditorialFeedVote,
+  EditorialFeed, EditorialFeedComments, EditorialFeedContent,
+  EditorialFeedItem, EditorialFeedMeta, EditorialFeedRule, EditorialFeedStatus,
+  EditorialFeedTag, EditorialFeedTime, EditorialFeedTitle, EditorialFeedVote,
 } from "@/components/ui/feedback-editorial-feed";`;
-
 const FEATURES = [
-  "Stacked list layout with votes set in the margin, like annotations.",
-  "A vertical rule separates the vote column from the content.",
-  "Each item keeps its own vote state, uncontrolled or controlled.",
+  "Each EditorialFeedItem owns its vote state. Keep its vote control inside the item and give mapped items stable keys.",
+  "onVoteChange receives local totals only, unlike the direction-based callbacks in the other styles.",
+  "For navigation, place a link inside the h3 title. The feed renders divs; add surrounding list semantics if your page needs them.",
 ] as const;
-
 const SUBCOMPONENTS: readonly Subcomponent[] = [
-  { description: "List container for feed items.", name: "EditorialFeed" },
   {
     description:
-      "One feedback row. Holds that item’s vote state and shares it with EditorialFeedVote.",
+      "Visual list wrapper. Accepts children and className; does not own vote state.",
+    name: "EditorialFeed",
+  },
+  {
+    description:
+      "Positioned item and vote context. Accepts children and className.",
     name: "EditorialFeedItem",
     props: voteRootProps({
-      description: "Called with the new totals after an uncontrolled vote.",
+      description:
+        "Local-mode totals after a vote. Unlike the other styles, this callback does not include voteType.",
       name: "onVoteChange",
       type: "(upvotes: number, downvotes: number) => void",
     }),
   },
   {
     description:
-      "Margin vote column with up and down buttons. Reads vote state from the item.",
+      "Margin vote control. Takes no props; must be inside EditorialFeedItem.",
     name: "EditorialFeedVote",
   },
   {
-    description: "Vertical rule between the vote column and the content.",
+    description:
+      "Decorative vertical divider. Accepts className, not children.",
     name: "EditorialFeedRule",
   },
-  { description: "Content column.", name: "EditorialFeedContent" },
-  { description: "Item title.", name: "EditorialFeedTitle" },
   {
-    description: "Row for status, tags, comments and time.",
+    description: "Content wrapper with children and className.",
+    name: "EditorialFeedContent",
+  },
+  {
+    description: "h3 heading with children and className.",
+    name: "EditorialFeedTitle",
+  },
+  {
+    description: "Metadata row with children and className.",
     name: "EditorialFeedMeta",
   },
   {
-    description: "Colored status label.",
+    description: "Status pill with children and className.",
     name: "EditorialFeedStatus",
     props: [
       {
-        description: "Status color key.",
+        default: '"gray"',
+        description: "Theme color key. gray/default are neutral.",
         name: "color",
-        type: "StatusColor",
+        type: '"blue" | "brown" | "green" | "orange" | "pink" | "purple" | "red" | "yellow" | "gray" | "default"',
       },
     ],
   },
-  { description: "Plain tag label.", name: "EditorialFeedTag" },
   {
-    description: "Comment count.",
+    description:
+      "Static italic tag with a # prefix. Accepts children and className; no color prop.",
+    name: "EditorialFeedTag",
+  },
+  {
+    description:
+      "Text count and separator, not a comment action. Accepts className.",
     name: "EditorialFeedComments",
     props: [
       {
@@ -87,19 +93,23 @@ const SUBCOMPONENTS: readonly Subcomponent[] = [
       },
     ],
   },
-  { description: "Relative time label.", name: "EditorialFeedTime" },
+  {
+    description:
+      "Already formatted time passed as children. Accepts className.",
+    name: "EditorialFeedTime",
+  },
 ];
 
 export default function EditorialFeedPage() {
   return (
     <RegistryDocPage
-      description="A stacked, editorial list of feedback with votes set in the margin and a vertical rule beside each item."
+      description="Feedback rows with votes in the margin. Each row can manage local demo state or display state controlled by your app."
       features={FEATURES}
       importCode={IMPORT_CODE}
       preview={<EditorialFeedPreview />}
       registryName="feedback-editorial-feed"
       subcomponents={SUBCOMPONENTS}
-      title="Editorial Feed"
+      title="Editorial feed"
       usageCode={EDITORIAL_FEED_CODE}
     />
   );
