@@ -13,7 +13,7 @@ const FAILURE_LABELS: Record<LiveCommand, string> = {
 };
 
 export const NEEDS_ACTIVATION_MESSAGE =
-  "Press Record in this window once: the browser only gives it the microphone after a click here.";
+  "Click Record here once: the microphone needs a first click in this window.";
 
 async function apply(
   recorder: SessionRecorder,

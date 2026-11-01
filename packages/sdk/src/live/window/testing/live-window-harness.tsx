@@ -8,11 +8,10 @@ import {
 } from "../../protocol";
 import { LiveWindow } from "../live-window";
 
-const CONNECTIONS: LiveConnections = {
-  connections: [
-    { apiUrl: "https://api.reflet.test", id: "acme", organizationName: "Acme" },
-  ],
-  selectedId: null,
+export const ACME = {
+  apiUrl: "https://api.reflet.test",
+  id: "acme",
+  organizationName: "Acme",
 };
 
 export const NO_APPS: LiveWindowMessage = {
@@ -33,7 +32,7 @@ export interface FakeHub {
   streamCount: () => number;
 }
 
-function fakeHub(): FakeHub {
+function fakeHub(connections: LiveConnections): FakeHub {
   const posts: HubPost[] = [];
   const streams: ReadableStreamDefaultController<Uint8Array>[] = [];
   const encoder = new TextEncoder();
@@ -53,10 +52,10 @@ function fakeHub(): FakeHub {
     if (init?.method === "POST") {
       posts.push({ body: JSON.parse(String(init.body)), path });
       return Response.json(
-        path === LIVE_HUB_ENDPOINTS.connection ? CONNECTIONS : LIVE_STATUS_OFF
+        path === LIVE_HUB_ENDPOINTS.connection ? connections : LIVE_STATUS_OFF
       );
     }
-    return Response.json(CONNECTIONS);
+    return Response.json(connections);
   };
   vi.stubGlobal(
     "fetch",
@@ -99,27 +98,10 @@ export function stubMatchMedia() {
   );
 }
 
-export function fakePictureInPicture() {
-  const frame = document.createElement("iframe");
-  document.body.append(frame);
-  const floatingDocument = frame.contentDocument;
-  if (!floatingDocument) {
-    throw new Error("The test iframe has no document.");
-  }
-  const floating = Object.assign(new EventTarget(), {
-    close: vi.fn(() => {
-      floating.dispatchEvent(new Event("pagehide"));
-      frame.remove();
-    }),
-    document: floatingDocument,
-  });
-  const requestWindow = vi.fn(() => Promise.resolve(floating));
-  vi.stubGlobal("documentPictureInPicture", { requestWindow });
-  return { document: floatingDocument, floating, requestWindow };
-}
-
-export async function openWindow(): Promise<FakeHub> {
-  const hub = fakeHub();
+export async function openWindow(
+  connections: LiveConnections["connections"] = [ACME]
+): Promise<FakeHub> {
+  const hub = fakeHub({ connections, selectedId: null });
   render(<LiveWindow />);
   await waitFor(() => expect(hub.streamCount()).toBe(1));
   hub.send(NO_APPS);

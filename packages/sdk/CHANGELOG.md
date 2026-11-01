@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Reflet Live: `openLiveWindow(url, { shellPath })` opens the Live window in the native dial shell at `shellPath` on macOS when that file exists, and in a Chrome/Edge app window otherwise. reflet-cli ships the shell (`reflet-live-shell`, a 1.5 MB universal macOS binary).
+
 ### Changed
 
+- Reflet Live: the Live window is now only the dial, shaped like the Reflet mark: two arcs around a hub carrying the Reflet logo, in Reflet's cream, olive and charcoal. On macOS it floats above your apps in a transparent, frameless window at the top right; drag it by its centre. One arc holds Record; the other names the organization you record into, written along the ring, next to Close. Pressing the name lists every connected organization by name, the current one in olive. While recording, Pause/Resume and Stop sit around the timer and mic level. A pill under the dial shows the page being recorded and the latest passage, what you just pointed at, or what to do next. Another open window, no connected organization, a revoked connection or a failed command covers the dial with a short notice and a way out. The app list, the passage list and the Picture-in-Picture dial are gone.
 - Devtools account menu: opens on your name and email. Without the app's own connection, it lists the organizations under "Record sessions as", each with its initial, and says why Add to board is off; the footer carries a "Sessions only" badge. Disconnect has an icon.
 
 ## [0.8.2] - 2026-10-26

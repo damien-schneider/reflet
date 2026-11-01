@@ -1,82 +1,59 @@
-import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
-import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Heading, Text } from "@ctrl-ui/react/ui/typography";
-import type { ReactNode } from "react";
-import { AppsSection } from "./activity/apps-section";
-import { PassagesSection } from "./activity/passages-section";
+import { DialNotice } from "./floating-dial/dial/dial-notice";
+import { WaitingDial } from "./floating-dial/floating-dial";
 import {
   type ConnectionsState,
   useHubConnections,
 } from "./hub-link/use-hub-connections";
 import { type HubStream, useHubStream } from "./hub-link/use-hub-stream";
-import { LiveNotices } from "./live-notices";
 import { IdleStateReport, LiveRecorder } from "./recorder/live-recorder";
+import { closeWindow } from "./window-host";
 
-function WindowFrame({
-  agentFollowing,
-  children,
-}: {
-  agentFollowing: boolean | null;
-  children: ReactNode;
-}) {
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-6">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <Heading level={1} size="heading-3">
-          Reflet Live
-        </Heading>
-        {agentFollowing === true && (
-          <Badge color="green">Agent following</Badge>
-        )}
-        {agentFollowing === false && (
-          <Text size="caption" tone="muted">
-            No agent following: run /reflet-live in your coding agent
-          </Text>
-        )}
-      </header>
-      {children}
-      <LiveNotices />
-    </main>
-  );
-}
+const CLOSE_ACTION = { label: "Close", onClick: closeWindow };
 
-function ConnectionSection({
-  connections,
-  onSelect,
-  stream,
-}: {
-  connections: ConnectionsState;
-  onSelect: (id: string) => void;
-  stream: HubStream;
-}) {
-  if (connections.kind === "ready") {
+function noticeFor(connections: ConnectionsState) {
+  if (connections.kind === "empty") {
     return (
-      <LiveRecorder
-        activity={stream.activity}
-        commands={stream.commands}
-        connections={connections.connections}
-        epoch={stream.epoch}
-        key={connections.selectedId}
-        onSelect={onSelect}
-        selectedId={connections.selectedId}
+      <DialNotice
+        actions={[CLOSE_ACTION]}
+        description="Connect Reflet from any app's devtools panel (footer → Connect), then come back here."
+        title="No organization yet"
       />
     );
   }
+  if (connections.kind === "failed") {
+    return (
+      <DialNotice
+        actions={[CLOSE_ACTION]}
+        description={connections.message}
+        isFailure
+        title="Organizations didn't load"
+      />
+    );
+  }
+  return null;
+}
+
+function ConnectionDial({
+  connections,
+  stream,
+}: {
+  connections: ConnectionsState;
+  stream: HubStream;
+}) {
+  const isLinkLost = stream.link === "lost";
   return (
     <>
       <IdleStateReport epoch={stream.epoch} />
-      {connections.kind === "empty" && (
-        <Text tone="muted">
-          Connect Reflet from any app's devtools panel (footer → Connect), then
-          come back here.
-        </Text>
-      )}
-      {connections.kind === "failed" && (
-        <Text tone="destructive">{connections.message}</Text>
-      )}
-      {connections.kind === "loading" && stream.link !== "lost" && (
-        <Text tone="muted">Connecting to Reflet Live…</Text>
-      )}
+      <WaitingDial
+        activity={stream.activity}
+        busyLabel={
+          connections.kind === "loading" && !isLinkLost
+            ? "Connecting to Reflet Live"
+            : null
+        }
+        isLinkLost={isLinkLost}
+        notice={noticeFor(connections)}
+      />
     </>
   );
 }
@@ -87,30 +64,34 @@ export function LiveWindow() {
 
   if (stream.link === "elsewhere") {
     return (
-      <WindowFrame agentFollowing={null}>
-        <Text tone="muted">
-          Reflet Live is open in another window: use that one and close this
-          tab.
-        </Text>
-      </WindowFrame>
+      <WaitingDial
+        activity={null}
+        isLinkLost={false}
+        notice={
+          <DialNotice
+            actions={[CLOSE_ACTION]}
+            description="Reflet Live is open in another window."
+            title="Already open"
+          />
+        }
+      />
     );
   }
-  return (
-    <WindowFrame agentFollowing={stream.activity.agentFollowing}>
-      {stream.link === "lost" && (
-        <Alert role="status" variant="destructive">
-          <AlertDescription>
-            Reflet Live stopped in the terminal: run npx reflet-cli live again.
-          </AlertDescription>
-        </Alert>
-      )}
-      <ConnectionSection
-        connections={state}
-        onSelect={select}
-        stream={stream}
+  if (state.kind === "ready") {
+    return (
+      <LiveRecorder
+        activity={stream.activity}
+        choice={{
+          connections: state.connections,
+          onSelect: select,
+          selectedId: state.selectedId,
+        }}
+        commands={stream.commands}
+        epoch={stream.epoch}
+        isLinkLost={stream.link === "lost"}
+        key={state.selectedId}
       />
-      <AppsSection activity={stream.activity} />
-      <PassagesSection activity={stream.activity} />
-    </WindowFrame>
-  );
+    );
+  }
+  return <ConnectionDial connections={state} stream={stream} />;
 }

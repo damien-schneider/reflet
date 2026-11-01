@@ -1,23 +1,17 @@
-import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@ctrl-ui/react/ui/select";
-import { Spinner } from "@ctrl-ui/react/ui/spinner";
-import { Text } from "@ctrl-ui/react/ui/typography";
 import { useState } from "react";
 import { devtoolsTransport } from "../../../sessions/api/session-transports";
-import { useRecorderSnapshot } from "../../../sessions/recorder/use-recorder-snapshot";
 import {
-  type SessionWorkspace,
   SessionWorkspaceProvider,
   useWorkspaceLoader,
 } from "../../../sessions/ui/session-workspace";
-import type { LiveConnection } from "../hub-link/use-hub-connections";
+import { DialNotice } from "../floating-dial/dial/dial-notice";
+import {
+  type OrganizationChoice,
+  OrganizationPage,
+} from "../floating-dial/dial-pages";
+import { WaitingDial } from "../floating-dial/floating-dial";
 import type { CommandChannel, HubActivity } from "../hub-link/use-hub-stream";
+import { closeWindow } from "../window-host";
 import { LiveControls } from "./live-controls";
 import { useWindowStateReport } from "./use-window-state-report";
 
@@ -40,110 +34,58 @@ export function IdleStateReport({ epoch }: { epoch: number }) {
   return null;
 }
 
-interface OrganizationChoice {
-  connections: LiveConnection[];
-  onSelect: (id: string) => void;
-  selectedId: string;
-}
-
-function OrganizationPicker({
-  connections,
-  isLocked,
-  onSelect,
-  selectedId,
-}: OrganizationChoice & { isLocked: boolean }) {
-  if (connections.length < 2) {
-    return (
-      <Text size="caption" tone="muted">
-        Records into {connections[0]?.organizationName}
-      </Text>
-    );
-  }
-  return (
-    <span className="flex items-center gap-2">
-      <Text id="live-organization" size="caption" tone="muted">
-        Records into
-      </Text>
-      <Select
-        disabled={isLocked}
-        items={connections.map((connection) => ({
-          label: connection.organizationName,
-          value: connection.id,
-        }))}
-        onValueChange={(id) => {
-          if (id) {
-            onSelect(id);
-          }
-        }}
-        value={selectedId}
-      >
-        <SelectTrigger
-          aria-labelledby="live-organization"
-          size="sm"
-          title={
-            isLocked ? "Stop the recording to switch organization" : undefined
-          }
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {connections.map((connection) => (
-            <SelectItem key={connection.id} value={connection.id}>
-              {connection.organizationName}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </span>
-  );
-}
-
-function ReadyRecorder({
+function UnreachableWorkspace({
   activity,
-  commands,
-  epoch,
-  picker,
-  workspace,
+  choice,
+  isLinkLost,
+  message,
+  onRetry,
 }: {
   activity: HubActivity;
-  commands: CommandChannel;
-  epoch: number;
-  picker: OrganizationChoice;
-  workspace: SessionWorkspace;
+  choice: OrganizationChoice;
+  isLinkLost: boolean;
+  message: string;
+  onRetry: () => void;
 }) {
-  const { phase } = useRecorderSnapshot(workspace.recorder);
+  const [isChoosing, setIsChoosing] = useState(false);
+  if (isChoosing) {
+    return (
+      <WaitingDial activity={activity} isLinkLost={isLinkLost}>
+        <OrganizationPage {...choice} onBack={() => setIsChoosing(false)} />
+      </WaitingDial>
+    );
+  }
+  const exit =
+    choice.connections.length > 1
+      ? { label: "Switch organization", onClick: () => setIsChoosing(true) }
+      : { label: "Close", onClick: closeWindow };
   return (
-    <SessionWorkspaceProvider workspace={workspace}>
-      <div className="flex flex-col gap-2">
-        <OrganizationPicker
-          {...picker}
-          isLocked={phase !== "idle" && phase !== "failed"}
+    <WaitingDial
+      activity={activity}
+      isLinkLost={isLinkLost}
+      notice={
+        <DialNotice
+          actions={[{ label: "Try again", onClick: onRetry }, exit]}
+          description={message}
+          isFailure
         />
-        <LiveControls
-          activity={activity}
-          commands={commands}
-          epoch={epoch}
-          workspace={workspace}
-        />
-      </div>
-    </SessionWorkspaceProvider>
+      }
+    />
   );
 }
 
 export function LiveRecorder({
   activity,
+  choice,
   commands,
-  connections,
   epoch,
-  onSelect,
-  selectedId,
+  isLinkLost,
 }: {
   activity: HubActivity;
+  choice: OrganizationChoice;
   commands: CommandChannel;
-  connections: LiveConnection[];
   epoch: number;
-  onSelect: (id: string) => void;
-  selectedId: string;
+  isLinkLost: boolean;
 }) {
   const [transport] = useState(devtoolsTransport);
   const [isRevoked, setIsRevoked] = useState(false);
@@ -153,38 +95,39 @@ export function LiveRecorder({
     surface: "live",
     transport,
   });
-  const picker = { connections, onSelect, selectedId };
 
   if (loaded.kind === "ready") {
     return (
-      <ReadyRecorder
-        activity={activity}
-        commands={commands}
-        epoch={epoch}
-        picker={picker}
-        workspace={loaded.workspace}
-      />
+      <SessionWorkspaceProvider workspace={loaded.workspace}>
+        <LiveControls
+          activity={activity}
+          choice={choice}
+          commands={commands}
+          epoch={epoch}
+          isLinkLost={isLinkLost}
+          workspace={loaded.workspace}
+        />
+      </SessionWorkspaceProvider>
     );
   }
   return (
-    <div className="flex flex-col gap-2">
-      <OrganizationPicker {...picker} isLocked={false} />
+    <>
       <IdleStateReport epoch={epoch} />
       {loaded.kind === "failed" ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <Text tone="destructive">
-            {isRevoked ? REVOKED_MESSAGE : loaded.message}
-          </Text>
-          <Button onClick={loaded.retry} size="sm" variant="surface">
-            Try again
-          </Button>
-        </div>
+        <UnreachableWorkspace
+          activity={activity}
+          choice={choice}
+          isLinkLost={isLinkLost}
+          message={isRevoked ? REVOKED_MESSAGE : loaded.message}
+          onRetry={loaded.retry}
+        />
       ) : (
-        <span className="flex items-center gap-2">
-          <Spinner aria-hidden="true" size="xs" />
-          <Text tone="muted">Connecting to Reflet…</Text>
-        </span>
+        <WaitingDial
+          activity={activity}
+          busyLabel="Connecting to Reflet"
+          isLinkLost={isLinkLost}
+        />
       )}
-    </div>
+    </>
   );
 }

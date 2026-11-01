@@ -211,12 +211,14 @@ npx reflet-cli prompt live`}
         />
         <DocsText>
           live starts a loopback-only hub at 127.0.0.1:47417 and opens its
-          browser window, preferring Chrome or Edge. Connect through an app's
-          devtools footer first, then choose the organization and press Record
-          in the Live window. Grant microphone access when requested. Move
-          between connected apps while speaking. This is a Reflet recording
-          session, not a local-only audio recorder; captures and transcription
-          use the connected organization's backend. See the{" "}
+          window: on macOS a small floating dial that stays above your apps,
+          elsewhere a browser window, preferring Chrome or Edge. Connect through
+          an app's devtools footer first, then press Record on the dial. The
+          dial names the organization it records into; press that name to pick
+          another. Grant microphone access when requested. Move between
+          connected apps while speaking. This is a Reflet recording session, not
+          a local-only audio recorder; captures and transcription use the
+          connected organization's backend. See the{" "}
           <DocsLink href="/docs/sdk/devtools#sessions">
             session privacy and capture reference
           </DocsLink>

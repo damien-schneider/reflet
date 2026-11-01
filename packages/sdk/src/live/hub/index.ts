@@ -19,4 +19,4 @@ export {
 } from "./hub-file";
 export { type LiveHub, startLiveHub } from "./hub-server";
 export type { LiveHubEvent } from "./hub-state";
-export { openLiveWindow } from "./open-window";
+export { type OpenLiveWindowOptions, openLiveWindow } from "./open-window";

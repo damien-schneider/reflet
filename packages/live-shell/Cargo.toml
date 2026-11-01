@@ -1,0 +1,20 @@
+[package]
+name = "reflet-live-shell"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "reflet-live-shell"
+path = "src/main.rs"
+
+[dependencies]
+tao = "=0.35.3"
+wry = { version = "=0.55.1", features = ["transparent"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

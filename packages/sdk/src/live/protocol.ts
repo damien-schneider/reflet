@@ -4,6 +4,7 @@ import { sessionLimitsSchema } from "../sessions/protocol";
 export const LIVE_HUB_DEFAULT_PORT = 47_417;
 export const LIVE_APP_HEADER = "x-reflet-live-app";
 export const LIVE_ROUTE_PREFIX = "/live";
+export const LIVE_DIAL_WINDOW = { height: 340, width: 248 } as const;
 
 export const LIVE_HUB_ENDPOINTS = {
   command: "/live/command",

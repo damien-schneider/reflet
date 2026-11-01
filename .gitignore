@@ -56,3 +56,4 @@ test-results
 
 # Widget build output
 apps/web/public/widget/
+.reflet/live/

@@ -56,7 +56,7 @@ npx reflet-cli live
 npx reflet-cli live watch --json
 ```
 
-The local hub hands passages and cited screenshots to the agent. Recording/transcription uses the connected organization's backend, not local-only storage. `watch` writes a cursor and screenshots under `.reflet/live/`; keep this directory out of git. Ctrl+C requests a recording stop and waits briefly for uploads.
+On macOS, `live` opens its window as a small floating dial that stays above your apps; elsewhere it opens a Chrome or Edge app window. The local hub hands passages and cited screenshots to the agent. Recording/transcription uses the connected organization's backend, not local-only storage. `watch` writes a cursor and screenshots under `.reflet/live/`; keep this directory out of git. Ctrl+C requests a recording stop and waits briefly for uploads.
 
 ## Reference
 

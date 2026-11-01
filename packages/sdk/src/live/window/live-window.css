@@ -1,4 +1,10 @@
 @import "tailwindcss";
 @import "@ctrl-ui/react/styles/index.css";
+@import "./floating-dial/floating-dial.css";
 @source "./";
 @source "../../../node_modules/@ctrl-ui/react/dist";
+
+html,
+body {
+  background: transparent;
+}

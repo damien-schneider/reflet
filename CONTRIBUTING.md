@@ -6,6 +6,8 @@ Use a development Convex deployment and test service credentials. Do not connect
 
 You need Git, Bun 1.3.14 (the version in `package.json`), and Node.js `^22.18.0 || >=24.11.0`. The setup below uses a managed [Convex](https://www.convex.dev/) project. See [self-hosting](docs/self-hosting.md) for deployment options.
 
+Building on macOS also needs a [Rust](https://rustup.rs/) toolchain with the `aarch64-apple-darwin` and `x86_64-apple-darwin` targets (`rustup target add aarch64-apple-darwin x86_64-apple-darwin`) for the Reflet Live window shell in `packages/live-shell`. Other systems skip it.
+
 ```sh
 git clone https://github.com/damien-schneider/reflet.git
 cd reflet
@@ -45,6 +47,8 @@ bun run dev
 Open [http://localhost:3003](http://localhost:3003). The web script binds to `127.0.0.1`; Convex watches backend changes, and the widget packages rebuild their static bundles. The first web start fetches missing Switzer font files from Fontshare, so it needs network access.
 
 To run only one part, use `bun run dev:web` or `bun run dev:server`. Restart the web process after changing its environment.
+
+To try Reflet Live from your checkout, run `bun run dev:live`. It builds the SDK and CLI, starts the Live hub, and opens its window. Stop it with Ctrl+C and run it again after changing Live code.
 
 ## Find the code
 

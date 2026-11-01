@@ -27,6 +27,24 @@ export function Svg({
   );
 }
 
+export function RefletMarkIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      fill="currentColor"
+      height={size}
+      viewBox="-1 -1 26 26"
+      width={size}
+    >
+      <path
+        clipRule="evenodd"
+        d="M12.2 24C13.5 23.8 14.9 23.2 16.2 22.2C16.7 21.9 22.9 15.8 23.2 15.3C24.6 13.5 24.2 10.5 22.2 7.8C21.9 7.4 15.8 1.2 15.3 0.8C13.5 -0.6 10.5 -0.2 7.8 1.8C7.4 2.1 1.2 8.3 0.8 8.7C-0.6 10.6 -0.2 13.6 1.8 16.2C2.1 16.7 8.3 22.9 8.7 23.2C9.6 23.9 10.9 24.2 12.2 24ZM8.9 20.6C6.2 20.3 4.1 18.4 3.5 15.8L3.4 15.4L3.3 12.2C3.3 9.1 3.3 8.9 3.4 8.4C3.9 5.8 5.8 3.9 8.4 3.4C8.9 3.3 9.1 3.3 12.2 3.3L15.4 3.4L15.8 3.5C18.5 4.1 20.3 6.2 20.6 9C20.7 9.8 20.6 15.1 20.5 15.5C20 18.3 17.8 20.3 15 20.6C14.6 20.6 9.3 20.6 8.9 20.6Z"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+}
+
 export function ChatIcon({ className }: { className?: string }) {
   return (
     <Svg className={className} size={15}>
@@ -81,6 +99,14 @@ export function ArrowIcon() {
   return (
     <Svg>
       <path d="M5 19 19 5M11 5h8v8" />
+    </Svg>
+  );
+}
+
+export function ArrowLeftIcon() {
+  return (
+    <Svg>
+      <path d="M19 12H5M11 6l-6 6 6 6" />
     </Svg>
   );
 }

@@ -41,10 +41,12 @@
     "check-types": "tsc --noEmit",
     "dev": "tsdown --watch",
     "lint": "cd ../.. && bun x ultracite check packages/cli",
-    "prepublishOnly": "npm run build",
-    "test:unit": "vitest run"
+    "prepublishOnly": "npm run build && npm run verify:live-shell",
+    "test:unit": "vitest run",
+    "verify:live-shell": "test -x dist/live-shell/reflet-live-shell || { echo 'dist/live-shell/reflet-live-shell is missing or not executable: build @reflet/live-shell on macOS first.' >&2; exit 1; }"
   },
   "devDependencies": {
+    "@reflet/live-shell": "workspace:*",
     "@types/node": "^26.1.2",
     "reflet-sdk": "workspace:*",
     "tsdown": "catalog:",

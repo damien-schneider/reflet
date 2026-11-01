@@ -65,8 +65,12 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
+const LIVE_SHELL_PATH = fileURLToPath(
+  new URL("./live-shell/reflet-live-shell", import.meta.url)
+);
+
 async function openWindow(url: string): Promise<boolean> {
-  const opened = await openLiveWindow(url);
+  const opened = await openLiveWindow(url, { shellPath: LIVE_SHELL_PATH });
   if (!opened) {
     say(`${SYMBOL.warn} Open ${url} in Chrome yourself.`);
   }

@@ -153,12 +153,13 @@
     },
     "packages/cli": {
       "name": "reflet-cli",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "bin": {
-        "reflet": "./dist/index.js",
-        "reflet-cli": "./dist/index.js",
+        "reflet": "dist/index.js",
+        "reflet-cli": "dist/index.js",
       },
       "devDependencies": {
+        "@reflet/live-shell": "workspace:*",
         "@types/node": "^26.1.2",
         "reflet-sdk": "workspace:*",
         "tsdown": "catalog:",
@@ -215,9 +216,13 @@
         "vitest": "catalog:",
       },
     },
+    "packages/live-shell": {
+      "name": "@reflet/live-shell",
+      "version": "0.0.0",
+    },
     "packages/sdk": {
       "name": "reflet-sdk",
-      "version": "0.8.0",
+      "version": "0.8.2",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@zumer/snapdom": "^3.0.0",
@@ -738,6 +743,8 @@
     "@reflet/env": ["@reflet/env@workspace:packages/env"],
 
     "@reflet/feedback-widget": ["@reflet/feedback-widget@workspace:packages/feedback-widget"],
+
+    "@reflet/live-shell": ["@reflet/live-shell@workspace:packages/live-shell"],
 
     "@reflet/survey-core": ["@reflet/survey-core@workspace:packages/survey-core"],
 

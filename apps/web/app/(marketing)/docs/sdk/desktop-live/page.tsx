@@ -196,8 +196,8 @@ const EXPORTS = [
   },
   {
     cells: [
-      "openLiveWindow(url), liveWindowUrl(port)",
-      "Compute the localhost URL or open it, preferring Chrome/Edge app mode. openLiveWindow returns whether the launcher started.",
+      "openLiveWindow(url, { shellPath? }), liveWindowUrl(port)",
+      "Compute the localhost URL or open it. On macOS, an existing shellPath (the reflet-live-shell binary shipped with reflet-cli) opens the floating dial; otherwise Chrome/Edge app mode. openLiveWindow returns whether the launcher started.",
     ],
     key: "window",
   },

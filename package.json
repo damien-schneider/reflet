@@ -24,6 +24,7 @@
     "check-types": "turbo check-types",
     "clean": "rm -rf node_modules .turbo .next && bun install --frozen-lockfile",
     "dev": "turbo dev",
+    "dev:live": "turbo -F reflet-cli build --ui=stream --output-logs=errors-only && node packages/cli/dist/index.js live",
     "dev:server": "turbo -F @reflet/backend dev",
     "dev:setup": "turbo -F @reflet/backend dev:setup",
     "dev:web": "turbo -F web dev",

@@ -2,10 +2,15 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
+import { LIVE_DIAL_WINDOW } from "../protocol";
 
 interface Launcher {
   args: string[];
   command: string;
+}
+
+export interface OpenLiveWindowOptions {
+  shellPath?: string;
 }
 
 const MAC_BROWSERS = ["Google Chrome", "Microsoft Edge"];
@@ -66,10 +71,19 @@ function windowsLauncher(url: string): Launcher {
   return { args: ["/c", "start", '""', url], command: "cmd" };
 }
 
-function launcherFor(url: string): Launcher {
+function launcherFor(url: string, shellPath: string | undefined): Launcher {
   switch (process.platform) {
     case "darwin":
-      return macLauncher(url);
+      return shellPath && existsSync(shellPath)
+        ? {
+            args: [
+              url,
+              String(LIVE_DIAL_WINDOW.width),
+              String(LIVE_DIAL_WINDOW.height),
+            ],
+            command: shellPath,
+          }
+        : macLauncher(url);
     case "win32":
       return windowsLauncher(url);
     default:
@@ -77,8 +91,11 @@ function launcherFor(url: string): Launcher {
   }
 }
 
-export function openLiveWindow(url: string): Promise<boolean> {
-  const { args, command } = launcherFor(url);
+export function openLiveWindow(
+  url: string,
+  options: OpenLiveWindowOptions = {}
+): Promise<boolean> {
+  const { args, command } = launcherFor(url, options.shellPath);
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       detached: true,
