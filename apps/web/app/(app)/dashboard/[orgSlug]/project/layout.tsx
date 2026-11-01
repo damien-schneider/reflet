@@ -37,11 +37,6 @@ export default function ProjectLayout({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  const currentMember = useQuery(
-    api.organizations.members.getCurrentMember,
-    org ? { organizationId: org._id } : "skip"
-  );
-
   if (org === undefined) {
     return <ProjectLoading />;
   }
@@ -50,12 +45,7 @@ export default function ProjectLayout({
     return <OrgNotFound />;
   }
 
-  if (currentMember === undefined) {
-    return <ProjectLoading />;
-  }
-
-  const isAdmin =
-    currentMember?.role === "admin" || currentMember?.role === "owner";
+  const isAdmin = org.role === "admin" || org.role === "owner";
 
   return (
     <ProjectContext value={{ isAdmin, organizationId: org._id, orgSlug }}>

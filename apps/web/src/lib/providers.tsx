@@ -2,12 +2,12 @@
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { env } from "@reflet/env/web";
-import { ConvexReactClient } from "convex/react";
 import dynamic from "next/dynamic";
 import type { PostHog } from "posthog-js";
 import { useEffect, useState } from "react";
 import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 import { authClient } from "./auth-client";
+import { KeepAliveConvexClient } from "./keep-alive-convex-client";
 
 const PostHogIdentifier = dynamic(
   () =>
@@ -22,7 +22,7 @@ if (!convexUrl) {
   throw new Error("NEXT_PUBLIC_CONVEX_URL is not set");
 }
 
-const convex = new ConvexReactClient(convexUrl);
+const convex = new KeepAliveConvexClient(convexUrl);
 
 const isPostHogConfigured =
   Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) && env.NODE_ENV !== "development";

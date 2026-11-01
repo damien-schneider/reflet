@@ -18,19 +18,12 @@ export default function NewReleasePage({
 }) {
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
-  const currentMember = useQuery(
-    api.organizations.members.getCurrentMember,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
-
-  const isAdmin =
-    currentMember?.role === "admin" || currentMember?.role === "owner";
 
   if (org === null) {
     return <OrgNotFound />;
   }
 
-  if (currentMember && !isAdmin) {
+  if (org?.role === "member") {
     return (
       <ReleasePageMessage
         description="Ask an admin to create releases for this organization."

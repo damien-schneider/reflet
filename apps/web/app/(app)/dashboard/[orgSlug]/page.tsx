@@ -15,13 +15,6 @@ export default function OrgDashboard({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  const membership = useQuery(
-    api.organizations.members.getMembership,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
-  const isMember = !!membership;
-  const isAdmin = membership?.role === "admin" || membership?.role === "owner";
-
   if (org === undefined) {
     return <LoadingState />;
   }
@@ -30,6 +23,8 @@ export default function OrgDashboard({
     return <OrgNotFound />;
   }
 
+  const isMember = org.role !== null;
+  const isAdmin = org.role === "admin" || org.role === "owner";
   const primaryColor = org.primaryColor;
   const defaultView = org.feedbackSettings?.defaultView ?? "feed";
 

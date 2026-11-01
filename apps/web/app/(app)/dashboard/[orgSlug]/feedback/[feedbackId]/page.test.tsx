@@ -31,6 +31,7 @@ const mockOrg = {
   isPublic: true,
   name: "My Organization",
   primaryColor: "#6366f1",
+  role: "member" as const,
   slug: "my-organization",
   subscriptionTier: "free" as const,
 };
@@ -78,7 +79,6 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
     },
     organizations: {
       members: {
-        getMembership: "members.getMembership",
         list: "members.list",
       },
       queries: { getBySlug: "organizations.getBySlug" },
@@ -295,9 +295,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -398,9 +395,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "organizations.getBySlug") {
         return mockOrg;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
     });
 
     render(
@@ -488,9 +482,6 @@ describe("FeedbackDetailPage", () => {
       }
       if (queryName === "comments.list") {
         return mockComments;
-      }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
       }
       if (queryName === "members.list") {
         return [];
@@ -593,9 +584,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return commentsWithData;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -664,16 +652,13 @@ describe("FeedbackDetailPage", () => {
         return mockFeedback;
       }
       if (queryName === "organizations.getBySlug") {
-        return mockOrg;
+        return { ...mockOrg, role: "admin" };
       }
       if (queryName === "organization_statuses.list") {
         return mockStatuses;
       }
       if (queryName === "comments.list") {
         return mockComments;
-      }
-      if (queryName === "members.getMembership") {
-        return { role: "admin" };
       }
       if (queryName === "members.list") {
         return [
@@ -728,9 +713,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -770,9 +752,6 @@ describe("FeedbackDetailPage", () => {
       }
       if (queryName === "comments.list") {
         return mockComments;
-      }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
       }
       if (queryName === "members.list") {
         return [];
@@ -826,9 +805,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return commentsWithData;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -878,9 +854,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return commentsWithNullAuthor;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -921,9 +894,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "comments.list") {
         return mockComments;
       }
-      if (queryName === "members.getMembership") {
-        return { role: "member" };
-      }
       if (queryName === "members.list") {
         return [];
       }
@@ -959,10 +929,9 @@ describe("FeedbackDetailPage GitHub issue", () => {
         "comments.list": mockComments,
         "feedback.get": mockFeedback,
         "github.getConnectionStatus": { hasRepository: true },
-        "members.getMembership": { role: "admin" },
         "members.list": [],
         "organization_statuses.list": mockStatuses,
-        "organizations.getBySlug": mockOrg,
+        "organizations.getBySlug": { ...mockOrg, role: "admin" },
         ...overrides,
       };
       return responses[String(queryFn)];

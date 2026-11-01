@@ -11,6 +11,7 @@ import {
 import { GithubLogo } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
 import { useQuery } from "convex/react";
 import { use, useState } from "react";
 import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
@@ -74,22 +75,18 @@ function ChangelogContent({
   orgSlug,
   view,
 }: {
-  org: Doc<"organizations">;
+  org: MemberOrganization;
   orgSlug: string;
   view: ChangelogTab;
 }) {
   const organizationId = org._id;
-  const currentMember = useQuery(api.organizations.members.getCurrentMember, {
-    organizationId,
-  });
   const githubStatus = useQuery(
     api.integrations.github.queries.getConnectionStatus,
     { organizationId }
   );
   const [showSetupWizard, setShowSetupWizard] = useState(false);
 
-  const isAdmin =
-    currentMember?.role === "admin" || currentMember?.role === "owner";
+  const isAdmin = org.role === "admin" || org.role === "owner";
   const isGithubConnected = Boolean(githubStatus?.isConnected);
   const hasConfiguredReleases =
     org.changelogSettings?.targetBranch !== undefined;

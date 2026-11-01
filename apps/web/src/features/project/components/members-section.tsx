@@ -17,6 +17,7 @@ import { SettingsPage, SettingsSection } from "./settings-page";
 interface MembersSectionProps {
   isAdmin: boolean;
   organizationId: Id<"organizations">;
+  orgSlug: string;
 }
 
 function CountBadge({ count }: { count: number | undefined }) {
@@ -33,14 +34,14 @@ function CountBadge({ count }: { count: number | undefined }) {
 export function MembersSection({
   isAdmin,
   organizationId,
+  orgSlug,
 }: MembersSectionProps) {
   const members = useQuery(api.organizations.members.list, { organizationId });
   const invitations = useQuery(api.organizations.invitations.listPending, {
     organizationId,
   });
-  const currentMember = useQuery(api.organizations.members.getCurrentMember, {
-    organizationId,
-  });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
+  const isOwner = org?.role === "owner";
   const removeMember = useMutation(api.organizations.members.remove);
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -84,7 +85,7 @@ export function MembersSection({
       >
         <div>
           <MemberList
-            isOwner={currentMember?.role === "owner"}
+            isOwner={isOwner}
             members={members}
             onRemoveMember={(id, name) => setRemovingMember({ id, name })}
           />
@@ -112,7 +113,7 @@ export function MembersSection({
       </SettingsSection>
 
       <InviteMemberDialog
-        canInviteAdmins={currentMember?.role === "owner"}
+        canInviteAdmins={isOwner}
         onOpenChange={setIsInviteDialogOpen}
         open={isInviteDialogOpen}
         organizationId={organizationId}

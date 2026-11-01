@@ -12,7 +12,8 @@ import {
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Text } from "@ctrl-ui/react/ui/typography";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { formatDistanceToNow } from "date-fns";
@@ -49,7 +50,7 @@ function FeedbackDetail({
   orgSlug,
 }: {
   feedbackId: Id<"feedback">;
-  org: Doc<"organizations">;
+  org: MemberOrganization;
   orgSlug: string;
 }) {
   const feedback = useQuery(api.feedback.queries.get, { id: feedbackId });
@@ -90,14 +91,12 @@ function FeedbackDetail({
   );
 }
 
-function useOrgTriageData(organizationId: Id<"organizations">) {
+function useOrgTriageData(org: MemberOrganization) {
+  const organizationId = org._id;
   const statuses = useQuery(api.organizations.statuses.list, {
     organizationId,
   });
-  const membership = useQuery(api.organizations.members.getMembership, {
-    organizationId,
-  });
-  const isAdmin = membership?.role === "admin" || membership?.role === "owner";
+  const isAdmin = org.role === "admin" || org.role === "owner";
   const members = useQuery(
     api.organizations.members.list,
     isAdmin ? { organizationId } : "skip"
@@ -111,12 +110,12 @@ function FeedbackDetailHeader({
   orgSlug,
 }: {
   feedback: NonNullable<FunctionReturnType<typeof api.feedback.queries.get>>;
-  org: Doc<"organizations">;
+  org: MemberOrganization;
   orgSlug: string;
 }) {
   const organizationId = org._id;
   const feedbackId = feedback._id;
-  const { isAdmin, members, statuses } = useOrgTriageData(organizationId);
+  const { isAdmin, members, statuses } = useOrgTriageData(org);
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const assignFeedback = useMutation(api.feedback.triage_actions.assign);
   const { isCreatingGithubIssue, onCreateGithubIssue } = useCreateGithubIssue({

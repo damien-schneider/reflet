@@ -23,6 +23,9 @@ const nextConfig: NextConfig = {
       "@daypicker/react",
       "cmdk",
     ],
+    staleTimes: {
+      dynamic: 300,
+    },
   },
   async headers() {
     return [
