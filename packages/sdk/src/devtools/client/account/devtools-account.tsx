@@ -1,10 +1,11 @@
 import type { WorkspaceState } from "../../../sessions/ui/session-workspace";
+import { SignOutIcon } from "../devtools-icons";
 import { reportFailure } from "../notices";
 import { disconnectBoard } from "../route/dev-route";
 import { CONNECT_REQUIREMENT } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
 import type { DevtoolsSessions } from "../sessions/devtools-sessions";
-import { AccountFooter, AccountNote } from "./account-footer";
+import { AccountFooter, AccountNote, OrganizationMark } from "./account-footer";
 import { ConnectFooter } from "./connect-footer";
 
 const personOf = (workspace: WorkspaceState) =>
@@ -48,8 +49,12 @@ export function DevtoolsAccount({
         actions={account.accounts.map((listed) => ({
           checked: listed.id === account.chosen.id,
           label: listed.organizationName,
+          leading: <OrganizationMark name={listed.organizationName} />,
           onSelect: () => account.choose(listed.id),
         }))}
+        badge="Sessions only"
+        groupLabel="Record sessions as"
+        note="Connected from your other apps on this machine. Adding to a board needs this app's own connection."
         organizationName={account.chosen.organizationName}
         person={personOf(sessions.state)}
       />
@@ -71,6 +76,7 @@ export function DevtoolsAccount({
       actions={[
         {
           label: "Disconnect",
+          leading: <SignOutIcon />,
           onSelect: () => disconnect(refresh),
           variant: "danger",
         },

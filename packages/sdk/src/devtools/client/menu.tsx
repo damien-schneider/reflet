@@ -15,6 +15,7 @@ export interface MenuItem {
   /** Present on every item of a single-choice menu: the item reads as a radio. */
   checked?: boolean;
   label: string;
+  leading?: ReactNode;
   onSelect: () => void;
   variant?: "danger";
 }
@@ -130,10 +131,16 @@ function MenuItemButton({
         tabIndex={-1}
         type="button"
       >
+        {item.leading}
         {item.label}
       </button>
     );
   }
+  const check = (
+    <span className="dt-menu-check">
+      {item.checked && <CheckIcon size={14} />}
+    </span>
+  );
   return (
     <button
       aria-checked={item.checked === true}
@@ -143,20 +150,66 @@ function MenuItemButton({
       tabIndex={-1}
       type="button"
     >
-      <span className="dt-menu-check">
-        {item.checked && <CheckIcon size={14} />}
-      </span>
-      {item.label}
+      {item.leading ? (
+        <>
+          {item.leading}
+          <span className="dt-menu-text">{item.label}</span>
+          {check}
+        </>
+      ) : (
+        <>
+          {check}
+          {item.label}
+        </>
+      )}
     </button>
   );
 }
 
-export function Menu({
+function MenuItems({
   items,
+  label,
+  onChosen,
+}: {
+  items: MenuItem[];
+  label: string | undefined;
+  onChosen: () => void;
+}) {
+  const labelId = useId();
+  const hasChoices = items.some((item) => item.checked !== undefined);
+  const buttons = items.map((item) => (
+    <MenuItemButton
+      hasChoices={hasChoices}
+      item={item}
+      key={item.label}
+      onChosen={onChosen}
+    />
+  ));
+  if (label === undefined) {
+    return buttons;
+  }
+  return (
+    <fieldset aria-labelledby={labelId} className="dt-menu-group">
+      <p className="dt-menu-label" id={labelId}>
+        {label}
+      </p>
+      {buttons}
+    </fieldset>
+  );
+}
+
+export function Menu({
+  groupLabel,
+  header,
+  items,
+  note,
   placement = "below",
   trigger,
 }: {
+  groupLabel?: string;
+  header?: ReactNode;
   items: MenuItem[];
+  note?: ReactNode;
   placement?: "above" | "below";
   trigger: MenuTrigger;
 }) {
@@ -173,7 +226,6 @@ export function Menu({
   useCloseOnOutsidePointer(containerRef, { close, isOpen });
   useFocusOnOpen(listRef, isOpen);
   useEscapeToClose(listRef, { isOpen, onEscape: closeAndRefocus });
-  const hasChoices = items.some((item) => item.checked !== undefined);
 
   const moveWithKeys = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Tab") {
@@ -217,14 +269,23 @@ export function Menu({
           ref={listRef}
           role="menu"
         >
-          {items.map((item) => (
-            <MenuItemButton
-              hasChoices={hasChoices}
-              item={item}
-              key={item.label}
-              onChosen={closeAndRefocus}
-            />
-          ))}
+          {header && (
+            <>
+              <div className="dt-menu-head">{header}</div>
+              <hr className="dt-menu-sep" />
+            </>
+          )}
+          <MenuItems
+            items={items}
+            label={groupLabel}
+            onChosen={closeAndRefocus}
+          />
+          {note && (
+            <>
+              <hr className="dt-menu-sep" />
+              <p className="dt-menu-note">{note}</p>
+            </>
+          )}
         </div>
       )}
     </div>

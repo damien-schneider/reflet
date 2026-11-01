@@ -36,12 +36,42 @@ function Avatar({ image, name }: { image: string | null; name: string }) {
   );
 }
 
+export function OrganizationMark({ name }: { name: string }) {
+  return (
+    <span aria-hidden="true" className="dt-org-mark">
+      {initials(name).charAt(0)}
+    </span>
+  );
+}
+
+function AccountHeader({
+  name,
+  person,
+}: {
+  name: string;
+  person: AccountPerson | null;
+}) {
+  const email = person?.email && person.email !== name ? person.email : null;
+  return (
+    <>
+      <span className="dt-account-name">{name}</span>
+      {email && <span className="dt-meta">{email}</span>}
+    </>
+  );
+}
+
 export function AccountFooter({
   actions,
+  badge,
+  groupLabel,
+  note,
   organizationName,
   person,
 }: {
   actions: MenuItem[];
+  badge?: string;
+  groupLabel?: string;
+  note?: string;
   organizationName: string;
   person: AccountPerson | null;
 }) {
@@ -53,13 +83,19 @@ export function AccountFooter({
         <span className="dt-account-name">{name ?? organizationName}</span>
         {name && <span className="dt-meta">{organizationName}</span>}
       </span>
+      {badge && <span className="dt-chip">{badge}</span>}
       <ChevronUpDownIcon />
     </>
   );
   return (
     <div className="dt-sheet-account">
       <Menu
+        groupLabel={groupLabel}
+        header={
+          <AccountHeader name={name ?? organizationName} person={person} />
+        }
         items={actions}
+        note={note}
         placement="above"
         trigger={{
           className: "dt-account",

@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Devtools account menu: opens on your name and email. Without the app's own connection, it lists the organizations under "Record sessions as", each with its initial, and says why Add to board is off; the footer carries a "Sessions only" badge. Disconnect has an icon.
+
 ## [0.8.2] - 2026-10-26
 
 ### Added

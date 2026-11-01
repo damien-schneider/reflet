@@ -229,6 +229,20 @@ a.dt-open { color: inherit; text-decoration: none; }
 .dt-menu-item:hover, .dt-menu-item:focus-visible { background: var(--rf-bg-hover); outline: none; }
 .dt-menu-item[data-variant="danger"] { color: var(--rf-danger); }
 .dt-menu-check { display: inline-flex; width: 14px; color: var(--rf-accent-ink); }
+.dt-menu-item > svg { flex: none; width: 15px; height: 15px; color: var(--rf-text-muted); }
+.dt-menu-item[data-variant="danger"] > svg { color: currentColor; }
+.dt-menu-item:has(> .dt-org-mark) { gap: 8px; height: 34px; padding-left: 7px; }
+.dt-menu-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dt-menu-head { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 6px 10px 4px; line-height: 1.35; }
+.dt-menu-head > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-menu-sep { flex: none; height: 1px; margin: 4px -4px; border: 0; background: var(--rf-border); }
+.dt-menu-group { display: flex; flex-direction: column; min-width: 0; margin: 0; padding: 0; border: 0; }
+.dt-menu-label { margin: 0; padding: 4px 10px; color: var(--rf-text-muted); font-size: 11.5px; font-weight: 500; }
+.dt-menu-note { margin: 0; padding: 4px 10px 6px; color: var(--rf-text-muted); font-size: 11.5px; line-height: 1.45; }
+.dt-org-mark {
+  display: inline-flex; flex: none; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px;
+  background: color-mix(in srgb, var(--rf-accent) 14%, transparent); color: var(--rf-accent-ink); font-size: 10.5px; font-weight: 650;
+}
 .dt-sheet-account { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 8px 8px; }
 .dt-sheet-body:not(:has(> .dt-sheet-foot)) + .dt-sheet-account { padding-top: 8px; border-top: 1px solid var(--rf-border); }
 .dt-sheet-account > .dt-meta { flex: 1 1 160px; padding-inline: 4px; }
