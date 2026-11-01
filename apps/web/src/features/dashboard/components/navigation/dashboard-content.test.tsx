@@ -31,6 +31,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("convex/react", () => ({
+  useMutation: () => vi.fn(),
   useQuery: (query: Parameters<typeof getFunctionName>[0]) => {
     switch (getFunctionName(query)) {
       case "auth/queries:getCurrentUser":

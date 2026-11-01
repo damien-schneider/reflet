@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { SidebarMenuButton, SidebarMenuItem } from "@ctrl-ui/react/ui/sidebar";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { Globe } from "@phosphor-icons/react";
@@ -9,11 +9,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 
-interface MakePublicBannerProps {
-  orgId: Id<"organizations">;
-}
-
-export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
+export function MakePublicItem({ orgId }: { orgId: Id<"organizations"> }) {
   const updateOrg = useMutation(api.organizations.mutations.update);
   const [isMakingPublic, setIsMakingPublic] = useState(false);
 
@@ -41,26 +37,18 @@ export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
     setIsMakingPublic(false);
   };
 
+  const label = isMakingPublic ? "Making public…" : "Make organization public";
+
   return (
-    <div className="px-2 pb-2 group-data-[collapsible=icon]:hidden">
-      <Button
-        className="w-full justify-start"
+    <SidebarMenuItem>
+      <SidebarMenuButton
         disabled={isMakingPublic}
         onClick={handleMakePublic}
-        size="xs"
-        variant="ghost"
+        tooltip={label}
       >
-        {isMakingPublic ? (
-          <Spinner data-icon="inline-start" size="xs" />
-        ) : (
-          <Globe
-            aria-hidden="true"
-            className="size-4"
-            data-icon="inline-start"
-          />
-        )}
-        {isMakingPublic ? "Making public…" : "Make organization public"}
-      </Button>
-    </div>
+        {isMakingPublic ? <Spinner size="xs" /> : <Globe aria-hidden="true" />}
+        <span className="group-data-[collapsible=icon]:sr-only">{label}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

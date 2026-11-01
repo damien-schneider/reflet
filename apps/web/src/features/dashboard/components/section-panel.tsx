@@ -2,6 +2,7 @@ import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -10,14 +11,16 @@ import {
 } from "@ctrl-ui/react/ui/sidebar";
 import { ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
+import { FooterLinks } from "@/features/dashboard/components/navigation/footer-links";
 import {
   type NavItem,
   NavLink,
 } from "@/features/dashboard/components/navigation/nav-group";
 import { activeNavItem } from "@/features/dashboard/components/navigation/org-sections";
+import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 
 const SectionPanelSlot = createContext<HTMLElement | null>(null);
 
@@ -28,6 +31,15 @@ export function SectionPanelHost({ children }: { children: React.ReactNode }) {
       <div className="contents" ref={setSlot} />
       {children}
     </SectionPanelSlot>
+  );
+}
+
+function PanelFooter() {
+  const { orgSlug } = useParams<{ orgSlug?: string }>();
+  return (
+    <SidebarFooter className="mt-auto max-lg:hidden">
+      <FooterLinks org={useMemberOrganization(orgSlug)} />
+    </SidebarFooter>
   );
 }
 
@@ -50,6 +62,7 @@ export function SectionPanel({
     <Sidebar
       className={cn("hidden shrink-0 lg:flex", className)}
       collapsible="none"
+      data-section-panel=""
       label={title}
     >
       <SidebarHeader className="h-14 shrink-0 justify-center">
@@ -69,6 +82,7 @@ export function SectionPanel({
         </h2>
       </SidebarHeader>
       {children}
+      <PanelFooter />
       <SidebarRail aria-label="Resize panel" resizable />
     </Sidebar>,
     slot

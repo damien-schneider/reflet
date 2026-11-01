@@ -8,6 +8,7 @@ const auth = vi.hoisted(() => ({ isAuthenticated: false, isLoading: true }));
 const dashboard = vi.hoisted(() => ({ fails: false }));
 vi.mock("convex/react", () => ({
   useConvexAuth: () => auth,
+  useQuery: () => undefined,
 }));
 vi.mock("next/navigation", () => ({
   useParams: () => ({ orgSlug: "acme" }),

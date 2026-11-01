@@ -7,37 +7,22 @@ import {
 } from "@ctrl-ui/react/ui/sidebar";
 import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
-import { MakePublicBanner } from "@/features/dashboard/components/make-public-banner";
 import { AccountMenu } from "@/features/dashboard/components/navigation/account-menu";
+import { FooterLinks } from "@/features/dashboard/components/navigation/footer-links";
 import { OrgNavigation } from "@/features/dashboard/components/navigation/org-navigation";
-import { UpgradeLink } from "@/features/dashboard/components/navigation/upgrade-link";
 import { SidebarFooterContent } from "@/features/dashboard/components/sidebar-footer-content";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 
-function AdminActions({ org }: { org: MemberOrganization }) {
-  return (
-    <>
-      {org.isPublic ? null : <MakePublicBanner orgId={org._id} />}
-      {org.subscriptionTier === "free" ? (
-        <UpgradeLink orgSlug={org.slug} />
-      ) : null}
-    </>
-  );
-}
-
-function DashboardFooter({
-  org,
-  isAdmin,
-}: {
-  org: MemberOrganization | undefined;
-  isAdmin: boolean;
-}) {
+function DashboardFooter({ org }: { org: MemberOrganization | undefined }) {
   return (
     <SidebarFooter>
-      {org && isAdmin ? <AdminActions org={org} /> : null}
+      <FooterLinks
+        className="lg:[:root:has([data-section-panel])_&]:hidden"
+        org={org}
+      />
       <SidebarMenu>
-        <SidebarFooterContent isPublic={org?.isPublic} orgSlug={org?.slug} />
+        <SidebarFooterContent />
         <AccountMenu />
       </SidebarMenu>
     </SidebarFooter>
@@ -71,7 +56,7 @@ export function DashboardSidebar({
           </p>
         )}
       </SidebarContent>
-      <DashboardFooter isAdmin={isAdmin} org={org} />
+      <DashboardFooter org={org} />
     </Sidebar>
   );
 }
