@@ -74,16 +74,14 @@ export default function InstallationPage() {
         <DocsText>
           The command writes components/ui/feedback-sweep-corner.tsx, adds tag
           color tokens for light and dark themes, and installs motion,
-          @phosphor-icons/react, clsx and tailwind-merge. Milestone registry
-          items do not need the icon package. Check the CLI's changes if your
+          @phosphor-icons/react, clsx and tailwind-merge. The milestone track
+          does not need the icon package. Check the CLI's changes if your
           aliases or component directory differ.
         </DocsText>
         <DocsText>
-          Other registry names: feedback-minimal-notch, feedback-editorial-feed,
-          milestone-track-view, milestone-editorial-accordion and
-          milestone-dashboard-timeline. Replace the name before .json in the
-          command. Each component page includes its own install command and full
-          source for manual installation.
+          To install the milestone view, use milestone-track-view instead of
+          feedback-sweep-corner in the command. Each component page includes its
+          install command and full source for manual installation.
         </DocsText>
         <DocsText>
           Missing styling usually means Tailwind is not scanning the installed

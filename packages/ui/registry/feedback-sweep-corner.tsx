@@ -352,9 +352,7 @@ function SweepCornerFooter({
   time,
   className,
 }: SweepCornerFooterProps) {
-  const { voteType, upvotes, downvotes } = useSweepCornerContext();
-  const total = upvotes + downvotes;
-  const upPercent = total > 0 ? Math.round((upvotes / total) * 100) : 50;
+  const { voteType } = useSweepCornerContext();
 
   return (
     <div
@@ -382,25 +380,13 @@ function SweepCornerFooter({
         )}
       </AnimatePresence>
 
-      <div className="relative flex items-center gap-2 px-4 py-2">
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Chat aria-hidden className="h-3 w-3" />
-            {comments}
-            <span className="sr-only"> comments</span>
-          </span>
-          <span className="opacity-70">{time}</span>
-        </div>
-        <span className="text-[10px] text-muted-foreground/70 tabular-nums">
-          {upvotes}
-          <span aria-hidden>↑</span>
-          <span className="sr-only"> upvotes,</span> {downvotes}
-          <span aria-hidden>↓</span>
-          <span className="sr-only"> downvotes</span>
+      <div className="relative flex items-center gap-3 px-4 py-2 text-[11px] text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <Chat aria-hidden className="h-3 w-3" />
+          {comments}
+          <span className="sr-only"> comments</span>
         </span>
-        <span className="text-[10px] text-muted-foreground/70 tabular-nums">
-          {upPercent}%<span className="sr-only"> upvoted</span>
-        </span>
+        <span className="opacity-70">{time}</span>
       </div>
     </div>
   );

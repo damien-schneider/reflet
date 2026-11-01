@@ -1,12 +1,3 @@
-/**
- * Build script that generates shadcn-compatible registry JSON files
- * from source components in packages/ui/registry/.
- *
- * Output: apps/web/public/r/[name].json
- *
- * Usage: bun run scripts/build-registry.ts
- */
-
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -97,47 +88,12 @@ const COMPONENTS: Array<{
     title: "Feedback Sweep Corner",
   },
   {
-    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
-    description: "Minimal feedback card with a left-edge notch vote indicator.",
-    file: "feedback-minimal-notch.tsx",
-    name: "feedback-minimal-notch",
-    registryDependencies: [],
-    title: "Feedback Minimal Notch",
-  },
-  {
-    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
-    description:
-      "Rich editorial layout with margin vote annotations and stacked list items.",
-    file: "feedback-editorial-feed.tsx",
-    name: "feedback-editorial-feed",
-    registryDependencies: [],
-    title: "Feedback Editorial Feed",
-  },
-  {
     dependencies: ["motion", "clsx", "tailwind-merge"],
     description: "Horizontal track grouped by time horizons.",
     file: "milestone-track-view.tsx",
     name: "milestone-track-view",
     registryDependencies: [],
     title: "Milestone Track View",
-  },
-  {
-    dependencies: ["motion", "clsx", "tailwind-merge"],
-    description:
-      "Serif typography with percentage column and color-wash accordion.",
-    file: "milestone-editorial-accordion.tsx",
-    name: "milestone-editorial-accordion",
-    registryDependencies: [],
-    title: "Milestone Editorial Accordion",
-  },
-  {
-    dependencies: ["motion", "clsx", "tailwind-merge"],
-    description:
-      "KPI summary bar at top with vertical timeline and sweep animation.",
-    file: "milestone-dashboard-timeline.tsx",
-    name: "milestone-dashboard-timeline",
-    registryDependencies: [],
-    title: "Milestone Dashboard Timeline",
   },
 ];
 
@@ -191,7 +147,6 @@ function build() {
     `\nBuilt ${built}/${COMPONENTS.length} registry items → ${OUTPUT_DIR}`
   );
 
-  // Write a local manifest so turbo can track outputs for caching
   const DIST_DIR = resolve(import.meta.dirname, "../dist");
   if (!existsSync(DIST_DIR)) {
     mkdirSync(DIST_DIR, { recursive: true });

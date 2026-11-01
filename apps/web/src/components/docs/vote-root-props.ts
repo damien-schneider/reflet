@@ -1,10 +1,5 @@
 import type { PropDefinition } from "./props-table";
 
-/**
- * Props shared by every feedback card root: uncontrolled defaults, the
- * controlled trio, and the controlled vote callback. `onVoteChange` differs
- * per card, so callers pass it in.
- */
 function voteRootProps(onVoteChange: PropDefinition): PropDefinition[] {
   return [
     {

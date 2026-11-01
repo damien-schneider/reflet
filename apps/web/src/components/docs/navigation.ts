@@ -53,14 +53,6 @@ const DOCS_NAVIGATION: readonly NavSection[] = [
             href: "/docs/components/feedback-cards/sweep-corner",
             label: "Sweep corner",
           },
-          {
-            href: "/docs/components/feedback-cards/minimal-notch",
-            label: "Minimal notch",
-          },
-          {
-            href: "/docs/components/feedback-cards/editorial-feed",
-            label: "Editorial feed",
-          },
         ],
       },
       {
@@ -70,14 +62,6 @@ const DOCS_NAVIGATION: readonly NavSection[] = [
           {
             href: "/docs/components/milestone-views/track",
             label: "Horizontal track",
-          },
-          {
-            href: "/docs/components/milestone-views/editorial-accordion",
-            label: "Editorial accordion",
-          },
-          {
-            href: "/docs/components/milestone-views/dashboard-timeline",
-            label: "Dashboard timeline",
           },
         ],
       },

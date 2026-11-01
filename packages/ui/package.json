@@ -2,7 +2,7 @@
   "name": "@reflet/ui",
   "version": "0.1.0",
   "private": true,
-  "description": "Pre-made UI components for feedback boards, roadmaps, and timelines — installable via shadcn registry",
+  "description": "Sweep corner feedback cards and Horizontal track milestones — installable via shadcn registry",
   "homepage": "https://reflet.app/docs/components",
   "repository": {
     "type": "git",
@@ -14,11 +14,7 @@
   "type": "module",
   "exports": {
     "./feedback-sweep-corner": "./registry/feedback-sweep-corner.tsx",
-    "./feedback-minimal-notch": "./registry/feedback-minimal-notch.tsx",
-    "./feedback-editorial-feed": "./registry/feedback-editorial-feed.tsx",
-    "./milestone-track-view": "./registry/milestone-track-view.tsx",
-    "./milestone-editorial-accordion": "./registry/milestone-editorial-accordion.tsx",
-    "./milestone-dashboard-timeline": "./registry/milestone-dashboard-timeline.tsx"
+    "./milestone-track-view": "./registry/milestone-track-view.tsx"
   },
   "scripts": {
     "build": "bun run scripts/build-registry.ts",

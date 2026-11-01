@@ -1,7 +1,5 @@
 "use client";
 
-import { MilestoneDashboardTimeline } from "@reflet/ui/milestone-dashboard-timeline";
-import { MilestoneEditorialAccordion } from "@reflet/ui/milestone-editorial-accordion";
 import { MilestoneTrackView } from "@reflet/ui/milestone-track-view";
 
 const MOCK_MILESTONES = [
@@ -51,42 +49,4 @@ function TrackViewPreview() {
   return <MilestoneTrackView milestones={MOCK_MILESTONES} />;
 }
 
-function EditorialAccordionPreview() {
-  return <MilestoneEditorialAccordion milestones={MOCK_MILESTONES} />;
-}
-
-function DashboardTimelinePreview() {
-  return <MilestoneDashboardTimeline milestones={MOCK_MILESTONES} />;
-}
-
-function AllMilestoneViewsPreview() {
-  return (
-    <div className="grid w-full gap-8 lg:grid-cols-3">
-      <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs">
-          Horizontal Track
-        </p>
-        <TrackViewPreview />
-      </div>
-      <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs">
-          Editorial Accordion
-        </p>
-        <EditorialAccordionPreview />
-      </div>
-      <div>
-        <p className="mb-2 font-medium text-muted-foreground text-xs">
-          Dashboard Timeline
-        </p>
-        <DashboardTimelinePreview />
-      </div>
-    </div>
-  );
-}
-
-export {
-  AllMilestoneViewsPreview,
-  DashboardTimelinePreview,
-  EditorialAccordionPreview,
-  TrackViewPreview,
-};
+export { TrackViewPreview };

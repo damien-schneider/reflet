@@ -28,18 +28,13 @@ const TOKENS = [
     "secondary, muted, muted-foreground",
     "Track surfaces, progress tracks and metadata.",
   ],
-  [
-    "border, ring, accent",
-    "Dividers, keyboard focus and active timeline rows.",
-  ],
-  ["chart-1", "Completed segments in the dashboard timeline."],
+  ["border, ring", "Dividers and keyboard focus."],
   [
     "tag-<color>, tag-<color>-text",
     "Colored status/tag backgrounds and text. Added by the registry with light, dark and Tailwind theme mappings.",
   ],
 ] as const;
-const CSS = `/* Override these existing tokens in your theme stylesheet. */
-:root {
+const CSS = `:root {
   --tag-blue: oklch(0.55 0.12 240);
   --tag-blue-text: oklch(0.38 0.10 240);
 }
@@ -70,7 +65,7 @@ export default function ThemingPage() {
           Color keys are blue, brown, green, orange, pink, purple, red, yellow,
           gray and default. Gray/default use neutral muted tokens. Milestone
           colorHex is separate from these tokens: pass a six-digit hex value
-          such as #0b6e99, because the views append alpha suffixes to it.
+          such as #0b6e99, because the track appends alpha suffixes to it.
         </DocsText>
         <CodeBlock code={CSS} />
       </DocsSection>

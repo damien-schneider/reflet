@@ -64,7 +64,7 @@ export function MilestoneTrackView({
         <div className="flex items-stretch gap-0.5">
           {zones.map((zone, i) => (
             <div
-              className="flex flex-1 flex-col gap-0.5"
+              className="flex min-w-0 flex-1 flex-col gap-0.5"
               key={zone.label}
               style={{ flexGrow: 1 + i * 0.12 }}
             >

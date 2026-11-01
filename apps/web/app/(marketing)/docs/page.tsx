@@ -54,7 +54,7 @@ export default function DocsIndexPage() {
           </li>
           <li>
             <DocsLink href="/docs/components">Install UI components</DocsLink>{" "}
-            for feedback cards and milestone views you own and style.
+            for Sweep corner feedback cards and Horizontal track milestones.
           </li>
           <li>
             <DocsLink href="/docs/api">Call the REST API</DocsLink> for
