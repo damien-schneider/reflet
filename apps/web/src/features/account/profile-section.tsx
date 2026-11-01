@@ -1,12 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@ctrl-ui/react/ui/field";
+import { FieldError, FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +12,10 @@ import {
   type UpdateProfileForm,
   updateProfileSchema,
 } from "@/features/account/account-schemas";
-import { SettingsSection } from "@/features/project/components/settings-page";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/features/project/components/settings-page";
 import { authClient } from "@/lib/auth-client";
 
 interface ProfileSectionProps {
@@ -99,67 +97,70 @@ export function ProfileSection({
         </div>
       </div>
 
-      <form
-        className="flex max-w-md flex-col gap-4"
-        noValidate
-        onSubmit={handleSubmit(handleUpdateProfile)}
-      >
-        <Field>
-          <FieldLabel htmlFor="name">Name</FieldLabel>
-          <Input
-            aria-invalid={Boolean(errors.name) || undefined}
-            autoComplete="name"
-            id="name"
-            {...register("name")}
-          />
-          <FieldError match={Boolean(errors.name?.message)}>
-            {errors.name?.message}
-          </FieldError>
-        </Field>
+      <form noValidate onSubmit={handleSubmit(handleUpdateProfile)}>
+        <FieldGroup variant="card">
+          <SettingsRow htmlFor="name" label="Name">
+            <div className="flex w-full flex-col gap-1.5">
+              <Input
+                aria-invalid={Boolean(errors.name) || undefined}
+                autoComplete="name"
+                id="name"
+                {...register("name")}
+              />
+              <FieldError match={Boolean(errors.name?.message)}>
+                {errors.name?.message}
+              </FieldError>
+            </div>
+          </SettingsRow>
 
-        <Field>
-          <FieldLabel htmlFor="avatarUrl">Avatar URL</FieldLabel>
-          <div className="flex gap-2">
-            <Input
-              aria-invalid={Boolean(errors.avatarUrl) || undefined}
-              autoComplete="photo"
-              id="avatarUrl"
-              inputMode="url"
-              placeholder="https://example.com/avatar.jpg"
-              spellCheck={false}
-              type="url"
-              {...register("avatarUrl")}
-            />
-            {avatarUrl ? (
-              <Button
-                aria-label="Clear avatar URL"
-                iconOnly
-                onClick={() => setValue("avatarUrl", "", { shouldDirty: true })}
-                type="button"
-                variant="ghost"
-              >
-                <X />
-              </Button>
-            ) : null}
-          </div>
-          <FieldDescription>
-            Leave empty to keep your current avatar.
-          </FieldDescription>
-          <FieldError match={Boolean(errors.avatarUrl?.message)}>
-            {errors.avatarUrl?.message}
-          </FieldError>
-        </Field>
-
-        <div>
-          <Button
-            disabled={isLoading || !isDirty}
-            tone="primary"
-            type="submit"
-            variant="solid"
+          <SettingsRow
+            description="Leave empty to keep your current avatar."
+            htmlFor="avatarUrl"
+            label="Avatar URL"
           >
-            {isLoading ? "Saving…" : "Save changes"}
-          </Button>
-        </div>
+            <div className="flex w-full flex-col gap-1.5">
+              <div className="flex w-full gap-2">
+                <Input
+                  aria-invalid={Boolean(errors.avatarUrl) || undefined}
+                  autoComplete="photo"
+                  id="avatarUrl"
+                  inputMode="url"
+                  placeholder="https://example.com/avatar.jpg"
+                  spellCheck={false}
+                  type="url"
+                  {...register("avatarUrl")}
+                />
+                {avatarUrl ? (
+                  <Button
+                    aria-label="Clear avatar URL"
+                    iconOnly
+                    onClick={() =>
+                      setValue("avatarUrl", "", { shouldDirty: true })
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
+                    <X />
+                  </Button>
+                ) : null}
+              </div>
+              <FieldError match={Boolean(errors.avatarUrl?.message)}>
+                {errors.avatarUrl?.message}
+              </FieldError>
+            </div>
+          </SettingsRow>
+
+          <div className="flex items-center justify-end">
+            <Button
+              disabled={isLoading || !isDirty}
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
+              {isLoading ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </FieldGroup>
       </form>
     </SettingsSection>
   );

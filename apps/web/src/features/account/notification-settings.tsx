@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { BellSlash, Warning } from "@phosphor-icons/react";
@@ -8,7 +9,10 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useId, useState } from "react";
-import { SettingsSection } from "@/features/project/components/settings-page";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/features/project/components/settings-page";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 type NotificationTypeKey =
@@ -81,15 +85,12 @@ function SwitchRow({
   const id = useId();
   const descriptionId = `${id}-description`;
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
-        <label className="text-label" htmlFor={id}>
-          {label}
-        </label>
-        <p className="text-caption text-muted-foreground" id={descriptionId}>
-          {description}
-        </p>
-      </div>
+    <SettingsRow
+      description={description}
+      descriptionId={descriptionId}
+      htmlFor={id}
+      label={label}
+    >
       <Switch
         aria-describedby={descriptionId}
         checked={checked}
@@ -97,7 +98,7 @@ function SwitchRow({
         id={id}
         onCheckedChange={onCheckedChange}
       />
-    </div>
+    </SettingsRow>
   );
 }
 
@@ -197,23 +198,25 @@ export function NotificationSettings() {
           </div>
         ) : null}
 
-        <SwitchRow
-          checked={pushEnabled && isSubscribed}
-          description={
-            pushEnabled && isSubscribed
-              ? "You’ll get push notifications on this device."
-              : "Turn on to get push notifications on this device."
-          }
-          disabled={
-            !isSupported ||
-            isPushDenied ||
-            isToggling ||
-            isPushLoading ||
-            isPrefsLoading
-          }
-          label="Enable push notifications"
-          onCheckedChange={handlePushToggle}
-        />
+        <FieldGroup variant="card">
+          <SwitchRow
+            checked={pushEnabled && isSubscribed}
+            description={
+              pushEnabled && isSubscribed
+                ? "You’ll get push notifications on this device."
+                : "Turn on to get push notifications on this device."
+            }
+            disabled={
+              !isSupported ||
+              isPushDenied ||
+              isToggling ||
+              isPushLoading ||
+              isPrefsLoading
+            }
+            label="Enable push notifications"
+            onCheckedChange={handlePushToggle}
+          />
+        </FieldGroup>
       </SettingsSection>
 
       <SettingsSection
@@ -224,7 +227,7 @@ export function NotificationSettings() {
         }
         title="Notification types"
       >
-        <div className="divide-y">
+        <FieldGroup variant="card">
           {NOTIFICATION_TYPES.map((type) => (
             <SwitchRow
               checked={preferences?.[type.key] ?? true}
@@ -235,22 +238,24 @@ export function NotificationSettings() {
               onCheckedChange={(value) => handleTypeToggle(type.key, value)}
             />
           ))}
-        </div>
+        </FieldGroup>
       </SettingsSection>
 
       <SettingsSection
         description="Emails Reflet sends to your account address."
         title="Email notifications"
       >
-        <SwitchRow
-          checked={preferences?.emailOnInboxMessage ?? true}
-          description="When a customer writes to your organization’s support inbox. One email until you open the conversation, not one per message."
-          disabled={isPrefsLoading}
-          label="Email me when a customer writes"
-          onCheckedChange={(value) =>
-            handleTypeToggle("emailOnInboxMessage", value)
-          }
-        />
+        <FieldGroup variant="card">
+          <SwitchRow
+            checked={preferences?.emailOnInboxMessage ?? true}
+            description="When a customer writes to your organization’s support inbox. One email until you open the conversation, not one per message."
+            disabled={isPrefsLoading}
+            label="Email me when a customer writes"
+            onCheckedChange={(value) =>
+              handleTypeToggle("emailOnInboxMessage", value)
+            }
+          />
+        </FieldGroup>
       </SettingsSection>
 
       {subscriptions && subscriptions.length > 0 ? (

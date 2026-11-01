@@ -4,6 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  FieldDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   FieldError: ({
     children,
     match,

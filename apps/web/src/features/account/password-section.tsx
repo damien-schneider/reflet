@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { FieldGroup } from "@ctrl-ui/react/ui/field";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -65,48 +66,46 @@ export function PasswordSection({
 
   return (
     <SettingsSection description="Use at least 8 characters." title="Password">
-      <form
-        className="flex max-w-md flex-col gap-4"
-        noValidate
-        onSubmit={handleSubmitPassword(handleUpdatePassword)}
-      >
-        <PasswordInputField
-          autoComplete="current-password"
-          error={passwordErrors.currentPassword}
-          id="currentPassword"
-          label="Current password"
-          onTogglePassword={() => toggleVisibility("current")}
-          register={registerPassword("currentPassword")}
-          showPassword={visibleFields.current}
-        />
-        <PasswordInputField
-          autoComplete="new-password"
-          error={passwordErrors.newPassword}
-          id="newPassword"
-          label="New password"
-          onTogglePassword={() => toggleVisibility("new")}
-          register={registerPassword("newPassword")}
-          showPassword={visibleFields.new}
-        />
-        <PasswordInputField
-          autoComplete="new-password"
-          error={passwordErrors.confirmPassword}
-          id="confirmPassword"
-          label="Confirm new password"
-          onTogglePassword={() => toggleVisibility("confirm")}
-          register={registerPassword("confirmPassword")}
-          showPassword={visibleFields.confirm}
-        />
-        <div>
-          <Button
-            disabled={isLoading}
-            tone="primary"
-            type="submit"
-            variant="solid"
-          >
-            {isLoading ? "Updating…" : "Update password"}
-          </Button>
-        </div>
+      <form noValidate onSubmit={handleSubmitPassword(handleUpdatePassword)}>
+        <FieldGroup variant="card">
+          <PasswordInputField
+            autoComplete="current-password"
+            error={passwordErrors.currentPassword}
+            id="currentPassword"
+            label="Current password"
+            onTogglePassword={() => toggleVisibility("current")}
+            register={registerPassword("currentPassword")}
+            showPassword={visibleFields.current}
+          />
+          <PasswordInputField
+            autoComplete="new-password"
+            error={passwordErrors.newPassword}
+            id="newPassword"
+            label="New password"
+            onTogglePassword={() => toggleVisibility("new")}
+            register={registerPassword("newPassword")}
+            showPassword={visibleFields.new}
+          />
+          <PasswordInputField
+            autoComplete="new-password"
+            error={passwordErrors.confirmPassword}
+            id="confirmPassword"
+            label="Confirm new password"
+            onTogglePassword={() => toggleVisibility("confirm")}
+            register={registerPassword("confirmPassword")}
+            showPassword={visibleFields.confirm}
+          />
+          <div className="flex items-center justify-end">
+            <Button
+              disabled={isLoading}
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
+              {isLoading ? "Updating…" : "Update password"}
+            </Button>
+          </div>
+        </FieldGroup>
       </form>
     </SettingsSection>
   );

@@ -1,12 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@ctrl-ui/react/ui/field";
+import { FieldError, FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
@@ -19,7 +14,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandingSection } from "./branding-section";
-import { SettingsPage, SettingsSection } from "./settings-page";
+import { SettingsPage, SettingsRow, SettingsSection } from "./settings-page";
 
 const SAVED_STATUS_MS = 2000;
 const NON_SLUG_CHARS = /[^a-z0-9]+/g;
@@ -46,7 +41,7 @@ export function OrganizationSection({
   organizationId,
   orgSlug,
 }: OrganizationSectionProps) {
-  const org = useQuery(api.organizations.queries.get, { id: organizationId });
+  const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   return (
     <SettingsPage
@@ -147,10 +142,9 @@ function OrganizationDetailsForm({
   };
 
   return (
-    <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-4">
-        <Field>
-          <FieldLabel htmlFor="org-name">Name</FieldLabel>
+    <form onSubmit={handleSubmit}>
+      <FieldGroup variant="card">
+        <SettingsRow htmlFor="org-name" label="Name">
           <Input
             autoComplete="organization"
             disabled={!isAdmin}
@@ -159,50 +153,52 @@ function OrganizationDetailsForm({
             placeholder="My organization"
             value={name}
           />
-        </Field>
+        </SettingsRow>
 
-        <Field>
-          <FieldLabel htmlFor="org-slug">URL</FieldLabel>
-          <InputGroup data-disabled={!isAdmin || undefined}>
-            <InputGroupAddon>/dashboard/</InputGroupAddon>
-            <Input
-              aria-describedby="org-slug-description org-slug-error"
-              aria-invalid={error ? true : undefined}
-              autoCapitalize="none"
-              disabled={!isAdmin}
-              id="org-slug"
-              onChange={(event) => {
-                setSlug(generateSlug(event.target.value));
-                setError(null);
-              }}
-              placeholder="my-organization"
-              spellCheck={false}
-              value={slug}
-            />
-          </InputGroup>
-          <FieldDescription id="org-slug-description">
-            Lowercase letters, numbers and hyphens. Changing it breaks existing
-            links.
-          </FieldDescription>
-          <FieldError id="org-slug-error" match={error !== null} role="alert">
-            {error}
-          </FieldError>
-        </Field>
-      </div>
+        <SettingsRow
+          description="Lowercase letters, numbers and hyphens. Changing it breaks existing links."
+          descriptionId="org-slug-description"
+          htmlFor="org-slug"
+          label="URL"
+        >
+          <div className="flex w-full flex-col gap-1.5">
+            <InputGroup data-disabled={!isAdmin || undefined}>
+              <InputGroupAddon>/dashboard/</InputGroupAddon>
+              <Input
+                aria-describedby="org-slug-description org-slug-error"
+                aria-invalid={error ? true : undefined}
+                autoCapitalize="none"
+                disabled={!isAdmin}
+                id="org-slug"
+                onChange={(event) => {
+                  setSlug(generateSlug(event.target.value));
+                  setError(null);
+                }}
+                placeholder="my-organization"
+                spellCheck={false}
+                value={slug}
+              />
+            </InputGroup>
+            <FieldError id="org-slug-error" match={error !== null} role="alert">
+              {error}
+            </FieldError>
+          </div>
+        </SettingsRow>
 
-      {isAdmin ? (
-        <div className="flex items-center justify-end">
-          <Button
-            disabled={isSaving || !canSave}
-            size="sm"
-            tone="primary"
-            type="submit"
-            variant="solid"
-          >
-            <SaveButtonContent isSaving={isSaving} saved={saved} />
-          </Button>
-        </div>
-      ) : null}
+        {isAdmin ? (
+          <div className="flex items-center justify-end">
+            <Button
+              disabled={isSaving || !canSave}
+              size="sm"
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
+              <SaveButtonContent isSaving={isSaving} saved={saved} />
+            </Button>
+          </div>
+        ) : null}
+      </FieldGroup>
     </form>
   );
 }
@@ -260,27 +256,27 @@ function VisibilitySetting({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-6">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-medium text-label">Public organization</span>
-          <span
-            className="text-caption text-muted-foreground"
-            id="public-toggle-status"
-          >
-            {isPublic
+      <FieldGroup variant="card">
+        <SettingsRow
+          description={
+            isPublic
               ? "Public pages are live."
-              : "Only members can see your pages."}
-          </span>
-        </div>
-        <Switch
-          aria-describedby="public-toggle-status"
-          aria-label="Make organization public"
-          checked={isPublic}
-          disabled={!isAdmin || isUpdating}
-          id="public-toggle"
-          onCheckedChange={handleChange}
-        />
-      </div>
+              : "Only members can see your pages."
+          }
+          descriptionId="public-toggle-status"
+          htmlFor="public-toggle"
+          label="Public organization"
+        >
+          <Switch
+            aria-describedby="public-toggle-status"
+            aria-label="Make organization public"
+            checked={isPublic}
+            disabled={!isAdmin || isUpdating}
+            id="public-toggle"
+            onCheckedChange={handleChange}
+          />
+        </SettingsRow>
+      </FieldGroup>
       {error ? (
         <p className="text-caption text-destructive-text" role="alert">
           {error}

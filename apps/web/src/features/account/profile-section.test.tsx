@@ -58,10 +58,16 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
 
 vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   FieldDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   FieldError: () => null,
+  FieldGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   FieldLabel: ({
     children,
     htmlFor,

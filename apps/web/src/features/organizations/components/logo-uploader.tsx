@@ -65,15 +65,13 @@ function DropzoneBody({
   if (currentLogo) {
     return (
       <div className="flex flex-col items-center gap-3">
-        <div className="relative h-16 w-32">
-          <Image
-            alt="Organization logo"
-            className="object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
-            fill
-            sizes="128px"
-            src={currentLogo}
-          />
-        </div>
+        <Image
+          alt="Organization logo"
+          className="h-16 w-32 object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
+          height={64}
+          src={currentLogo}
+          width={128}
+        />
         <Text as="p" size="caption" tone="muted">
           Click or drag to replace
         </Text>

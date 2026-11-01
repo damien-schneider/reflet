@@ -2,7 +2,7 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { FieldError, FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
@@ -17,6 +17,7 @@ import { useMutation } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 import { CopyButton } from "@/components/copy-button";
+import { SettingsRow } from "@/features/project/components/settings-page";
 import { convexErrorMessage } from "@/lib/convex-error-message";
 
 type SupportEmailSettings = FunctionReturnType<
@@ -32,40 +33,39 @@ export function ForwardingCard({
   organizationId,
   settings,
 }: ForwardingCardProps) {
+  if (!settings.inboundAddress) {
+    return <CreateAliasButton organizationId={organizationId} />;
+  }
+
   return (
-    <div className="flex flex-col gap-6">
-      {settings.inboundAddress ? (
-        <>
-          <div className="flex flex-col gap-1">
-            <span className="text-label">Your Reflet support address</span>
-            <div className="flex min-w-0 items-center gap-1">
-              <code className="truncate font-mono text-label">
-                {settings.inboundAddress}
-              </code>
-              <CopyButton
-                label="Copy support address"
-                size="xs"
-                value={settings.inboundAddress}
-              />
-            </div>
+    <div className="flex flex-col gap-4">
+      <FieldGroup variant="card">
+        <SettingsRow label="Your Reflet support address">
+          <div className="flex min-w-0 max-w-full items-center gap-1">
+            <code className="truncate font-mono text-label">
+              {settings.inboundAddress}
+            </code>
+            <CopyButton
+              label="Copy support address"
+              size="xs"
+              value={settings.inboundAddress}
+            />
           </div>
-          <ForwardingAddressForm
-            currentAddress={settings.forwardingAddress}
+        </SettingsRow>
+        <ForwardingAddressForm
+          currentAddress={settings.forwardingAddress}
+          organizationId={organizationId}
+        />
+        {settings.forwardingAddress ? (
+          <ForwardingStatus
+            forwardingVerifiedAt={settings.forwardingVerifiedAt}
             organizationId={organizationId}
           />
-          {settings.forwardingAddress ? (
-            <ForwardingStatus
-              forwardingVerifiedAt={settings.forwardingVerifiedAt}
-              organizationId={organizationId}
-            />
-          ) : null}
-          {settings.gmailConfirmation ? (
-            <GmailConfirmation confirmation={settings.gmailConfirmation} />
-          ) : null}
-        </>
-      ) : (
-        <CreateAliasButton organizationId={organizationId} />
-      )}
+        ) : null}
+      </FieldGroup>
+      {settings.gmailConfirmation ? (
+        <GmailConfirmation confirmation={settings.gmailConfirmation} />
+      ) : null}
     </div>
   );
 }
@@ -144,46 +144,48 @@ function ForwardingAddressForm({
 
   return (
     <form noValidate onSubmit={handleSubmit}>
-      <Field>
-        <FieldLabel htmlFor="forwarding-address">
-          Mailbox that forwards here
-        </FieldLabel>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            aria-describedby="forwarding-address-error"
-            aria-invalid={error ? true : undefined}
-            autoCapitalize="none"
-            autoComplete="email"
-            id="forwarding-address"
-            inputMode="email"
-            onChange={(event) => {
-              setAddress(event.target.value);
-              setError(null);
-            }}
-            placeholder="support@example.com"
-            spellCheck={false}
-            type="email"
-            value={address}
-          />
-          <Button
-            disabled={isSaving || !trimmed || isUnchanged}
-            type="submit"
-            variant="surface"
+      <SettingsRow
+        htmlFor="forwarding-address"
+        label="Mailbox that forwards here"
+      >
+        <div className="flex w-full flex-col gap-1.5">
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <Input
+              aria-describedby="forwarding-address-error"
+              aria-invalid={error ? true : undefined}
+              autoCapitalize="none"
+              autoComplete="email"
+              id="forwarding-address"
+              inputMode="email"
+              onChange={(event) => {
+                setAddress(event.target.value);
+                setError(null);
+              }}
+              placeholder="support@example.com"
+              spellCheck={false}
+              type="email"
+              value={address}
+            />
+            <Button
+              disabled={isSaving || !trimmed || isUnchanged}
+              type="submit"
+              variant="surface"
+            >
+              {isSaving ? (
+                <Spinner aria-hidden data-icon="inline-start" size="xs" />
+              ) : null}
+              {isSaving ? "Saving…" : "Save"}
+            </Button>
+          </div>
+          <FieldError
+            id="forwarding-address-error"
+            match={error !== null}
+            role="alert"
           >
-            {isSaving ? (
-              <Spinner aria-hidden data-icon="inline-start" size="xs" />
-            ) : null}
-            {isSaving ? "Saving…" : "Save"}
-          </Button>
+            {error}
+          </FieldError>
         </div>
-        <FieldError
-          id="forwarding-address-error"
-          match={error !== null}
-          role="alert"
-        >
-          {error}
-        </FieldError>
-      </Field>
+      </SettingsRow>
     </form>
   );
 }
@@ -215,8 +217,8 @@ function ForwardingStatus({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <SettingsRow label="Forwarding">
+      <div className="flex flex-wrap items-center gap-2">
         {forwardingVerifiedAt ? (
           <Badge color="green">
             <CheckCircle aria-hidden />
@@ -243,11 +245,11 @@ function ForwardingStatus({
         </Button>
       </div>
       {error ? (
-        <p className="text-caption text-destructive" role="alert">
+        <p className="self-stretch text-caption text-destructive" role="alert">
           {error}
         </p>
       ) : null}
-    </div>
+    </SettingsRow>
   );
 }
 

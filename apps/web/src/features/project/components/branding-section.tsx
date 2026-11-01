@@ -9,7 +9,7 @@ import {
   ColorPickerInput,
   ColorPickerTrigger,
 } from "@ctrl-ui/react/ui/color-picker";
-import { Field, FieldDescription, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Check, WarningCircle } from "@phosphor-icons/react";
@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { LogoUploader } from "@/features/organizations/components/logo-uploader";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
+import { SettingsRow } from "./settings-page";
 
 const AUTOSAVE_DEBOUNCE_MS = 800;
 const SAVED_STATUS_MS = 2000;
@@ -137,23 +138,26 @@ function BrandingForm({
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <Field>
-        <FieldLabel>Logo</FieldLabel>
-        <LogoUploader
-          currentLogo={logo}
-          disabled={!isAdmin}
-          onLogoChange={handleLogoChange}
-        />
-      </Field>
+    <div className="flex flex-col gap-2">
+      <FieldGroup variant="card">
+        <SettingsRow label="Logo">
+          <div className="w-full">
+            <LogoUploader
+              currentLogo={logo}
+              disabled={!isAdmin}
+              onLogoChange={handleLogoChange}
+            />
+          </div>
+        </SettingsRow>
 
-      <PrimaryColorField
-        disabled={!(isAdmin && isProTier)}
-        isProTier={isProTier}
-        onChange={handleColorChange}
-        orgSlug={orgSlug}
-        value={primaryColor}
-      />
+        <PrimaryColorField
+          disabled={!(isAdmin && isProTier)}
+          isProTier={isProTier}
+          onChange={handleColorChange}
+          orgSlug={orgSlug}
+          value={primaryColor}
+        />
+      </FieldGroup>
 
       <SaveStatusMessage status={saveStatus} />
     </div>
@@ -176,22 +180,40 @@ function PrimaryColorField({
   value,
 }: PrimaryColorFieldProps) {
   return (
-    <Field>
-      <div className="flex items-center gap-2">
-        <FieldLabel htmlFor="primary-color">Primary color</FieldLabel>
-        {isProTier ? null : (
-          <Badge size="sm" variant="outline">
-            Pro
-          </Badge>
-        )}
-      </div>
+    <SettingsRow
+      description={
+        isProTier ? null : (
+          <>
+            Custom colors are part of Pro.{" "}
+            <Link
+              className="font-medium text-foreground underline underline-offset-4"
+              href={`/dashboard/${orgSlug}/project/billing`}
+            >
+              Compare plans
+            </Link>
+          </>
+        )
+      }
+      descriptionId="primary-color-upsell"
+      htmlFor="primary-color"
+      label={
+        <>
+          Primary color
+          {isProTier ? null : (
+            <Badge size="sm" variant="outline">
+              Pro
+            </Badge>
+          )}
+        </>
+      }
+    >
       <ColorPicker
         disabled={disabled}
         format="hex"
         onValueChange={onChange}
         value={value}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2">
           <ColorPickerTrigger aria-label="Pick the organization primary color" />
           <ColorPickerInput
             aria-describedby={isProTier ? undefined : "primary-color-upsell"}
@@ -205,18 +227,7 @@ function PrimaryColorField({
           <ColorPickerHue />
         </ColorPickerContent>
       </ColorPicker>
-      {isProTier ? null : (
-        <FieldDescription id="primary-color-upsell">
-          Custom colors are part of Pro.{" "}
-          <Link
-            className="font-medium text-foreground underline underline-offset-4"
-            href={`/dashboard/${orgSlug}/project/billing`}
-          >
-            Compare plans
-          </Link>
-        </FieldDescription>
-      )}
-    </Field>
+    </SettingsRow>
   );
 }
 

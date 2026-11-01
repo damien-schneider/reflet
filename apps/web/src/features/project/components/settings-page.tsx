@@ -1,4 +1,10 @@
 import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from "@ctrl-ui/react/ui/field";
+import {
   PageActions,
   PageBody,
   PageDescription,
@@ -69,5 +75,37 @@ export function SettingsSection({
       </div>
       {children}
     </section>
+  );
+}
+
+interface SettingsRowProps {
+  children: React.ReactNode;
+  description?: React.ReactNode;
+  descriptionId?: string;
+  htmlFor?: string;
+  label: React.ReactNode;
+}
+
+export function SettingsRow({
+  children,
+  description,
+  descriptionId,
+  htmlFor,
+  label,
+}: SettingsRowProps) {
+  return (
+    <Field orientation="responsive">
+      <FieldContent>
+        <FieldLabel className="flex items-center gap-2" htmlFor={htmlFor}>
+          {label}
+        </FieldLabel>
+        {description ? (
+          <FieldDescription id={descriptionId}>{description}</FieldDescription>
+        ) : null}
+      </FieldContent>
+      <div className="flex @md/field-group:w-1/2 w-full flex-col @md/field-group:items-end gap-1.5">
+        {children}
+      </div>
+    </Field>
   );
 }

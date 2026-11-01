@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { FieldError, FieldGroup } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,10 @@ import {
   type UpdateEmailForm,
   updateEmailSchema,
 } from "@/features/account/account-schemas";
-import { SettingsSection } from "@/features/project/components/settings-page";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/features/project/components/settings-page";
 import { authClient } from "@/lib/auth-client";
 
 interface EmailSectionProps {
@@ -70,46 +73,44 @@ export function EmailSection({
       }
       title="Email"
     >
-      <form
-        className="flex max-w-md flex-col gap-4"
-        noValidate
-        onSubmit={handleSubmit(handleUpdateEmail)}
-      >
-        <Field>
-          <FieldLabel htmlFor="newEmail">New email</FieldLabel>
-          <Input
-            aria-invalid={Boolean(errors.newEmail) || undefined}
-            autoComplete="email"
-            id="newEmail"
-            placeholder="new@example.com"
-            spellCheck={false}
-            type="email"
-            {...register("newEmail")}
-          />
-          <FieldError match={Boolean(errors.newEmail?.message)}>
-            {errors.newEmail?.message}
-          </FieldError>
-        </Field>
+      <form noValidate onSubmit={handleSubmit(handleUpdateEmail)}>
+        <FieldGroup variant="card">
+          <SettingsRow htmlFor="newEmail" label="New email">
+            <div className="flex w-full flex-col gap-1.5">
+              <Input
+                aria-invalid={Boolean(errors.newEmail) || undefined}
+                autoComplete="email"
+                id="newEmail"
+                placeholder="new@example.com"
+                spellCheck={false}
+                type="email"
+                {...register("newEmail")}
+              />
+              <FieldError match={Boolean(errors.newEmail?.message)}>
+                {errors.newEmail?.message}
+              </FieldError>
+            </div>
+          </SettingsRow>
 
-        <output
-          aria-live="polite"
-          className="text-body text-muted-foreground empty:hidden"
-        >
-          {requestedEmail
-            ? `Check ${requestedEmail} for a link to confirm the change.`
-            : null}
-        </output>
-
-        <div>
-          <Button
-            disabled={isLoading}
-            tone="primary"
-            type="submit"
-            variant="solid"
-          >
-            {isLoading ? "Sending…" : "Change email"}
-          </Button>
-        </div>
+          <div className="flex items-center justify-end gap-3">
+            <output
+              aria-live="polite"
+              className="me-auto text-body text-muted-foreground empty:hidden"
+            >
+              {requestedEmail
+                ? `Check ${requestedEmail} for a link to confirm the change.`
+                : null}
+            </output>
+            <Button
+              disabled={isLoading}
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
+              {isLoading ? "Sending…" : "Change email"}
+            </Button>
+          </div>
+        </FieldGroup>
       </form>
     </SettingsSection>
   );
