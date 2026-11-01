@@ -4,9 +4,12 @@ import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { Sheet, SheetBody, SheetContent } from "@ctrl-ui/react/ui/sheet";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useState } from "react";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
+import { DrawerResizeEdge } from "./drawer-resize-edge";
 import { FeedbackContent } from "./feedback-content";
+import { FeedbackDetailActions } from "./feedback-detail-actions";
 import { FeedbackDetailDrawerHeader } from "./feedback-detail-drawer-header";
 import type {
   FeedbackDetailContentProps,
@@ -40,6 +43,7 @@ export function FeedbackDetailDrawer({
   onNext,
 }: FeedbackDetailDrawerProps) {
   const feedback = useDrawerFeedback(feedbackId);
+  const [width, setWidth] = useState<number | null>(null);
 
   useDrawerNavigationHotkeys({
     hasNext,
@@ -56,8 +60,15 @@ export function FeedbackDetailDrawer({
       <SheetContent
         className="overflow-hidden md:w-[70vw] md:max-w-[70vw]"
         side="right"
+        style={width ? { maxWidth: width, width } : undefined}
       >
+        <DrawerResizeEdge onResize={setWidth} />
         <FeedbackDetailDrawerHeader
+          actions={
+            feedback && (
+              <FeedbackDetailActions feedback={feedback} isAdmin={isAdmin} />
+            )
+          }
           author={feedback?.author}
           createdAt={feedback?.createdAt}
           currentIndex={currentIndex}
@@ -109,7 +120,13 @@ function FeedbackDetailSkeleton() {
 }
 
 function FeedbackDetailMetadata({ feedback, isAdmin }: LoadedFeedbackProps) {
-  return <FeedbackMetadataBar feedback={feedback} isAdmin={isAdmin} />;
+  return (
+    <FeedbackMetadataBar
+      feedback={feedback}
+      isAdmin={isAdmin}
+      showActions={false}
+    />
+  );
 }
 
 function FeedbackDetailBody({
@@ -137,7 +154,7 @@ function FeedbackDetailBody({
         </div>
 
         {isAdmin && (
-          <div className="px-6 pb-4">
+          <div className="px-6 pb-4 empty:hidden">
             <InlineClarification feedbackId={feedbackId} />
           </div>
         )}
@@ -147,7 +164,7 @@ function FeedbackDetailBody({
         </div>
 
         {isAdmin && (
-          <div className="border-t px-6 py-4">
+          <div className="border-t px-6 py-4 empty:hidden">
             <ReportContext feedbackId={feedbackId} />
           </div>
         )}

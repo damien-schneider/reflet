@@ -2,13 +2,11 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useFeedbackDrawer } from "./use-feedback-drawer";
 
-// Mock next/navigation
-const mockPush = vi.fn();
+const mockPush = vi.spyOn(window.history, "pushState");
 let currentSearchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/test-org/board",
-  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   useSearchParams: () => currentSearchParams,
 }));
 
@@ -67,18 +65,14 @@ describe("useFeedbackDrawer", () => {
     it("openFeedback pushes URL with feedback id", () => {
       const { result } = renderHook(() => useFeedbackDrawer());
       act(() => result.current.openFeedback("fb-1"));
-      expect(mockPush).toHaveBeenCalledWith("/test-org/board?f=fb-1", {
-        scroll: false,
-      });
+      expect(mockPush).toHaveBeenCalledWith(null, "", "/test-org/board?f=fb-1");
     });
 
     it("closeFeedback removes feedback param", () => {
       currentSearchParams = new URLSearchParams("f=fb-1");
       const { result } = renderHook(() => useFeedbackDrawer());
       act(() => result.current.closeFeedback());
-      expect(mockPush).toHaveBeenCalledWith("/test-org/board", {
-        scroll: false,
-      });
+      expect(mockPush).toHaveBeenCalledWith(null, "", "/test-org/board");
     });
 
     it("navigateToFeedback updates URL", () => {
@@ -88,9 +82,7 @@ describe("useFeedbackDrawer", () => {
           "fb-2" as Parameters<typeof result.current.navigateToFeedback>[0]
         )
       );
-      expect(mockPush).toHaveBeenCalledWith("/test-org/board?f=fb-2", {
-        scroll: false,
-      });
+      expect(mockPush).toHaveBeenCalledWith(null, "", "/test-org/board?f=fb-2");
     });
   });
 
@@ -134,18 +126,14 @@ describe("useFeedbackDrawer", () => {
       currentSearchParams = new URLSearchParams("f=fb-2");
       const { result } = renderHook(() => useFeedbackDrawer(feedbackIds));
       act(() => result.current.goToPrevious());
-      expect(mockPush).toHaveBeenCalledWith("/test-org/board?f=fb-1", {
-        scroll: false,
-      });
+      expect(mockPush).toHaveBeenCalledWith(null, "", "/test-org/board?f=fb-1");
     });
 
     it("goToNext navigates to next item", () => {
       currentSearchParams = new URLSearchParams("f=fb-2");
       const { result } = renderHook(() => useFeedbackDrawer(feedbackIds));
       act(() => result.current.goToNext());
-      expect(mockPush).toHaveBeenCalledWith("/test-org/board?f=fb-3", {
-        scroll: false,
-      });
+      expect(mockPush).toHaveBeenCalledWith(null, "", "/test-org/board?f=fb-3");
     });
 
     it("goToPrevious does nothing at first item", () => {

@@ -31,11 +31,13 @@ export function AiAnalysisDisplay(props: AiAnalysisDisplayProps) {
       className={cn(
         props.layout === "panel"
           ? "border-t pt-4"
-          : "flex flex-wrap items-center gap-1.5"
+          : "flex basis-full flex-wrap items-center gap-1.5"
       )}
     >
-      {props.layout === "panel" && (
+      {props.layout === "panel" ? (
         <h3 className="mb-2 font-medium text-body">Assessment</h3>
+      ) : (
+        <span className="mr-1 text-muted-foreground text-xs">Assessment</span>
       )}
       <PropertyRow label="Priority" layout={props.layout}>
         <AnalysisProperty

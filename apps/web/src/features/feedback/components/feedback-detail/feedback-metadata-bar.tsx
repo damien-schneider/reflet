@@ -14,10 +14,9 @@ import { PublicationProperty } from "@/features/feedback/components/properties/p
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
-import { CopyForAgents } from "./copy-for-agents";
 import { DeadlineDisplay } from "./deadline-display";
+import { FeedbackDetailActions } from "./feedback-detail-actions";
 import { StatusDisplay } from "./status-display";
-import { SubscribeButton } from "./subscribe-button";
 import { TagDisplay } from "./tag-display";
 import { VoteButtons } from "./vote-buttons";
 
@@ -25,10 +24,12 @@ export function FeedbackMetadataBar({
   feedback,
   isAdmin,
   layout = "bar",
+  showActions = true,
 }: {
   feedback: FeedbackDetail;
   isAdmin: boolean;
   layout?: FeedbackPropertiesLayout;
+  showActions?: boolean;
 }) {
   const {
     _id: feedbackId,
@@ -36,9 +37,6 @@ export function FeedbackMetadataBar({
     organizationStatusId,
     assignee,
     tags: feedbackTags,
-    title,
-    description,
-    attachments,
     deadline,
     voteCount,
     userVoteType,
@@ -58,16 +56,12 @@ export function FeedbackMetadataBar({
     api.feedback.tags.list,
     isAdmin ? { organizationId } : "skip"
   );
-  const isSubscribed = useQuery(api.feedback.subscriptions.isSubscribed, {
-    feedbackId,
-  });
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const updateStatus = useMutation(
     api.feedback.triage_actions.updateOrganizationStatus
   );
   const assignFeedback = useMutation(api.feedback.triage_actions.assign);
-  const toggleSubscription = useMutation(api.feedback.subscriptions.toggle);
   const updateAnalysis = useMutation(
     api.feedback.triage_actions.updateAnalysis
   );
@@ -132,13 +126,21 @@ export function FeedbackMetadataBar({
     setDeadlineOpen(false);
   };
 
-  const handleToggleSubscription = async () => {
-    if (!isAuthenticated) {
-      authGuard(() => undefined);
-      return;
-    }
-    await toggleSubscription({ feedbackId });
-  };
+  const actions = showActions && (
+    <div
+      className={
+        layout === "panel"
+          ? "flex items-center justify-between gap-3 border-t pt-3"
+          : "ml-auto flex items-center gap-3"
+      }
+    >
+      <FeedbackDetailActions
+        feedback={feedback}
+        isAdmin={isAdmin}
+        showLabel={layout === "panel"}
+      />
+    </div>
+  );
 
   return (
     <div
@@ -217,6 +219,8 @@ export function FeedbackMetadataBar({
         )}
       </div>
 
+      {layout === "bar" && actions}
+
       {feedback.isMember && (
         <AiAnalysisDisplay
           {...feedback}
@@ -226,32 +230,7 @@ export function FeedbackMetadataBar({
         />
       )}
 
-      {layout === "bar" && <div className="flex-1" />}
-
-      <div
-        className={
-          layout === "panel"
-            ? "flex items-center justify-between gap-3 border-t pt-3"
-            : "contents"
-        }
-      >
-        {isAdmin && (
-          <CopyForAgents
-            attachments={attachments}
-            description={description}
-            feedbackId={feedbackId}
-            organizationId={organizationId}
-            tags={feedbackTags}
-            title={title}
-          />
-        )}
-
-        <SubscribeButton
-          isSubscribed={isSubscribed}
-          onToggle={handleToggleSubscription}
-          showLabel={layout === "panel"}
-        />
-      </div>
+      {layout === "panel" && actions}
     </div>
   );
 }

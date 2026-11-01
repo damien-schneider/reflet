@@ -32,6 +32,7 @@ interface DrawerNavigationProps {
 }
 
 interface FeedbackDetailDrawerHeaderProps extends DrawerNavigationProps {
+  actions?: ReactNode;
   author?: DrawerAuthor | null;
   createdAt?: number;
   showNavigation: boolean;
@@ -144,6 +145,7 @@ function DrawerAuthorInfo({
 }
 
 export function FeedbackDetailDrawerHeader({
+  actions,
   author,
   createdAt,
   showNavigation,
@@ -160,6 +162,7 @@ export function FeedbackDetailDrawerHeader({
       <DrawerAuthorInfo author={author} createdAt={createdAt} />
 
       <div className="ml-auto flex items-center gap-1">
+        {actions}
         {showNavigation && <DrawerNavigation {...navigation} />}
       </div>
 

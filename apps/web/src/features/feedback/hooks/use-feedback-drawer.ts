@@ -1,7 +1,7 @@
 "use client";
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { toId } from "@/lib/convex-helpers";
 
@@ -30,11 +30,9 @@ export interface FeedbackDrawerNavigation {
 export function useFeedbackDrawer(
   feedbackIds: Id<"feedback">[] = []
 ): FeedbackDrawerState & FeedbackDrawerActions & FeedbackDrawerNavigation {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Parse current state from URL
   const state = useMemo((): FeedbackDrawerState => {
     const feedbackIdParam = searchParams.get(FEEDBACK_PARAM_KEY);
     const selectedFeedbackId = feedbackIdParam
@@ -47,7 +45,6 @@ export function useFeedbackDrawer(
     };
   }, [searchParams]);
 
-  // Helper to update URL params
   const updateParams = useCallback(
     (feedbackId: string | null) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -60,12 +57,11 @@ export function useFeedbackDrawer(
 
       const queryString = params.toString();
       const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.push(newUrl, { scroll: false });
+      window.history.pushState(null, "", newUrl);
     },
-    [router, pathname, searchParams]
+    [pathname, searchParams]
   );
 
-  // Actions
   const openFeedback = useCallback(
     (id: string) => {
       updateParams(id);
@@ -84,7 +80,6 @@ export function useFeedbackDrawer(
     [updateParams]
   );
 
-  // Navigation
   const currentIndex = useMemo(() => {
     if (!state.selectedFeedbackId || feedbackIds.length === 0) {
       return -1;

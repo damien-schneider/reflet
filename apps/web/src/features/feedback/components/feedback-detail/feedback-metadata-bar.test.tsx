@@ -117,3 +117,20 @@ test("the properties panel names each field and returns focus after inspecting p
   await userEvent.keyboard("{Escape}");
   expect(rejectionTrigger).toHaveFocus();
 });
+
+test("separates the assessment row from triage and keeps follow actions with triage", () => {
+  render(<FeedbackMetadataBar feedback={feedback} isAdmin />);
+  expect(screen.getByText("Assessment")).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Subscribe to updates" })
+  ).toBeInTheDocument();
+});
+
+test("drawer moves follow actions out of the bar", () => {
+  render(
+    <FeedbackMetadataBar feedback={feedback} isAdmin showActions={false} />
+  );
+  expect(
+    screen.queryByRole("button", { name: "Subscribe to updates" })
+  ).not.toBeInTheDocument();
+});

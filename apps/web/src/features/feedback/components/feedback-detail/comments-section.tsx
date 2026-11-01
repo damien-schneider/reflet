@@ -71,6 +71,13 @@ export function CommentsSection({
         )}
       </h3>
 
+      <CommentProvider feedbackId={feedbackId}>
+        <CommentList
+          comments={comments}
+          isLoading={commentsData === undefined}
+        />
+      </CommentProvider>
+
       <CommentInput
         isAdmin={isAdmin}
         isGeneratingDraft={isGeneratingDraft}
@@ -80,13 +87,6 @@ export function CommentsSection({
         onSubmit={handleSubmitComment}
         value={newComment}
       />
-
-      <CommentProvider feedbackId={feedbackId}>
-        <CommentList
-          comments={comments}
-          isLoading={commentsData === undefined}
-        />
-      </CommentProvider>
     </div>
   );
 }
@@ -114,11 +114,7 @@ function CommentList({
     );
   }
   if (comments.length === 0) {
-    return (
-      <p className="py-8 text-center text-muted-foreground text-sm">
-        No comments yet.
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">No comments yet.</p>;
   }
   return (
     <div className="space-y-1">
