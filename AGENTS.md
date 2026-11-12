@@ -160,3 +160,9 @@ After every change:
 4. `turbo test` (all pass)
 5. `turbo build` (full production build)
 6. `bunx react-doctor@latest . --verbose --diff` (if React changed, score >= 95)
+
+## Publishing to npm
+
+- `~/.npmrc` holds a granular npm token (write access to `reflet-sdk` and `reflet-cli`, bypasses 2FA, expires 2027-02-10). Agents publish without asking; `npm whoami` must print `damien-schneider`. On 401/403, ask the user for a new token. Never commit the token or add a repo `.npmrc` with an `_authToken` line.
+- SDK: bump `packages/sdk/package.json`, then `cd packages/sdk && bun run release`.
+- CLI: bump `packages/cli/package.json`, then `cd packages/cli && npm publish`. `prepublishOnly` builds it and needs `dist/live-shell/reflet-live-shell`, which only builds on macOS.
