@@ -1,119 +1,79 @@
-"use node";
-
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { type ActionCtx, internalAction } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
+import { NOTIFICATION_SETTINGS_PATH } from "./preferences";
+import { optedInEmailAddress } from "./team_alerts";
 
-const BATCH_SIZE = 10;
-const BATCH_DELAY_MS = 100;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-interface ShippedEmailContext {
-  feedbackId: string;
-  feedbackTitle: string;
-  orgName: string;
-  orgSlug: string;
-  releaseTitle: string;
-  siteUrl: string;
-}
-
-async function sendShippedEmail(
-  ctx: ActionCtx,
-  email: string,
-  shipped: ShippedEmailContext
-): Promise<boolean> {
-  try {
-    const isSuppressed = await ctx.runQuery(
-      internal.email.suppression.isEmailSuppressed,
-      { email }
-    );
-    if (isSuppressed) {
-      return false;
-    }
-    await ctx.runAction(internal.email.renderer.sendFeedbackShippedEmail, {
-      feedbackTitle: shipped.feedbackTitle,
-      feedbackUrl: `${shipped.siteUrl}/${shipped.orgSlug}/feedback/${shipped.feedbackId}`,
-      organizationName: shipped.orgName,
-      releaseTitle: shipped.releaseTitle,
-      releaseUrl: `${shipped.siteUrl}/${shipped.orgSlug}/changelog`,
-      to: email,
-      unsubscribeUrl: `${shipped.siteUrl}/settings/notifications`,
+const followerEmails = async (
+  ctx: MutationCtx,
+  feedbackId: Id<"feedback">
+): Promise<Set<string>> => {
+  const votes = await ctx.db
+    .query("feedbackVotes")
+    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+    .collect();
+  const subscriptions = await ctx.db
+    .query("feedbackSubscriptions")
+    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+    .collect();
+  const userIds = new Set(
+    [...votes, ...subscriptions].flatMap(({ userId }) =>
+      userId ? [userId] : []
+    )
+  );
+  const emails = new Set<string>();
+  for (const userId of userIds) {
+    const email = await optedInEmailAddress(ctx, {
+      preference: "emailOnFeedbackShipped",
+      userId,
     });
-    return true;
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    console.error(
-      `[Shipped Notifications] Failed to send to ${email}: ${errorMsg}`
-    );
-    return false;
+    if (email) {
+      emails.add(email);
+    }
   }
-}
+  return emails;
+};
 
-async function sendShippedEmailsInBatches(
-  ctx: ActionCtx,
-  emails: string[],
-  shipped: ShippedEmailContext
-): Promise<number> {
-  let sent = 0;
-  for (let i = 0; i < emails.length; i += BATCH_SIZE) {
-    for (const email of emails.slice(i, i + BATCH_SIZE)) {
-      if (await sendShippedEmail(ctx, email, shipped)) {
-        sent++;
+export const sendShippedNotifications = internalMutation({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) => {
+    const release = await ctx.db.get(args.releaseId);
+    const organization = release && (await ctx.db.get(release.organizationId));
+    if (!(release && organization)) {
+      return null;
+    }
+    if ((await getOrgTier(ctx, organization._id)) !== "pro") {
+      return null;
+    }
+    const siteUrl = process.env.SITE_URL ?? "";
+    const links = await ctx.db
+      .query("releaseFeedback")
+      .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+      .collect();
+    for (const link of links) {
+      const feedback = await ctx.db.get(link.feedbackId);
+      if (!feedback || feedback.deletedAt) {
+        continue;
+      }
+      for (const to of await followerEmails(ctx, feedback._id)) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.email.renderer.sendFeedbackShippedEmail,
+          {
+            feedbackTitle: feedback.title,
+            feedbackUrl: `${siteUrl}/${organization.slug}/feedback/${feedback._id}`,
+            organizationName: organization.name,
+            releaseTitle: release.title,
+            releaseUrl: `${siteUrl}/${organization.slug}/changelog`,
+            to,
+            unsubscribeUrl: `${siteUrl}${NOTIFICATION_SETTINGS_PATH}`,
+          }
+        );
       }
     }
-    if (i + BATCH_SIZE < emails.length) {
-      await sleep(BATCH_DELAY_MS);
-    }
-  }
-  return sent;
-}
-
-/**
- * Send "You asked, we shipped" notifications to voters and subscribers
- * of feedback items linked to a newly published release.
- */
-export const sendShippedNotifications = internalAction({
-  args: {
-    releaseId: v.id("releases"),
+    return null;
   },
-  handler: async (ctx, args) => {
-    const data = await ctx.runQuery(
-      internal.notifications.shipped_helpers.getShippedNotificationData,
-      { releaseId: args.releaseId }
-    );
-
-    if (!data) {
-      return { error: "Release or org not found", success: false };
-    }
-
-    if (!data.isPro) {
-      return { reason: "Not Pro tier", skipped: true, success: true };
-    }
-
-    const siteUrl = process.env.SITE_URL ?? "";
-    let totalSent = 0;
-
-    for (const item of data.feedbackItems) {
-      const recipients = await ctx.runQuery(
-        internal.notifications.shipped_helpers.getFeedbackRecipients,
-        { feedbackId: item.feedbackId }
-      );
-      const uniqueEmails = [
-        ...new Set(recipients.flatMap((r) => (r.email ? [r.email] : []))),
-      ];
-      totalSent += await sendShippedEmailsInBatches(ctx, uniqueEmails, {
-        feedbackId: item.feedbackId,
-        feedbackTitle: item.feedbackTitle,
-        orgName: data.orgName,
-        orgSlug: data.orgSlug,
-        releaseTitle: data.releaseTitle,
-        siteUrl,
-      });
-    }
-
-    return { emailsSent: totalSent, success: true };
-  },
+  returns: v.null(),
 });

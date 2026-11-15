@@ -1,10 +1,8 @@
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { authComponent } from "../auth/auth";
-import { DEFAULT_PREFERENCES } from "../notifications/preferences";
-import { isOrgAdmin } from "../shared/membership";
-import { rateLimiter } from "../shared/rate_limits";
+import { teamAlertEmailAddress } from "../notifications/team_alerts";
+import { orgAdminIdsExcept } from "../shared/membership";
 import { resolveConversationPerson } from "./people";
 
 const NOTIFICATION_TITLE = "New support message";
@@ -16,28 +14,10 @@ const teamRecipientIds = async (
   if (conversation.assignedTo) {
     return [conversation.assignedTo];
   }
-  const members = await ctx.db
-    .query("organizationMembers")
-    .withIndex("by_organization", (q) =>
-      q.eq("organizationId", conversation.organizationId)
-    )
-    .collect();
-  return members
-    .filter((member) => isOrgAdmin(member.role))
-    .map((member) => member.userId)
-    .filter((userId) => userId !== conversation.userId);
-};
-
-const wantsInboxEmail = async (
-  ctx: MutationCtx,
-  userId: string
-): Promise<boolean> => {
-  const preferences = await ctx.db
-    .query("userNotificationPreferences")
-    .withIndex("by_user", (q) => q.eq("userId", userId))
-    .first();
-  return (
-    preferences?.emailOnInboxMessage ?? DEFAULT_PREFERENCES.emailOnInboxMessage
+  return await orgAdminIdsExcept(
+    ctx,
+    conversation.organizationId,
+    conversation.userId
   );
 };
 
@@ -51,17 +31,12 @@ const scheduleInboxAlertEmail = async (
     userId: string;
   }
 ) => {
-  if (!(await wantsInboxEmail(ctx, args.userId))) {
-    return;
-  }
-  const member = await authComponent.getAnyUserById(ctx, args.userId);
-  if (!member?.email) {
-    return;
-  }
-  const { ok } = await rateLimiter.limit(ctx, "supportInboxAlertPerMember", {
-    key: args.userId,
+  const to = await teamAlertEmailAddress(ctx, {
+    preference: "emailOnInboxMessage",
+    rateLimit: "supportInboxAlertPerMember",
+    userId: args.userId,
   });
-  if (!ok) {
+  if (!to) {
     return;
   }
   await ctx.scheduler.runAfter(0, internal.support.email.inbox_alert.send, {
@@ -71,7 +46,7 @@ const scheduleInboxAlertEmail = async (
     organizationSlug: args.organization.slug,
     personLabel: args.personLabel,
     preview: args.preview,
-    to: member.email,
+    to,
   });
 };
 

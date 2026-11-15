@@ -13,6 +13,7 @@ const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
   incident_resolved: "notifyOnIncident",
   invitation: "notifyOnInvitation",
   new_comment: "notifyOnNewComment",
+  new_feedback: "notifyOnNewFeedback",
   new_support_message: "notifyOnNewSupportMessage",
   status_change: "notifyOnStatusChange",
   support_inbox_message: "notifyOnInboxMessage",

@@ -28,12 +28,17 @@ const findSuppression = (
     )
     .first();
 
+export const isGloballySuppressed = async (
+  ctx: QueryCtx,
+  email: string
+): Promise<boolean> => (await findSuppression(ctx, email, undefined)) !== null;
+
 export const isSupportRecipientSuppressed = async (
   ctx: QueryCtx,
   email: string,
   organizationId: Id<"organizations">
 ): Promise<boolean> =>
-  (await findSuppression(ctx, email, undefined)) !== null ||
+  (await isGloballySuppressed(ctx, email)) ||
   (await findSuppression(ctx, email, organizationId)) !== null;
 
 export const addSuppressionOnce = async (
@@ -62,8 +67,7 @@ export const addSuppressionOnce = async (
 
 export const isEmailSuppressed = internalQuery({
   args: { email: v.string() },
-  handler: async (ctx, args) =>
-    (await findSuppression(ctx, args.email, undefined)) !== null,
+  handler: (ctx, args) => isGloballySuppressed(ctx, args.email),
   returns: v.boolean(),
 });
 

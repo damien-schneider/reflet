@@ -21,9 +21,15 @@ type NotificationTypeKey =
   | "notifyOnVoteMilestone"
   | "notifyOnNewSupportMessage"
   | "notifyOnInboxMessage"
+  | "notifyOnNewFeedback"
   | "notifyOnInvitation"
   | "notifyOnIncident";
-type PreferenceKey = NotificationTypeKey | "emailOnInboxMessage";
+type EmailTypeKey =
+  | "emailOnFeedbackShipped"
+  | "emailOnInboxMessage"
+  | "emailOnNewFeedback"
+  | "emailOnWeeklyDigest";
+type PreferenceKey = NotificationTypeKey | EmailTypeKey;
 
 const NOTIFICATION_TYPES: {
   key: NotificationTypeKey;
@@ -56,6 +62,12 @@ const NOTIFICATION_TYPES: {
     label: "New messages in your inbox",
   },
   {
+    description:
+      "When someone submits feedback to an organization you administer",
+    key: "notifyOnNewFeedback",
+    label: "New feedback",
+  },
+  {
     description: "When you’re invited to join an organization",
     key: "notifyOnInvitation",
     label: "Invitations",
@@ -64,6 +76,36 @@ const NOTIFICATION_TYPES: {
     description: "When a status page incident starts or resolves",
     key: "notifyOnIncident",
     label: "Incidents",
+  },
+];
+
+const EMAIL_TYPES: {
+  key: EmailTypeKey;
+  label: string;
+  description: string;
+}[] = [
+  {
+    description:
+      "When a customer writes to your organization’s support inbox. One email until you open the conversation, not one per message.",
+    key: "emailOnInboxMessage",
+    label: "Email me when a customer writes",
+  },
+  {
+    description:
+      "When someone submits feedback to an organization you administer, including feedback awaiting your approval. Feedback flagged as spam is skipped.",
+    key: "emailOnNewFeedback",
+    label: "Email me about new feedback",
+  },
+  {
+    description:
+      "A weekly summary of feedback, votes and status changes in your organizations",
+    key: "emailOnWeeklyDigest",
+    label: "Weekly digest",
+  },
+  {
+    description: "When feedback you voted on or submitted ships",
+    key: "emailOnFeedbackShipped",
+    label: "Feedback shipped",
   },
 ];
 
@@ -246,15 +288,16 @@ export function NotificationSettings() {
         title="Email notifications"
       >
         <FieldGroup variant="card">
-          <SwitchRow
-            checked={preferences?.emailOnInboxMessage ?? true}
-            description="When a customer writes to your organization’s support inbox. One email until you open the conversation, not one per message."
-            disabled={isPrefsLoading}
-            label="Email me when a customer writes"
-            onCheckedChange={(value) =>
-              handleTypeToggle("emailOnInboxMessage", value)
-            }
-          />
+          {EMAIL_TYPES.map((type) => (
+            <SwitchRow
+              checked={preferences?.[type.key] ?? true}
+              description={type.description}
+              disabled={isPrefsLoading}
+              key={type.key}
+              label={type.label}
+              onCheckedChange={(value) => handleTypeToggle(type.key, value)}
+            />
+          ))}
         </FieldGroup>
       </SettingsSection>
 

@@ -37,6 +37,7 @@ vi.mock("convex/react", () => ({
               {
                 _id: "invitation1",
                 createdAt: Date.now(),
+                href: "/invite/join-acme",
                 invitationToken: "join-acme",
                 isRead: false,
                 message: "Join Acme as a member",

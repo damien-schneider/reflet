@@ -20,6 +20,11 @@ export const organizationTables = {
     organizationId: v.id("organizations"),
   })
     .index("by_organization", ["organizationId"])
+    .index("by_organization_action_created_at", [
+      "organizationId",
+      "action",
+      "createdAt",
+    ])
     .index("by_feedback", ["feedbackId"]),
 
   invitations: defineTable({

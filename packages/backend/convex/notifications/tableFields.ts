@@ -29,11 +29,15 @@ export const notificationTables = {
 
   userNotificationPreferences: defineTable({
     createdAt: v.number(),
+    emailOnFeedbackShipped: v.optional(v.boolean()),
     emailOnInboxMessage: v.optional(v.boolean()),
+    emailOnNewFeedback: v.optional(v.boolean()),
+    emailOnWeeklyDigest: v.optional(v.boolean()),
     notifyOnInboxMessage: v.optional(v.boolean()),
     notifyOnIncident: v.optional(v.boolean()),
     notifyOnInvitation: v.boolean(),
     notifyOnNewComment: v.boolean(),
+    notifyOnNewFeedback: v.optional(v.boolean()),
     notifyOnNewSupportMessage: v.boolean(),
     notifyOnStatusChange: v.boolean(),
     notifyOnVoteMilestone: v.boolean(),

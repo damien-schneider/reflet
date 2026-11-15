@@ -14,6 +14,7 @@
     "./templates/subscription-confirmation-email": "./src/templates/subscription-confirmation-email.tsx",
     "./templates/status-incident-email": "./src/templates/status-incident-email.tsx",
     "./templates/status-maintenance-email": "./src/templates/status-maintenance-email.tsx",
+    "./templates/new-feedback-alert-email": "./src/templates/new-feedback-alert-email.tsx",
     "./templates/platform-alert-email": "./src/templates/platform-alert-email.tsx",
     "./templates/support-contact-confirmation-email": "./src/templates/support-contact-confirmation-email.tsx",
     "./templates/support-forwarding-test-email": "./src/templates/support-forwarding-test-email.tsx",

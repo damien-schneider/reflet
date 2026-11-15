@@ -6,8 +6,8 @@ import {
   getDeadlineInfo,
 } from "./milestone-deadline";
 
-// Freeze time for deterministic tests
-const FIXED_NOW = new Date("2025-06-15T12:00:00Z");
+// deadlines are local calendar days, so "now" and every target are local times
+const FIXED_NOW = new Date("2025-06-15T12:00:00");
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -18,7 +18,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const toTimestamp = (dateStr: string): number => new Date(dateStr).getTime();
+const toTimestamp = (dateStr: string): number =>
+  new Date(`${dateStr}T00:00:00`).getTime();
 
 describe("getDeadlineInfo", () => {
   it("returns null when targetDate is undefined", () => {

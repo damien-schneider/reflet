@@ -6,6 +6,7 @@ import {
   query,
 } from "../_generated/server";
 import { EVALUATION_MODEL } from "../ai/models";
+import { settleNewFeedbackAlert } from "../notifications/new_feedback";
 import { requireOrgMember } from "../shared/access";
 import { afterApproval } from "./after_create";
 import {
@@ -240,9 +241,10 @@ async function saveRunVerdict(
 ) {
   const { run, result, suggestions } = options;
   const now = Date.now();
+  const withhold = result.junk >= run.thresholds.junk;
   const { decision, isApproved } = await decidePublication(ctx, feedback, {
     run,
-    withhold: result.junk >= run.thresholds.junk,
+    withhold,
   });
   await ctx.db.patch(feedback._id, {
     aiJunk: result.junk,
@@ -255,6 +257,11 @@ async function saveRunVerdict(
   if (isApproved && !feedback.isApproved) {
     await afterApproval(ctx, { ...feedback, isApproved });
   }
+  await settleNewFeedbackAlert(
+    ctx,
+    { ...feedback, isApproved },
+    { junk: withhold }
+  );
   await ctx.db.patch(run._id, {
     answers: result.answers,
     completedAt: now,

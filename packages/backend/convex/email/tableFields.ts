@@ -14,7 +14,8 @@ export const emailTypeValidator = v.union(
   v.literal("support_reply_notice"),
   v.literal("support_contact_confirmation"),
   v.literal("support_forwarding_test"),
-  v.literal("support_inbox_alert")
+  v.literal("support_inbox_alert"),
+  v.literal("new_feedback_alert")
 );
 
 export const emailSendStatus = v.union(

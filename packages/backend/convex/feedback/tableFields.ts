@@ -158,6 +158,7 @@ export const feedbackTables = {
     isPinned: v.boolean(),
     mergedIntoId: v.optional(v.id("feedback")),
     needsClarification: v.optional(v.boolean()),
+    newFeedbackAlertPending: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
     organizationStatusId: v.optional(v.id("organizationStatuses")),
     priority: v.optional(
@@ -250,6 +251,7 @@ export const feedbackTables = {
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
   })
     .index("by_feedback", ["feedbackId"])
+    .index("by_feedback_created_at", ["feedbackId", "createdAt"])
     .index("by_user", ["userId"])
     .index("by_feedback_user", ["feedbackId", "userId"])
     .index("by_feedback_external_user", ["feedbackId", "externalUserId"]),

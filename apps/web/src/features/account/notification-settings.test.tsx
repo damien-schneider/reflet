@@ -81,7 +81,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Warning: () => <svg />,
 }));
 
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 import { NotificationSettings } from "./notification-settings";
@@ -231,118 +231,47 @@ describe("NotificationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows Active Devices with Chrome Desktop user agent", () => {
+  it.each([
+    {
+      device: "Chrome on Desktop",
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    },
+    {
+      device: "Firefox on Desktop",
+      userAgent:
+        "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0",
+    },
+    {
+      device: "Safari on Desktop",
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    },
+    {
+      device: "Edge on Desktop",
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    },
+    {
+      device: "on Mobile",
+      userAgent:
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    },
+    { device: "Unknown device", userAgent: undefined },
+  ])("lists an active device as $device", ({ device, userAgent }) => {
     vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
+      .mockReturnValueOnce({ pushEnabled: true })
       .mockReturnValueOnce([
         {
           _id: "sub1",
           createdAt: Date.now(),
           endpoint: "https://push.example.com",
-          userAgent:
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          userAgent,
         },
       ]);
     render(<NotificationSettings />);
     expect(screen.getByText("Active devices")).toBeInTheDocument();
-    expect(screen.getByText(/Chrome on Desktop/)).toBeInTheDocument();
-  });
-
-  it("shows Firefox Desktop user agent", () => {
-    vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
-      .mockReturnValueOnce([
-        {
-          _id: "sub2",
-          createdAt: Date.now(),
-          endpoint: "https://push.example.com",
-          userAgent:
-            "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0",
-        },
-      ]);
-    render(<NotificationSettings />);
-    expect(screen.getByText(/Firefox on Desktop/)).toBeInTheDocument();
-  });
-
-  it("shows Safari Desktop user agent", () => {
-    vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
-      .mockReturnValueOnce([
-        {
-          _id: "sub3",
-          createdAt: Date.now(),
-          endpoint: "https://push.example.com",
-          userAgent:
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-        },
-      ]);
-    render(<NotificationSettings />);
-    expect(screen.getByText(/Safari on Desktop/)).toBeInTheDocument();
-  });
-
-  it("shows Unknown device when user agent is missing", () => {
-    vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
-      .mockReturnValueOnce([
-        {
-          _id: "sub4",
-          createdAt: Date.now(),
-          endpoint: "https://push.example.com",
-        },
-      ]);
-    render(<NotificationSettings />);
-    expect(screen.getByText("Unknown device")).toBeInTheDocument();
-  });
-
-  it("shows Mobile user agent for mobile user agent string", () => {
-    vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
-      .mockReturnValueOnce([
-        {
-          _id: "sub5",
-          createdAt: Date.now(),
-          endpoint: "https://push.example.com",
-          userAgent:
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-        },
-      ]);
-    render(<NotificationSettings />);
-    expect(screen.getByText(/on Mobile/)).toBeInTheDocument();
+    expect(screen.getByText(device, { exact: false })).toBeInTheDocument();
   });
 
   it("renders push notification settings heading", () => {
@@ -380,7 +309,6 @@ describe("NotificationSettings", () => {
 
   it("toggles notification type when switch is clicked", async () => {
     const mockUpdatePrefs = vi.fn().mockResolvedValue(undefined);
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs);
     vi.mocked(useQuery).mockReturnValue({
       notifyOnInvitation: true,
@@ -400,27 +328,58 @@ describe("NotificationSettings", () => {
     }
   });
 
-  it("shows Edge Desktop user agent", () => {
-    vi.mocked(useQuery)
-      .mockReturnValueOnce({
-        notifyOnInvitation: true,
-        notifyOnNewComment: true,
-        notifyOnNewSupportMessage: true,
-        notifyOnStatusChange: true,
-        notifyOnVoteMilestone: true,
-        pushEnabled: true,
-      })
-      .mockReturnValueOnce([
-        {
-          _id: "sub6",
-          createdAt: Date.now(),
-          endpoint: "https://push.example.com",
-          userAgent:
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-        },
-      ]);
+  it.each([
+    {
+      label: "Email me about new feedback",
+      patch: { emailOnNewFeedback: false },
+      pushEnabled: false,
+    },
+    {
+      label: "Weekly digest",
+      patch: { emailOnWeeklyDigest: false },
+      pushEnabled: false,
+    },
+    {
+      label: "Feedback shipped",
+      patch: { emailOnFeedbackShipped: false },
+      pushEnabled: false,
+    },
+    {
+      label: "New feedback",
+      patch: { notifyOnNewFeedback: false },
+      pushEnabled: true,
+    },
+  ])(
+    "turning off “$label” saves $patch",
+    async ({ label, patch, pushEnabled }) => {
+      const mockUpdatePrefs = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs);
+      vi.mocked(useQuery).mockReturnValue({ pushEnabled });
+      render(<NotificationSettings />);
+      const switchId = screen
+        .getByText(label)
+        .closest("label")
+        ?.getAttribute("for");
+      await userEvent.setup().click(screen.getByTestId(`switch-${switchId}`));
+      expect(mockUpdatePrefs).toHaveBeenCalledWith(patch);
+    }
+  );
+
+  it("describes the new feedback, weekly digest and shipped toggles", () => {
     render(<NotificationSettings />);
-    expect(screen.getByText(/Edge on Desktop/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "When someone submits feedback to an organization you administer"
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "A weekly summary of feedback, votes and status changes in your organizations"
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("When feedback you voted on or submitted ships")
+    ).toBeInTheDocument();
   });
 
   it("renders multiple notification type sections", () => {

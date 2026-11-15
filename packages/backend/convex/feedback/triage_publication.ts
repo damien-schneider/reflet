@@ -1,6 +1,7 @@
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { settleNewFeedbackAlert } from "../notifications/new_feedback";
 import { afterApproval } from "./after_create";
 import { publicationState } from "./property_values";
 
@@ -61,6 +62,11 @@ export async function applyPolicyWithoutVerdict(
       await afterApproval(ctx, { ...feedback, isApproved });
     }
   }
+  await settleNewFeedbackAlert(
+    ctx,
+    { ...feedback, isApproved },
+    { junk: false }
+  );
   return decision;
 }
 

@@ -5,6 +5,7 @@ import {
   Chat,
   ChatsCircle,
   Envelope,
+  Lightbulb,
   Package,
   ShieldWarning,
   TrendUp,
@@ -25,6 +26,7 @@ const notificationIcons: Record<
   incident_resolved: ShieldWarning,
   invitation: UserPlus,
   new_comment: Chat,
+  new_feedback: Lightbulb,
   new_support_message: Envelope,
   status_change: TrendUp,
   support_inbox_message: ChatsCircle,
@@ -37,6 +39,7 @@ const notificationColors: Record<NotificationType, string> = {
   incident_resolved: "text-success-text",
   invitation: "text-brand-text",
   new_comment: "text-chart-1-text",
+  new_feedback: "text-chart-2-text",
   new_support_message: "text-chart-4-text",
   status_change: "text-brand-text",
   support_inbox_message: "text-chart-4-text",
@@ -46,25 +49,22 @@ const notificationColors: Record<NotificationType, string> = {
 interface NotificationItemProps {
   notification: Pick<
     Doc<"notifications">,
-    "type" | "title" | "message" | "isRead" | "createdAt" | "invitationToken"
-  >;
+    "type" | "title" | "message" | "isRead" | "createdAt"
+  > & { href?: string };
 }
 
 export function NotificationItem({ notification }: NotificationItemProps) {
-  const isInvitation =
-    notification.type === "invitation" && notification.invitationToken;
-
   const rowClassName = cn(
     "flex gap-3 rounded-(--radius-popup-item) p-3",
     !notification.isRead && "bg-accent/50"
   );
 
-  if (isInvitation) {
+  if (notification.href) {
     return (
       <li>
         <Link
           className={cn(rowClassName, "hover:bg-accent")}
-          href={`/invite/${notification.invitationToken}`}
+          href={notification.href}
         >
           <NotificationContent notification={notification} />
         </Link>

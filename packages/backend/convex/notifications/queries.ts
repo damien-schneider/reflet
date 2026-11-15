@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { feedbackDashboardPath } from "./new_feedback";
 
 const pendingInvitationsFor = async (
   ctx: QueryCtx,
@@ -19,6 +20,23 @@ const pendingInvitationsFor = async (
     (invitation) =>
       invitation.status === "pending" && invitation.expiresAt > now
   );
+};
+
+const notificationHref = async (
+  ctx: QueryCtx,
+  notification: Doc<"notifications">
+): Promise<string | undefined> => {
+  if (notification.invitationToken) {
+    return `/invite/${notification.invitationToken}`;
+  }
+  if (notification.type !== "new_feedback" || !notification.feedbackId) {
+    return;
+  }
+  const feedback = await ctx.db.get(notification.feedbackId);
+  const organization = feedback && (await ctx.db.get(feedback.organizationId));
+  return organization
+    ? feedbackDashboardPath(organization.slug, notification.feedbackId)
+    : undefined;
 };
 
 /**
@@ -67,11 +85,16 @@ export const list = query({
 
     allNotifications.sort((a, b) => b.createdAt - a.createdAt);
 
-    if (args.limit) {
-      return allNotifications.slice(0, args.limit);
-    }
+    const page = args.limit
+      ? allNotifications.slice(0, args.limit)
+      : allNotifications;
 
-    return allNotifications;
+    return await Promise.all(
+      page.map(async (notification) => ({
+        ...notification,
+        href: await notificationHref(ctx, notification),
+      }))
+    );
   },
 });
 

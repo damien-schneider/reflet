@@ -1,6 +1,10 @@
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import {
+  awaitTriageBeforeAlert,
+  notifyTeamOfNewFeedback,
+} from "../notifications/new_feedback";
 import { emitWebhookEvent } from "../webhooks/mutations";
 import { isFeedbackPublishable } from "./property_values";
 
@@ -61,11 +65,16 @@ export async function scheduleAfterCreate(
   }
 
   if (options.autoTagging) {
+    await awaitTriageBeforeAlert(ctx, feedbackId);
     return;
   }
 
   const feedback = await ctx.db.get(feedbackId);
-  if (feedback?.isApproved) {
+  if (!feedback) {
+    return;
+  }
+  await notifyTeamOfNewFeedback(ctx, feedback);
+  if (feedback.isApproved) {
     await afterApproval(ctx, feedback);
   }
 }

@@ -86,6 +86,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: DAY,
     rate: 50,
   },
+  newFeedbackAlertPerMember: {
+    capacity: 20,
+    kind: "token bucket",
+    period: DAY,
+    rate: 50,
+  },
   platformTriageFailureAlert: {
     capacity: 1,
     kind: "token bucket",

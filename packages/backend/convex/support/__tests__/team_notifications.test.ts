@@ -1,9 +1,14 @@
 /// <reference types="vite/client" />
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
+
+// the support Resend client reads its key once, when the first test imports it
+beforeEach(() => {
+  vi.stubEnv("RESEND_SUPPORT_API_KEY", "re_test");
+});
 
 afterEach(() => {
   vi.useRealTimers();
@@ -340,7 +345,6 @@ describe("starting an email conversation", () => {
       conversationId,
     });
 
-    vi.stubEnv("RESEND_SUPPORT_API_KEY", "re_test");
     for (const messageId of [opening._id, followUpId]) {
       await t.action(internal.support.email.render.deliverAdminReply, {
         messageId,

@@ -53,7 +53,8 @@ export const notificationType = v.union(
   v.literal("feedback_shipped"),
   v.literal("incident_detected"),
   v.literal("incident_resolved"),
-  v.literal("support_inbox_message")
+  v.literal("support_inbox_message"),
+  v.literal("new_feedback")
 );
 
 export const supportConversationStatus = v.union(

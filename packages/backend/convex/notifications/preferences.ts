@@ -2,12 +2,19 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
+export const NOTIFICATION_SETTINGS_PATH =
+  "/dashboard/account?tab=notifications";
+
 export const DEFAULT_PREFERENCES = {
+  emailOnFeedbackShipped: true,
   emailOnInboxMessage: true,
+  emailOnNewFeedback: true,
+  emailOnWeeklyDigest: true,
   notifyOnInboxMessage: true,
   notifyOnIncident: true,
   notifyOnInvitation: true,
   notifyOnNewComment: true,
+  notifyOnNewFeedback: true,
   notifyOnNewSupportMessage: true,
   notifyOnStatusChange: true,
   notifyOnVoteMilestone: true,
@@ -37,9 +44,18 @@ export const getPreferences = query({
     }
 
     return {
+      emailOnFeedbackShipped:
+        preferences.emailOnFeedbackShipped ??
+        DEFAULT_PREFERENCES.emailOnFeedbackShipped,
       emailOnInboxMessage:
         preferences.emailOnInboxMessage ??
         DEFAULT_PREFERENCES.emailOnInboxMessage,
+      emailOnNewFeedback:
+        preferences.emailOnNewFeedback ??
+        DEFAULT_PREFERENCES.emailOnNewFeedback,
+      emailOnWeeklyDigest:
+        preferences.emailOnWeeklyDigest ??
+        DEFAULT_PREFERENCES.emailOnWeeklyDigest,
       notifyOnInboxMessage:
         preferences.notifyOnInboxMessage ??
         DEFAULT_PREFERENCES.notifyOnInboxMessage,
@@ -47,6 +63,9 @@ export const getPreferences = query({
         preferences.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
       notifyOnInvitation: preferences.notifyOnInvitation,
       notifyOnNewComment: preferences.notifyOnNewComment,
+      notifyOnNewFeedback:
+        preferences.notifyOnNewFeedback ??
+        DEFAULT_PREFERENCES.notifyOnNewFeedback,
       notifyOnNewSupportMessage: preferences.notifyOnNewSupportMessage,
       notifyOnStatusChange: preferences.notifyOnStatusChange,
       notifyOnVoteMilestone: preferences.notifyOnVoteMilestone,
@@ -62,11 +81,15 @@ export const getPreferences = query({
  */
 export const updatePreferences = mutation({
   args: {
+    emailOnFeedbackShipped: v.optional(v.boolean()),
     emailOnInboxMessage: v.optional(v.boolean()),
+    emailOnNewFeedback: v.optional(v.boolean()),
+    emailOnWeeklyDigest: v.optional(v.boolean()),
     notifyOnInboxMessage: v.optional(v.boolean()),
     notifyOnIncident: v.optional(v.boolean()),
     notifyOnInvitation: v.optional(v.boolean()),
     notifyOnNewComment: v.optional(v.boolean()),
+    notifyOnNewFeedback: v.optional(v.boolean()),
     notifyOnNewSupportMessage: v.optional(v.boolean()),
     notifyOnStatusChange: v.optional(v.boolean()),
     notifyOnVoteMilestone: v.optional(v.boolean()),
@@ -92,7 +115,10 @@ export const updatePreferences = mutation({
 
     return await ctx.db.insert("userNotificationPreferences", {
       createdAt: now,
+      emailOnFeedbackShipped: args.emailOnFeedbackShipped,
       emailOnInboxMessage: args.emailOnInboxMessage,
+      emailOnNewFeedback: args.emailOnNewFeedback,
+      emailOnWeeklyDigest: args.emailOnWeeklyDigest,
       notifyOnInboxMessage: args.notifyOnInboxMessage,
       notifyOnIncident:
         args.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
@@ -100,6 +126,7 @@ export const updatePreferences = mutation({
         args.notifyOnInvitation ?? DEFAULT_PREFERENCES.notifyOnInvitation,
       notifyOnNewComment:
         args.notifyOnNewComment ?? DEFAULT_PREFERENCES.notifyOnNewComment,
+      notifyOnNewFeedback: args.notifyOnNewFeedback,
       notifyOnNewSupportMessage:
         args.notifyOnNewSupportMessage ??
         DEFAULT_PREFERENCES.notifyOnNewSupportMessage,
