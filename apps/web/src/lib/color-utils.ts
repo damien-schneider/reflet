@@ -1,7 +1,5 @@
 // Top-level regex for hex color parsing
 const HEX_COLOR_REGEX = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
-// Regex for validating hex colors (3 or 6 digit)
-const HEX_VALIDATION_REGEX = /^#?([a-f\d]{3}|[a-f\d]{6})$/i;
 
 /**
  * Converts a hex color to HSL values
@@ -159,25 +157,4 @@ export function generateColorCssVars(
     "--color-primary-hover": palette.primaryHover,
     "--color-primary-light": palette.primaryLight,
   };
-}
-
-/**
- * Validates a hex color string
- */
-export function isValidHexColor(color: string): boolean {
-  return HEX_VALIDATION_REGEX.test(color);
-}
-
-/**
- * Normalizes a hex color to 6-digit format with #
- */
-export function normalizeHexColor(color: string): string {
-  let hex = color.replace("#", "");
-  if (hex.length === 3) {
-    hex = hex
-      .split("")
-      .map((c) => c + c)
-      .join("");
-  }
-  return `#${hex}`;
 }

@@ -23,6 +23,15 @@ describe("createAnnouncements", () => {
       const result = onDragStart({ active: { id: "f1" } });
       expect(result).toBe("Picked up Fix login bug. Dragging.");
     });
+
+    it("never announces undefined when the dragged card is not in the list", () => {
+      const { onDragStart } = createAnnouncements(
+        mockFeedback as never,
+        mockStatuses
+      );
+      const result = onDragStart({ active: { id: "gone" } });
+      expect(result).toBe("Picked up item. Dragging.");
+    });
   });
 
   describe("onDragOver", () => {
@@ -71,6 +80,18 @@ describe("createAnnouncements", () => {
         over: { id: "s2" },
       });
       expect(result).toBe("Dropped Fix login bug in Done");
+    });
+
+    it("never announces undefined when the dropped card is not in the list", () => {
+      const { onDragEnd } = createAnnouncements(
+        mockFeedback as never,
+        mockStatuses
+      );
+      const result = onDragEnd({
+        active: { id: "gone" },
+        over: { id: "s2" },
+      });
+      expect(result).toBe("Dropped item in Done");
     });
 
     it("should return drag cancelled when over is null", () => {

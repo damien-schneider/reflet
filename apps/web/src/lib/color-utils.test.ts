@@ -1,65 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ColorPalette } from "./color-utils";
-import {
-  generateColorCssVars,
-  generateColorPalette,
-  isValidHexColor,
-  normalizeHexColor,
-} from "./color-utils";
-
-describe("isValidHexColor", () => {
-  it("accepts 6-digit hex with #", () => {
-    expect(isValidHexColor("#ff0000")).toBe(true);
-    expect(isValidHexColor("#000000")).toBe(true);
-    expect(isValidHexColor("#ffffff")).toBe(true);
-    expect(isValidHexColor("#abcdef")).toBe(true);
-  });
-
-  it("accepts 6-digit hex without #", () => {
-    expect(isValidHexColor("ff0000")).toBe(true);
-    expect(isValidHexColor("ABCDEF")).toBe(true);
-  });
-
-  it("accepts 3-digit hex with #", () => {
-    expect(isValidHexColor("#fff")).toBe(true);
-    expect(isValidHexColor("#000")).toBe(true);
-    expect(isValidHexColor("#abc")).toBe(true);
-  });
-
-  it("accepts 3-digit hex without #", () => {
-    expect(isValidHexColor("fff")).toBe(true);
-    expect(isValidHexColor("ABC")).toBe(true);
-  });
-
-  it("rejects invalid hex values", () => {
-    expect(isValidHexColor("")).toBe(false);
-    expect(isValidHexColor("#")).toBe(false);
-    expect(isValidHexColor("#gg0000")).toBe(false);
-    expect(isValidHexColor("#12345")).toBe(false);
-    expect(isValidHexColor("#1234567")).toBe(false);
-    expect(isValidHexColor("xyz")).toBe(false);
-    expect(isValidHexColor("red")).toBe(false);
-    expect(isValidHexColor("#ab")).toBe(false);
-    expect(isValidHexColor("#abcd")).toBe(false);
-  });
-});
-
-describe("normalizeHexColor", () => {
-  it("adds # prefix if missing", () => {
-    expect(normalizeHexColor("ff0000")).toBe("#ff0000");
-  });
-
-  it("keeps existing # prefix", () => {
-    expect(normalizeHexColor("#ff0000")).toBe("#ff0000");
-  });
-
-  it("expands 3-digit hex to 6-digit", () => {
-    expect(normalizeHexColor("#fff")).toBe("#ffffff");
-    expect(normalizeHexColor("#000")).toBe("#000000");
-    expect(normalizeHexColor("#abc")).toBe("#aabbcc");
-    expect(normalizeHexColor("f0f")).toBe("#ff00ff");
-  });
-});
+import { generateColorCssVars, generateColorPalette } from "./color-utils";
 
 describe("generateColorPalette", () => {
   it("sets primary to the original hex (with #)", () => {
