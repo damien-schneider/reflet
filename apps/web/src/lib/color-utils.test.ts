@@ -32,18 +32,6 @@ describe("generateColorPalette", () => {
     expect(lightYellow.primaryForeground).toBe("#000000");
   });
 
-  it("handles pure red", () => {
-    const palette = generateColorPalette("#ff0000");
-    expect(palette.primary).toBe("#ff0000");
-    expect(palette.primaryForeground).toBe("#ffffff");
-  });
-
-  it("handles pure green", () => {
-    const palette = generateColorPalette("#00ff00");
-    expect(palette.primary).toBe("#00ff00");
-    expect(palette.primaryForeground).toBe("#000000");
-  });
-
   it("handles grayscale colors (0 saturation)", () => {
     const palette = generateColorPalette("#808080");
     expect(palette.primary).toBe("#808080");

@@ -165,7 +165,11 @@ describe("WidgetSettingsDialog", () => {
     expect(screen.getByLabelText("Primary color")).toHaveValue("#5c6d4f");
   });
 
-  it("uses default values when widget has no settings", () => {
+  it("uses default values when widget has no settings", async () => {
+    const { __mockMutationFn } = (await import("convex/react")) as {
+      __mockMutationFn: ReturnType<typeof vi.fn>;
+    };
+    const user = userEvent.setup();
     const widgetNoSettings = { ...baseWidget, settings: null };
     render(
       <WidgetSettingsDialog
@@ -174,7 +178,16 @@ describe("WidgetSettingsDialog", () => {
         widget={widgetNoSettings}
       />
     );
-    expect(screen.getByText("Chat settings")).toBeInTheDocument();
+    await user.click(screen.getByText("Save changes"));
+    expect(__mockMutationFn).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        autoOpen: false,
+        position: "bottom-right",
+        showLauncher: true,
+        welcomeMessage: "Hi there! How can we help you?",
+        zIndex: 9999,
+      })
+    );
   });
 
   it("calls onOpenChange(false) when Cancel is clicked", async () => {

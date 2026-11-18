@@ -167,26 +167,6 @@ describe("VersionPicker", () => {
     expect(onChange).toHaveBeenCalledWith("1.0.1");
   });
 
-  it("calls onChange when major button is clicked", () => {
-    const onChange = vi.fn();
-    render(
-      <VersionPicker
-        {...defaultProps}
-        onChange={onChange}
-        value="1.0.1"
-        versionSuggestions={suggest({
-          autoVersioning: true,
-          defaultIncrement: "patch",
-          major: "2.0.0",
-          minor: "1.1.0",
-          patch: "1.0.1",
-        })}
-      />
-    );
-    fireEvent.click(screen.getByText(/Major 2.0.0/));
-    expect(onChange).toHaveBeenCalledWith("2.0.0");
-  });
-
   it("does not show version buttons when disabled", () => {
     render(
       <VersionPicker

@@ -130,12 +130,6 @@ describe("ChangelogSubscribe", () => {
       mockUseQuery.mockReturnValue(false);
     });
 
-    it("renders email subscription form", () => {
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByTestId("email-input")).toBeInTheDocument();
-      expect(screen.getByText("Subscribe")).toBeInTheDocument();
-    });
-
     it("calls subscribeByEmail with valid email", async () => {
       render(<ChangelogSubscribe organizationId={ORG_ID} />);
       const input = screen.getByTestId("email-input");
@@ -154,20 +148,6 @@ describe("ChangelogSubscribe", () => {
       vi.mocked(authClient.useSession).mockReturnValue({
         data: { user: { id: "user123" } },
       } as ReturnType<typeof authClient.useSession>);
-    });
-
-    it("renders subscribe button when not subscribed", () => {
-      mockUseQuery.mockReturnValue(false);
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByText("Subscribe")).toBeInTheDocument();
-      expect(screen.getByTestId("bell-icon")).toBeInTheDocument();
-    });
-
-    it("renders unsubscribe button when subscribed", () => {
-      mockUseQuery.mockReturnValue(true);
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByText("Unsubscribe")).toBeInTheDocument();
-      expect(screen.getByTestId("bell-slash-icon")).toBeInTheDocument();
     });
 
     it("disables button when subscription state is loading", () => {

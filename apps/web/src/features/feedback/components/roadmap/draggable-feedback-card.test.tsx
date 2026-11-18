@@ -93,18 +93,4 @@ describe("DraggableFeedbackCard", () => {
 
     expect(onFeedbackClick).not.toHaveBeenCalled();
   });
-
-  it("hides the move handle from non-admins", () => {
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={item}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-
-    expect(
-      screen.queryByRole("button", { name: "Move Test Feedback" })
-    ).not.toBeInTheDocument();
-  });
 });

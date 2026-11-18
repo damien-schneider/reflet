@@ -151,16 +151,6 @@ describe("WebsiteReferenceCard", () => {
     expect(screen.getByText("Fetching…")).toBeInTheDocument();
   });
 
-  it("renders Fetching badge for fetching status", () => {
-    render(
-      <WebsiteReferenceCard
-        isAdmin={false}
-        reference={{ ...baseReference, status: "fetching" }}
-      />
-    );
-    expect(screen.getByText("Fetching…")).toBeInTheDocument();
-  });
-
   it("renders Failed badge and the error message for error status", () => {
     render(
       <WebsiteReferenceCard
@@ -184,16 +174,6 @@ describe("WebsiteReferenceCard", () => {
   it("does not show admin actions for non-admins", () => {
     render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-  });
-
-  it("shows admin refresh and delete buttons for admins", () => {
-    render(<WebsiteReferenceCard isAdmin={true} reference={baseReference} />);
-    expect(
-      screen.getByRole("button", { name: "Refresh Getting Started Guide" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Remove Getting Started Guide" })
-    ).toBeInTheDocument();
   });
 
   it("calls refresh mutation when refresh is clicked", async () => {

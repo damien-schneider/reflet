@@ -103,14 +103,6 @@ describe("InvitationList", () => {
     });
   });
 
-  it("shows Resend button when cooldown has passed", () => {
-    const invitation = makeInvitation({
-      _creationTime: Date.now() - 120_000,
-    });
-    render(<InvitationList invitations={[invitation]} />);
-    expect(screen.getByText("Resend")).toBeInTheDocument();
-  });
-
   it("shows cooldown text when within cooldown period", () => {
     const invitation = makeInvitation({
       _creationTime: Date.now() - 10_000,

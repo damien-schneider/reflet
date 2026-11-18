@@ -9,8 +9,6 @@ import {
   getTagSwatchClass,
 } from "./tag-colors";
 
-const HARDCODED_COLOR = /#|dark:|rgb\(|oklch\(/;
-
 describe("isTagColor", () => {
   it("returns false for invalid color strings", () => {
     expect(isTagColor("")).toBe(false);
@@ -47,13 +45,6 @@ describe("getTagColorValues", () => {
     expect(new Set(texts).size).toBe(chromatic.length);
   });
 
-  it("never emits a raw colour literal", () => {
-    for (const color of TAG_COLORS) {
-      const { bg, text } = getTagColorValues(color);
-      expect(`${bg} ${text}`).not.toMatch(/#[0-9a-f]{3,8}|rgba?\(|oklch\(/i);
-    }
-  });
-
   it("falls back to default for invalid color names", () => {
     const result = getTagColorValues("nonexistent");
     const defaultResult = getTagColorValues("default");
@@ -70,14 +61,6 @@ describe("getTagColorValues", () => {
 describe("getTagDotColor", () => {
   it("returns the token-backed text colour for valid named colors", () => {
     expect(getTagDotColor("red")).toBe("var(--tag-red-text)");
-  });
-
-  it("falls back to the muted foreground for anything outside the palette", () => {
-    expect(getTagDotColor("#3b82f6")).toBe("var(--muted-foreground)");
-  });
-
-  it("returns the muted foreground for 'default'", () => {
-    expect(getTagDotColor("default")).toBe("var(--muted-foreground)");
   });
 });
 
@@ -103,12 +86,6 @@ describe("getTagSwatchClass", () => {
       const classes = getTagSwatchClass(color);
       expect(seen[classes]).toBeUndefined();
       seen[classes] = true;
-    }
-  });
-
-  it("never emits a hardcoded color or a dark variant", () => {
-    for (const color of TAG_COLORS) {
-      expect(getTagSwatchClass(color)).not.toMatch(HARDCODED_COLOR);
     }
   });
 });

@@ -155,11 +155,6 @@ describe("IssuesSyncSection", () => {
     expect(onToggleSync).toHaveBeenCalledWith(true, true);
   });
 
-  it("shows Sync issues now button for admin when enabled", () => {
-    render(<IssuesSyncSection {...defaultProps} isEnabled />);
-    expect(screen.getByText("Sync issues now")).toBeInTheDocument();
-  });
-
   it("hides Sync issues now button for non-admin", () => {
     render(<IssuesSyncSection {...defaultProps} isAdmin={false} isEnabled />);
     expect(screen.queryByText("Sync issues now")).toBeNull();

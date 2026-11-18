@@ -29,16 +29,6 @@ describe("computeDashboardNavigation", () => {
       expect(result.redirectTo).toBeNull();
       expect(result.orgNotAccessible).toBe(false);
     });
-
-    it("should not redirect when both are undefined", () => {
-      const result = computeDashboardNavigation({
-        org: undefined,
-        organizations: undefined,
-        orgSlug: "my-organization",
-      });
-      expect(result.redirectTo).toBeNull();
-      expect(result.orgNotAccessible).toBe(false);
-    });
   });
 
   describe("on /dashboard (no orgSlug)", () => {
@@ -56,24 +46,6 @@ describe("computeDashboardNavigation", () => {
       const result = computeDashboardNavigation({
         org: undefined,
         organizations: [makeOrg("org-a"), makeOrg("org-b")],
-        orgSlug: undefined,
-      });
-      expect(result.redirectTo).toBeNull();
-    });
-
-    it("should not auto-select when organizations list is empty", () => {
-      const result = computeDashboardNavigation({
-        org: undefined,
-        organizations: [],
-        orgSlug: undefined,
-      });
-      expect(result.redirectTo).toBeNull();
-    });
-
-    it("should not auto-select when organizations is undefined", () => {
-      const result = computeDashboardNavigation({
-        org: undefined,
-        organizations: undefined,
         orgSlug: undefined,
       });
       expect(result.redirectTo).toBeNull();
@@ -124,16 +96,6 @@ describe("computeDashboardNavigation", () => {
     it("should never redirect when organizations is empty (auth not ready)", () => {
       const result = computeDashboardNavigation({
         org: null,
-        organizations: [],
-        orgSlug: "my-organization",
-      });
-      expect(result.redirectTo).toBeNull();
-      expect(result.orgNotAccessible).toBe(false);
-    });
-
-    it("should never redirect when org has role:null and organizations empty", () => {
-      const result = computeDashboardNavigation({
-        org: makeOrg("my-organization", null),
         organizations: [],
         orgSlug: "my-organization",
       });

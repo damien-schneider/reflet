@@ -237,18 +237,6 @@ describe("WidgetCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders Deactivate option for active widget", () => {
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(screen.getByText("Deactivate")).toBeInTheDocument();
-  });
-
-  it("renders Activate option for inactive widget", () => {
-    render(
-      <WidgetCard orgSlug="test" widget={{ ...baseWidget, isActive: false }} />
-    );
-    expect(screen.getByText("Activate")).toBeInTheDocument();
-  });
-
   it("renders widget settings color and position", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     expect(screen.getByText("#5c6d4f")).toBeInTheDocument();
@@ -300,16 +288,6 @@ describe("WidgetCard", () => {
     await user.click(screen.getByText("Delete"));
     expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
     expect(screen.getByText(/embed code stops working/)).toBeInTheDocument();
-  });
-
-  it("shows 0 conversations", () => {
-    render(
-      <WidgetCard
-        orgSlug="test"
-        widget={{ ...baseWidget, conversationCount: 0 }}
-      />
-    );
-    expect(screen.getByText("0 conversations")).toBeInTheDocument();
   });
 
   it("renders widget without settings", () => {

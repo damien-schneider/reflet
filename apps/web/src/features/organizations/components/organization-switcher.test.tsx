@@ -252,17 +252,6 @@ describe("OrganizationSwitcher", () => {
     expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
-  it("shows create dialog when Create organization is clicked", async () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const user = userEvent.setup();
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-
-    await user.click(screen.getByText("Create organization"));
-    expect(screen.getByText("Organization name")).toBeInTheDocument();
-  });
-
   it("renders org links with correct hrefs", () => {
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },

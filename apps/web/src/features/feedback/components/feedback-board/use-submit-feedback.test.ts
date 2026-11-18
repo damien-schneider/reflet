@@ -140,6 +140,7 @@ describe("useSubmitFeedback", () => {
         title: "Test",
       });
       result.current.setSubmitTagId("tag1" as Id<"tags">);
+      result.current.setSubmitAssigneeId("user1");
     });
 
     await act(async () => {

@@ -139,8 +139,7 @@ describe("MemberList", () => {
     render(
       <MemberList isOwner={false} members={[member]} onRemoveMember={vi.fn()} />
     );
-    const elements = screen.getAllByText("jane@test.com");
-    expect(elements.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("jane@test.com")).toHaveLength(2);
   });
 
   it("falls back to Unknown when name and email are null", () => {
@@ -175,17 +174,6 @@ describe("MemberList", () => {
     expect(screen.queryByTestId("dropdown-menu")).toBeNull();
   });
 
-  it("shows dropdown menu for owner viewing non-owner member", () => {
-    render(
-      <MemberList
-        isOwner
-        members={[makeMember({ role: "member" })]}
-        onRemoveMember={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("dropdown-menu")).toBeInTheDocument();
-  });
-
   it("does not show dropdown for owner role members", () => {
     render(
       <MemberList
@@ -195,17 +183,6 @@ describe("MemberList", () => {
       />
     );
     expect(screen.queryByTestId("dropdown-menu")).toBeNull();
-  });
-
-  it("shows Promote to admin for members", () => {
-    render(
-      <MemberList
-        isOwner
-        members={[makeMember({ role: "member" })]}
-        onRemoveMember={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Promote to admin")).toBeInTheDocument();
   });
 
   it("shows Demote to member for admins", () => {

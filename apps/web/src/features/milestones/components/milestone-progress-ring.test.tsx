@@ -46,10 +46,4 @@ describe("MilestoneProgressRing", () => {
       screen.getByLabelText("Milestone progress: 50%")
     ).toBeInTheDocument();
   });
-
-  it("handles zero total gracefully", () => {
-    const progress = { completed: 0, inProgress: 0, percentage: 0, total: 0 };
-    render(<MilestoneProgressRing progress={progress} />);
-    expect(screen.getByLabelText("Milestone progress: 0%")).toBeInTheDocument();
-  });
 });

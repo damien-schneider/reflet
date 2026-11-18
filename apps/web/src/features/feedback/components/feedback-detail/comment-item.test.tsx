@@ -108,18 +108,6 @@ describe("CommentItem", () => {
     expect(screen.getByText("Bob")).toBeInTheDocument();
   });
 
-  it("shows edit form when Edit is clicked from dropdown", async () => {
-    render(<CommentItem comment={makeComment()} />);
-    // Open dropdown menu
-    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
-    fireEvent.click(dotsButton);
-    // Click Edit
-    fireEvent.click(screen.getByText("Edit"));
-    // Should show editor and Save/Cancel buttons
-    expect(screen.getByText("Save")).toBeInTheDocument();
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-  });
-
   it("cancels edit and restores original content", async () => {
     render(<CommentItem comment={makeComment({ content: "Original" })} />);
     const dotsButton = screen.getByRole("button", { name: "Comment actions" });
@@ -173,12 +161,6 @@ describe("CommentItem", () => {
     });
   });
 
-  it("shows reply input when Reply is clicked", () => {
-    render(<CommentItem comment={makeComment()} />);
-    fireEvent.click(screen.getByText("Reply"));
-    expect(screen.getByPlaceholderText("Write a reply…")).toBeInTheDocument();
-  });
-
   it("cancels reply input", () => {
     render(<CommentItem comment={makeComment()} />);
     fireEvent.click(screen.getByText("Reply"));
@@ -201,7 +183,11 @@ describe("CommentItem", () => {
     // Trigger onSubmit via Enter key on the mock editor
     fireEvent.keyDown(replyEditor, { key: "Enter" });
     await waitFor(() => {
-      expect(mockAddReply).toHaveBeenCalled();
+      expect(mockAddReply).toHaveBeenCalledWith({
+        body: "My reply",
+        feedbackId: "f1",
+        parentId: "c1",
+      });
     });
   });
 

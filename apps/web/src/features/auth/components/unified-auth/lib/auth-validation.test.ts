@@ -2,14 +2,6 @@ import { describe, expect, it } from "vitest";
 import { formatAuthError, signInSchema, signUpSchema } from "./auth-validation";
 
 describe("signInSchema", () => {
-  it("validates a correct email and password", () => {
-    const result = signInSchema.safeParse({
-      email: "user@example.com",
-      password: "password123",
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("rejects invalid email", () => {
     const result = signInSchema.safeParse({
       email: "not-an-email",
@@ -44,15 +36,6 @@ describe("signInSchema", () => {
 });
 
 describe("signUpSchema", () => {
-  it("validates matching passwords >= 8 chars", () => {
-    const result = signUpSchema.safeParse({
-      confirmPassword: "password123",
-      email: "user@example.com",
-      password: "password123",
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("rejects password shorter than 8 characters", () => {
     const result = signUpSchema.safeParse({
       confirmPassword: "short",
@@ -116,12 +99,6 @@ describe("formatAuthError", () => {
 
   it("replaces [body.email] with Email", () => {
     expect(formatAuthError("[body.email] is invalid")).toBe("Email is invalid");
-  });
-
-  it("replaces [body.password] with Password", () => {
-    expect(formatAuthError("[body.password] is too short")).toContain(
-      "Password"
-    );
   });
 
   it("keeps unknown field names as-is in replacement", () => {

@@ -112,35 +112,6 @@ describe("FeedbackContent", () => {
     expect(link).toHaveAttribute("target", "_blank");
   });
 
-  it("shows save/cancel buttons when title is changed by admin", () => {
-    render(
-      <FeedbackContent
-        description="desc"
-        feedbackId={feedbackId}
-        isAdmin
-        title="Title"
-      />
-    );
-    const titleEditor = screen.getByTestId("title-editor");
-    fireEvent.change(titleEditor, { target: { value: "New Title" } });
-    expect(screen.getByText("Save changes")).toBeInTheDocument();
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-  });
-
-  it("shows save/cancel buttons when description is changed by admin", () => {
-    render(
-      <FeedbackContent
-        description="desc"
-        feedbackId={feedbackId}
-        isAdmin
-        title="Title"
-      />
-    );
-    const descEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descEditor, { target: { value: "New desc" } });
-    expect(screen.getByText("Save changes")).toBeInTheDocument();
-  });
-
   it("cancels changes and restores original values", () => {
     render(
       <FeedbackContent

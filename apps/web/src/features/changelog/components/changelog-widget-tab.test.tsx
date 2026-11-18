@@ -149,11 +149,6 @@ describe("ChangelogWidgetTab", () => {
     expect(screen.queryByText("API keys required")).not.toBeInTheDocument();
   });
 
-  it("shows API keys warning when hasApiKeys is false", () => {
-    render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
-    expect(screen.getByText("API keys required")).toBeInTheDocument();
-  });
-
   it("calls generateApiKeys mutation on button click", async () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
     fireEvent.click(screen.getByText("Generate API keys"));

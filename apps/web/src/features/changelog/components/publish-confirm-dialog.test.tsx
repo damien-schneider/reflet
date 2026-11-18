@@ -196,11 +196,6 @@ describe("PublishConfirmDialog", () => {
     expect(screen.getByText("Untitled release")).toBeInTheDocument();
   });
 
-  it("does not show version badge when version is empty", () => {
-    render(<PublishConfirmDialog {...defaultProps} version="" />);
-    expect(screen.queryByText("2.0.0")).not.toBeInTheDocument();
-  });
-
   it("shows zero subscribers message", () => {
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(screen.getByText("No subscribers to notify")).toBeInTheDocument();
@@ -286,27 +281,7 @@ describe("PublishConfirmDialog", () => {
     expect(
       screen.getByText(/GitHub push enabled but no repo connected/)
     ).toBeInTheDocument();
-    expect(screen.getByText("Connect repository")).toBeInTheDocument();
-  });
-
-  it("renders connect repository link with correct href", () => {
-    mockUseQuery.mockImplementation((queryName: string) => {
-      if (queryName === "organizations:get") {
-        return {
-          changelogSettings: { pushToGithubOnPublish: true },
-          role: "owner",
-        };
-      }
-      if (queryName === "github:getConnectionStatus") {
-        return { hasRepository: false, isConnected: false };
-      }
-      if (queryName === "changelog_subscriptions:getSubscriberCount") {
-        return 0;
-      }
-    });
-    render(<PublishConfirmDialog {...defaultProps} />);
-    const link = screen.getByText("Connect repository");
-    expect(link.closest("a")).toHaveAttribute(
+    expect(screen.getByText("Connect repository").closest("a")).toHaveAttribute(
       "href",
       "/dashboard/test-org/project/github"
     );

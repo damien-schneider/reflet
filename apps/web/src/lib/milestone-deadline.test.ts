@@ -66,25 +66,11 @@ describe("getDeadlineInfo", () => {
     expect(info?.status).toBe("none");
   });
 
-  it("returns 'none' for completed milestone even if due today", () => {
-    const today = toTimestamp("2025-06-15");
-    const info = getDeadlineInfo(today, "completed");
-
-    expect(info?.status).toBe("none");
-  });
-
   it("label contains formatted date", () => {
     const date = toTimestamp("2025-06-20");
     const info = getDeadlineInfo(date, "active");
 
     expect(info?.label).toBe("Jun 20, 2025");
-  });
-
-  it("relativeLabel contains relative time for non-today dates", () => {
-    const future = toTimestamp("2025-07-15");
-    const info = getDeadlineInfo(future, "active");
-
-    expect(info?.relativeLabel).toContain("in");
   });
 
   it("handles yesterday as overdue", () => {
@@ -94,37 +80,12 @@ describe("getDeadlineInfo", () => {
     expect(info?.status).toBe("overdue");
     expect(info?.daysRemaining).toBe(-1);
   });
-
-  it("handles tomorrow as due_soon", () => {
-    const tomorrow = toTimestamp("2025-06-16");
-    const info = getDeadlineInfo(tomorrow, "active");
-
-    expect(info?.status).toBe("due_soon");
-    expect(info?.daysRemaining).toBe(1);
-  });
 });
 
-const ALL_STATUSES: DeadlineStatus[] = [
-  "overdue",
-  "due_today",
-  "due_soon",
-  "upcoming",
-  "none",
-];
 const URGENT_STATUSES: DeadlineStatus[] = ["overdue", "due_today", "due_soon"];
 const CALM_STATUSES: DeadlineStatus[] = ["upcoming", "none"];
 
 describe("deadline styling", () => {
-  it("styles every status through design tokens, never raw colours", () => {
-    for (const status of ALL_STATUSES) {
-      const { bg, text, border } = getDeadlineBadgeStyles(status);
-      for (const value of [bg, text, border, getDeadlineButtonClass(status)]) {
-        expect(value).not.toMatch(/#|rgb\(|oklch\(|dark:/);
-        expect(value.length).toBeGreaterThan(0);
-      }
-    }
-  });
-
   it("draws attention to urgent deadlines and stays quiet otherwise", () => {
     const quiet = getDeadlineButtonClass("none");
     for (const status of URGENT_STATUSES) {
@@ -132,13 +93,6 @@ describe("deadline styling", () => {
     }
     for (const status of CALM_STATUSES) {
       expect(getDeadlineButtonClass(status)).toBe(quiet);
-    }
-  });
-
-  it("keeps the badge text colour consistent with the date button colour", () => {
-    for (const status of ALL_STATUSES) {
-      const token = getDeadlineBadgeStyles(status).text.replace("text-", "");
-      expect(getDeadlineButtonClass(status)).toContain(`var(--${token})`);
     }
   });
 

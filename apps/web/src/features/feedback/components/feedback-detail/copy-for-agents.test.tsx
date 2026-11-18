@@ -155,16 +155,6 @@ describe("buildAgentPrompt", () => {
     expect(result).toContain("- https://cdn.example.com/img2.png");
     expect(result).toContain("- https://cdn.example.com/img3.png");
   });
-
-  it("should handle tags without icon correctly", () => {
-    const result = buildAgentPrompt({
-      description: null,
-      tags: [{ _id: "t1" as never, color: "red", name: "bug" }],
-      title: "Test",
-    });
-    expect(result).toContain("**Tags:** bug");
-    expect(result).not.toContain("undefined");
-  });
 });
 
 const feedbackId = "f1" as Id<"feedback">;
@@ -288,8 +278,12 @@ describe("CopyForAgents Component", () => {
     expect(writeTextMock).toHaveBeenCalledWith(`/reflet ${feedbackId}`);
   });
 
-  it("handles tags with null values in the array", () => {
+  it("skips null tags in the copied prompt", () => {
     mockUseQuery.mockReturnValue(null);
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
     render(
       <CopyForAgents
         description="desc"
@@ -299,7 +293,11 @@ describe("CopyForAgents Component", () => {
         title="Test"
       />
     );
-    // Should not crash
-    expect(screen.getByText("Agents")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Agents"));
+    fireEvent.click(screen.getByText("Copy prompt"));
+
+    expect(writeTextMock).toHaveBeenCalledWith(
+      expect.stringContaining("**Tags:** bug\n")
+    );
   });
 });

@@ -32,12 +32,6 @@ function getMediaType(mimeType: string): MediaType | null {
   return null;
 }
 
-const ACCEPT_BY_TYPE = {
-  both: "image/*,video/*",
-  image: "image/*",
-  video: "video/*",
-};
-
 function validateMediaFile(
   file: File,
   limits: { image: number; video: number }
@@ -133,28 +127,8 @@ export function useMediaUpload({
     return result;
   };
 
-  const openFilePicker = (
-    acceptType: "image" | "video" | "both" = "both"
-  ): Promise<MediaUploadResult | null> =>
-    new Promise((resolve) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ACCEPT_BY_TYPE[acceptType];
-      input.onchange = async (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) {
-          resolve(null);
-          return;
-        }
-        const file = target.files?.[0];
-        resolve(file ? await uploadMedia(file) : null);
-      };
-      input.click();
-    });
-
   return {
     isUploading,
-    openFilePicker,
     uploadMedia,
     uploadProgress,
   };

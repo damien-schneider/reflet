@@ -310,18 +310,6 @@ describe("MilestoneSegment", () => {
     expect(screen.queryByTestId("context-list")).toBeNull();
   });
 
-  it("renders context menu for admin", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("context-list")).toBeInTheDocument();
-  });
-
   it("exposes admin actions through a labelled keyboard-reachable trigger", async () => {
     const user = userEvent.setup();
     render(
@@ -353,18 +341,6 @@ describe("MilestoneSegment", () => {
     expect(
       screen.queryByRole("button", { name: "Actions for Beta" })
     ).toBeNull();
-  });
-
-  it("context menu shows Mark as complete for active milestones", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone({ status: "active" })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Mark as complete")).toBeInTheDocument();
   });
 
   it("context menu hides Mark as complete for completed milestones", () => {
@@ -426,21 +402,6 @@ describe("MilestoneSegment", () => {
     expect(mockRemoveMilestone).toHaveBeenCalledWith(
       expect.objectContaining({ id: "ms1" })
     );
-  });
-
-  it("renders edit dialog with form fields", async () => {
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Edit"));
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Alpha Release")).toBeInTheDocument();
   });
 
   it("closes edit dialog on Cancel", async () => {

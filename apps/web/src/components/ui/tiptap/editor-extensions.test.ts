@@ -447,8 +447,7 @@ describe("Image NodeView - resize interactions", () => {
       new MouseEvent("mousemove", { clientX: 500, clientY: 200 })
     );
 
-    const newWidth = Number.parseInt(img.style.width, 10);
-    expect(newWidth).toBeGreaterThanOrEqual(50);
+    expect(img.style.width).toBe("50px");
 
     document.dispatchEvent(new MouseEvent("mouseup"));
   });

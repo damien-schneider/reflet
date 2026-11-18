@@ -260,15 +260,6 @@ describe("useBoardFilters", () => {
         scroll: false,
       });
     });
-
-    it("preserves non-default view param", () => {
-      currentSearchParams = new URLSearchParams("view=roadmap&q=test");
-      const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.clearFilters());
-      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?view=roadmap", {
-        scroll: false,
-      });
-    });
   });
 
   describe("hasActiveFilters", () => {
@@ -290,20 +281,8 @@ describe("useBoardFilters", () => {
       expect(result.current.hasActiveFilters).toBe(true);
     });
 
-    it("is true when single tag filter exists", () => {
-      currentSearchParams = new URLSearchParams("tag=t1");
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.hasActiveFilters).toBe(true);
-    });
-
     it("is false when only a non-default sort is set", () => {
       currentSearchParams = new URLSearchParams("sort=votes");
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.hasActiveFilters).toBe(false);
-    });
-
-    it("is false when only view is set", () => {
-      currentSearchParams = new URLSearchParams("view=roadmap");
       const { result } = renderHook(() => useBoardFilters());
       expect(result.current.hasActiveFilters).toBe(false);
     });

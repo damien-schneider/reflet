@@ -47,13 +47,6 @@ describe("PublicViewToolbar", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders toolbar for owner", () => {
-    mockUseQuery.mockReturnValue({ role: "owner" });
-    render(<PublicViewToolbar orgSlug="acme" />);
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Public view")).toBeInTheDocument();
-  });
-
   it("renders toolbar for admin", () => {
     mockUseQuery.mockReturnValue({ role: "admin" });
     render(<PublicViewToolbar orgSlug="acme" />);

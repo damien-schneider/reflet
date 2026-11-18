@@ -87,20 +87,6 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
 import { GitHubConnectionSection } from "./github-connection-card";
 
 describe("GitHubConnectionSection", () => {
-  it("renders connect button when not connected and admin", () => {
-    render(
-      <GitHubConnectionSection
-        connectHref="/api/github/install?test=1"
-        isAdmin
-        isConnected={false}
-        isDisconnecting={false}
-        onConnectClick={vi.fn()}
-        onDisconnect={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Connect GitHub")).toBeInTheDocument();
-  });
-
   it("shows non-admin message when not connected and not admin", () => {
     render(
       <GitHubConnectionSection

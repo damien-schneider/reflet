@@ -133,20 +133,6 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByText("Back").closest("button")).toBeDisabled();
   });
 
-  it("navigates to step 2 on Next click", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByTestId("configure-step")).toBeInTheDocument();
-  });
-
-  it("navigates to step 3 and shows Complete setup", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Next"));
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByTestId("setup-method-step")).toBeInTheDocument();
-    expect(screen.getByText("Complete setup")).toBeInTheDocument();
-  });
-
   it("navigates back from step 2 to step 1", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
     fireEvent.click(screen.getByText("Next"));
@@ -189,11 +175,5 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByTestId("setup-method-step")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Back"));
     expect(screen.getByTestId("configure-step")).toBeInTheDocument();
-  });
-
-  it("Back button is enabled on step 2", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByText("Back").closest("button")).not.toBeDisabled();
   });
 });

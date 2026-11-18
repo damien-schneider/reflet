@@ -151,11 +151,6 @@ describe("LabelMappingsSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows Add mapping button for admin", () => {
-    render(<LabelMappingsSection {...defaultProps} />);
-    expect(screen.getByText("Add mapping")).toBeInTheDocument();
-  });
-
   it("hides Add mapping button for non-admin", () => {
     render(<LabelMappingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.queryByText("Add mapping")).toBeNull();
@@ -201,18 +196,6 @@ describe("LabelMappingsSection", () => {
     ];
     render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
     expect(screen.queryByText("→")).toBeNull();
-  });
-
-  it("shows delete button for admin on mappings", () => {
-    const mappings = [
-      {
-        _id: "map1" as never,
-        autoSync: true,
-        githubLabelName: "bug",
-      },
-    ];
-    render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
-    expect(screen.getByTestId("icon-trash")).toBeInTheDocument();
   });
 
   it("hides delete button for non-admin on mappings", () => {

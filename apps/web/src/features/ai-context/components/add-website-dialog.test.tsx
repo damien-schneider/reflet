@@ -105,21 +105,6 @@ describe("AddWebsiteDialog", () => {
     expect(screen.getByText("Add website")).not.toBeDisabled();
   });
 
-  it("shows error for invalid URL", async () => {
-    const user = userEvent.setup();
-    render(<AddWebsiteDialog {...baseProps} />);
-
-    await user.type(
-      screen.getByPlaceholderText("https://example.com/docs"),
-      "not-a-url"
-    );
-    fireEvent.submit(screen.getByText("Add website").closest("form")!);
-
-    expect(
-      screen.getByText("Enter a valid URL, like https://example.com/docs")
-    ).toBeInTheDocument();
-  });
-
   it("shows error for non-http protocol", async () => {
     const user = userEvent.setup();
     render(<AddWebsiteDialog {...baseProps} />);

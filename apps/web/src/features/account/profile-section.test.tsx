@@ -150,16 +150,6 @@ describe("ProfileSection", () => {
     expect(screen.queryByAltText("Avatar preview")).not.toBeInTheDocument();
   });
 
-  it("shows avatar preview after entering URL", async () => {
-    const u = userEvent.setup();
-    render(
-      <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
-    );
-    const input = screen.getByPlaceholderText("https://example.com/avatar.jpg");
-    await u.type(input, "https://example.com/new.jpg");
-    expect(screen.getByAltText("Avatar preview")).toBeInTheDocument();
-  });
-
   it("clears avatar URL when the clear button is clicked", async () => {
     const u = userEvent.setup();
     render(

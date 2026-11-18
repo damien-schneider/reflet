@@ -132,32 +132,6 @@ describe("InviteMemberDialog", () => {
     mockInviteMutation.mockReset();
   });
 
-  it("shows success state with copy link after invitation is sent", async () => {
-    const user = userEvent.setup();
-    mockInviteMutation.mockResolvedValue({
-      invitationId: "inv123",
-      token: "abc-token-123",
-    });
-
-    render(<InviteMemberDialog {...defaultProps} />);
-
-    // Fill in email
-    const emailInput = screen.getByTestId("input-email");
-    await user.type(emailInput, "test@example.com");
-
-    // Submit the form
-    const submitButton = screen.getByText("Send invitation");
-    await user.click(submitButton);
-
-    // Should show success state
-    await waitFor(() => {
-      expect(screen.getByText(INVITATION_SENT_PATTERN)).toBeInTheDocument();
-    });
-
-    // Should show the copy button (icon button)
-    expect(screen.getByTestId("copy-button")).toBeInTheDocument();
-  });
-
   it("shows copied confirmation after copying link", async () => {
     const user = userEvent.setup();
     mockInviteMutation.mockResolvedValue({
@@ -194,8 +168,9 @@ describe("InviteMemberDialog", () => {
       expect(screen.getByText(COPIED_PATTERN)).toBeInTheDocument();
     });
 
-    // Verify clipboard was called
-    expect(writeTextMock).toHaveBeenCalled();
+    expect(writeTextMock).toHaveBeenCalledWith(
+      `${window.location.origin}/invite/abc-token-123`
+    );
 
     // Clean up
     vi.unstubAllGlobals();

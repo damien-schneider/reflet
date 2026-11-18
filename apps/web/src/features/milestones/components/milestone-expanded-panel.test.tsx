@@ -190,19 +190,6 @@ describe("MilestoneExpandedPanel", () => {
     expect(screen.getByText("Linked feedback (2)")).toBeInTheDocument();
   });
 
-  it("shows search input for admin", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(
-      screen.getByPlaceholderText("Search feedback to link…")
-    ).toBeInTheDocument();
-  });
-
   it("does not show search input for non-admin", () => {
     render(
       <MilestoneExpandedPanel

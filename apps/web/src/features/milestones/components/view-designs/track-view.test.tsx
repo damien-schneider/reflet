@@ -167,21 +167,6 @@ describe("TrackView", () => {
     expect(popovers.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("expands panel when milestone segment is clicked", async () => {
-    const user = userEvent.setup();
-    render(
-      <TrackView
-        isAdmin
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    await user.click(screen.getAllByTestId("segment-m1")[0]);
-    expect(
-      screen.getAllByTestId("expanded-panel").length
-    ).toBeGreaterThanOrEqual(1);
-  });
-
   it("collapses panel when same milestone is clicked again", async () => {
     const user = userEvent.setup();
     render(

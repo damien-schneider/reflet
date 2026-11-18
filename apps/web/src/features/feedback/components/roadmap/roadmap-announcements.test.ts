@@ -3,9 +3,9 @@ import { createAnnouncements } from "./roadmap-announcements";
 
 const mockFeedback = [
   { _id: "f1", title: "Fix login bug" },
-  { _id: "f2", title: "Add dark mode" },
+  { _id: "f2", organizationStatusId: "s2", title: "Add dark mode" },
   { _id: "f3", title: "Improve performance" },
-] as Array<{ _id: string; title: string }>;
+] as Array<{ _id: string; title: string; organizationStatusId?: string }>;
 
 const mockStatuses = [
   { _id: "s1", color: "blue", name: "In Progress" },
@@ -35,6 +35,15 @@ describe("createAnnouncements", () => {
   });
 
   describe("onDragOver", () => {
+    it("names the column of the card it is over", () => {
+      const { onDragOver } = createAnnouncements(
+        mockFeedback as never,
+        mockStatuses
+      );
+      const result = onDragOver({ active: { id: "f1" }, over: { id: "f2" } });
+      expect(result).toBe("Over Done column");
+    });
+
     it("should return column name when over a status", () => {
       const { onDragOver } = createAnnouncements(
         mockFeedback as never,
@@ -55,21 +64,18 @@ describe("createAnnouncements", () => {
       const result = onDragOver({ active: { id: "f1" }, over: null });
       expect(result).toBeUndefined();
     });
-
-    it("should return undefined when over unknown status", () => {
-      const { onDragOver } = createAnnouncements(
-        mockFeedback as never,
-        mockStatuses
-      );
-      const result = onDragOver({
-        active: { id: "f1" },
-        over: { id: "unknown" },
-      });
-      expect(result).toBeUndefined();
-    });
   });
 
   describe("onDragEnd", () => {
+    it("names the column of the card it was dropped on", () => {
+      const { onDragEnd } = createAnnouncements(
+        mockFeedback as never,
+        mockStatuses
+      );
+      const result = onDragEnd({ active: { id: "f1" }, over: { id: "f2" } });
+      expect(result).toBe("Dropped Fix login bug in Done");
+    });
+
     it("should return drop message when dropped on a status", () => {
       const { onDragEnd } = createAnnouncements(
         mockFeedback as never,
@@ -100,18 +106,6 @@ describe("createAnnouncements", () => {
         mockStatuses
       );
       const result = onDragEnd({ active: { id: "f1" }, over: null });
-      expect(result).toBe("Drag cancelled");
-    });
-
-    it("should return drag cancelled when over unknown status", () => {
-      const { onDragEnd } = createAnnouncements(
-        mockFeedback as never,
-        mockStatuses
-      );
-      const result = onDragEnd({
-        active: { id: "f1" },
-        over: { id: "unknown" },
-      });
       expect(result).toBe("Drag cancelled");
     });
   });

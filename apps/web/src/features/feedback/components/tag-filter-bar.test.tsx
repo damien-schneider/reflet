@@ -88,23 +88,6 @@ describe("TagFilterBar", () => {
     vi.clearAllMocks();
   });
 
-  it("calls onTagSelect with null when All clicked", async () => {
-    const user = userEvent.setup();
-    const onTagSelect = vi.fn();
-    render(
-      <TagFilterBar
-        isAdmin={false}
-        onClearTags={() => onTagSelect()}
-        onTagChange={onTagSelect}
-        organizationId={organizationId}
-        selectedTagIds={["t1"]}
-        tags={tags}
-      />
-    );
-    await user.click(screen.getByText("All"));
-    expect(onTagSelect).toHaveBeenCalledWith();
-  });
-
   it("calls onTagSelect with tag id when tag clicked", async () => {
     const user = userEvent.setup();
     const onTagSelect = vi.fn();

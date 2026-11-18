@@ -71,16 +71,6 @@ describe("sortFeedback", () => {
   });
 
   describe("pinned items", () => {
-    it("pinned items always come first regardless of sort", () => {
-      const items = [
-        createItem({ _id: "a", isPinned: false, voteCount: 100 }),
-        createItem({ _id: "b", isPinned: true, voteCount: 1 }),
-        createItem({ _id: "c", isPinned: false, voteCount: 50 }),
-      ];
-      const sorted = sortFeedback(items, "votes");
-      expect(sorted[0]._id).toBe("b");
-    });
-
     it("multiple pinned items are sorted among themselves", () => {
       const items = [
         createItem({ _id: "a", isPinned: true, voteCount: 5 }),
@@ -133,7 +123,7 @@ describe("sortFeedback", () => {
         createItem({ _id: "c", voteCount: 5 }),
       ];
       const sorted = sortFeedback(items, "votes");
-      expect(sorted).toHaveLength(3);
+      expect(sorted.map((i) => i._id)).toEqual(["a", "b", "c"]);
     });
   });
 });

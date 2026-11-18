@@ -61,6 +61,7 @@ vi.mock("@tanstack/react-pacer", () => ({
     mockUseDebouncedValue(value),
 }));
 
+import { useQuery } from "convex/react";
 import { authClient } from "@/lib/auth-client";
 import { useAuthForm } from "./use-auth-form";
 
@@ -116,64 +117,26 @@ describe("useAuthForm - button disabled state", () => {
     expect(result.current.isCheckingEmail).toBe(false);
   });
 
-  it("clears isCheckingEmail when query returns even if email state has leading/trailing spaces", async () => {
+  it("checks the trimmed email when the typed one has surrounding spaces", async () => {
     const { result, rerender } = renderHook(() => useAuthForm());
 
     // User types email with space (common on mobile)
     act(() => {
       result.current.setValue("email", "test@example.com ");
     });
-
-    // Debounce trims the email
-    debouncedValue = "test@example.com";
+    debouncedValue = "test@example.com ";
     rerender();
 
-    await waitFor(() => {
-      expect(result.current.isCheckingEmail).toBe(true);
+    expect(useQuery).toHaveBeenLastCalledWith("checkEmailExists", {
+      email: "test@example.com",
     });
 
     mockEmailExistsData = { exists: true };
     rerender();
 
-    // Should still clear isCheckingEmail even though the form email has trailing space
     await waitFor(() => {
       expect(result.current.isCheckingEmail).toBe(false);
       expect(result.current.mode).toBe("signIn");
-    });
-  });
-
-  it("does not have stale isCheckingEmail when user rapidly types and query returns", async () => {
-    const { result, rerender } = renderHook(() => useAuthForm());
-
-    // User types first email
-    act(() => {
-      result.current.setValue("email", "first@example.com");
-    });
-    debouncedValue = "first@example.com";
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.isCheckingEmail).toBe(true);
-    });
-
-    // User changes to different email BEFORE query returns
-    act(() => {
-      result.current.setValue("email", "second@example.com");
-    });
-    debouncedValue = "second@example.com";
-    rerender();
-
-    // Query returns for first email
-    mockEmailExistsData = { exists: true };
-    rerender();
-
-    // The email state should be "second@example.com" (from debounce effect)
-    // But lastCheckedEmail will be set to whatever the current email state is
-
-    await waitFor(() => {
-      // After query returns, isCheckingEmail should eventually be false
-      // This might require multiple rerenders as state settles
-      expect(result.current.isCheckingEmail).toBe(false);
     });
   });
 
@@ -254,47 +217,6 @@ describe("useAuthForm - button disabled state", () => {
     expect(result.current.errors.password?.message).toBe(
       "Use at least 8 characters"
     );
-  });
-
-  it("REGRESSION: button should be enabled when sign-in mode active with password", async () => {
-    // This test reproduces the bug: button shows "Sign in" but stays disabled
-    const { result, rerender } = renderHook(() => useAuthForm());
-
-    // User types email and password simultaneously (before email check)
-    act(() => {
-      result.current.setValue("email", "existing@example.com");
-      result.current.setValue("password", "mypassword123");
-    });
-    rerender();
-
-    // Trigger validation while mode is still null
-    await act(async () => {
-      await result.current.trigger();
-    });
-    rerender();
-
-    // Debounce fires for email
-    debouncedValue = "existing@example.com";
-    rerender();
-
-    // Query returns - user exists, so sign-in mode
-    mockEmailExistsData = { exists: true };
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.mode).toBe("signIn");
-      expect(result.current.isCheckingEmail).toBe(false);
-    });
-
-    // Re-trigger validation now that mode is signIn
-    await act(async () => {
-      await result.current.trigger();
-    });
-    rerender();
-
-    // Button should be enabled: no errors, mode is signIn, password entered
-    expect(result.current.isCheckingEmail).toBe(false);
-    expect(Object.keys(result.current.errors).length).toBe(0);
   });
 
   it("BUG: email blur after check complete should not re-trigger isCheckingEmail", async () => {

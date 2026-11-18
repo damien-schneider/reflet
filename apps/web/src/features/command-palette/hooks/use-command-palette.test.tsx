@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { createStore, Provider } from "jotai";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { commandPaletteOpenAtom } from "@/store/dashboard-atoms";
 import { useCommandPalette } from "./use-command-palette";
 
 const mockPush = vi.fn();
@@ -106,12 +107,14 @@ describe("useCommandPalette", () => {
       );
 
       const item = result.current.filteredItems.find((i) => i.id === "project");
-
-      if (item) {
-        act(() => result.current.handleSelect(item));
-        expect(mockPush).toHaveBeenCalledWith("/dashboard/my-org/project");
-        expect(result.current.isOpen).toBe(false);
+      if (!item) {
+        throw new Error("No project command for an org member");
       }
+
+      act(() => store.set(commandPaletteOpenAtom, true));
+      act(() => result.current.handleSelect(item));
+      expect(mockPush).toHaveBeenCalledWith("/dashboard/my-org/project");
+      expect(result.current.isOpen).toBe(false);
     });
   });
 

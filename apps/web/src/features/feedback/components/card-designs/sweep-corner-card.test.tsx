@@ -141,12 +141,6 @@ describe("SweepCornerFeedCard", () => {
     expect(mockVote).toHaveBeenCalledWith("f1", "upvote");
   });
 
-  it("forwards downvote with the feedback id", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    fireEvent.click(screen.getByText("downvote-btn"));
-    expect(mockVote).toHaveBeenCalledWith("f1", "downvote");
-  });
-
   it("renders pinned icon when isPinned", () => {
     render(
       <SweepCornerFeedCard

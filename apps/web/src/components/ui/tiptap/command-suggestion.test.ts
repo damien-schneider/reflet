@@ -108,20 +108,12 @@ describe("command-suggestion", () => {
         "./command-suggestion"
       );
       const ext = createSlashCommandExtension({});
-      const suggestion = ext.options?.suggestion;
+      const items = await ext.options.suggestion.items?.({
+        editor: {} as never,
+        query: "bullet",
+      });
 
-      if (suggestion?.items) {
-        const items = suggestion.items({
-          editor: {} as never,
-          query: "bullet",
-        });
-        expect(
-          items.some((i: { title: string }) => i.title === "Bullet List")
-        ).toBe(true);
-        expect(
-          items.some((i: { title: string }) => i.title === "Heading 1")
-        ).toBe(false);
-      }
+      expect(items?.map((item) => item.title)).toEqual(["Bullet List"]);
     });
 
     it("returns all items for empty query", async () => {
@@ -129,12 +121,15 @@ describe("command-suggestion", () => {
         "./command-suggestion"
       );
       const ext = createSlashCommandExtension({});
-      const suggestion = ext.options?.suggestion;
+      const items = await ext.options.suggestion.items?.({
+        editor: {} as never,
+        query: "",
+      });
 
-      if (suggestion?.items) {
-        const items = suggestion.items({ editor: {} as never, query: "" });
-        expect(items.length).toBeGreaterThanOrEqual(2);
-      }
+      expect(items?.map((item) => item.title)).toEqual([
+        "Heading 1",
+        "Bullet List",
+      ]);
     });
   });
 

@@ -77,11 +77,6 @@ describe("AuthForgotPasswordLink", () => {
     render(<AuthForgotPasswordLink mode="signUp" />);
     expect(screen.queryByText("Forgot password?")).not.toBeInTheDocument();
   });
-
-  it("does not render when mode is null", () => {
-    render(<AuthForgotPasswordLink mode={null} />);
-    expect(screen.queryByText("Forgot password?")).not.toBeInTheDocument();
-  });
 });
 
 describe("AuthConfirmPassword", () => {
@@ -103,11 +98,6 @@ describe("AuthConfirmPassword", () => {
 
   it("does not render in signIn mode", () => {
     render(<AuthConfirmPassword {...baseProps} mode="signIn" />);
-    expect(screen.queryByText("Confirm password")).not.toBeInTheDocument();
-  });
-
-  it("does not render when mode is null", () => {
-    render(<AuthConfirmPassword {...baseProps} mode={null} />);
     expect(screen.queryByText("Confirm password")).not.toBeInTheDocument();
   });
 

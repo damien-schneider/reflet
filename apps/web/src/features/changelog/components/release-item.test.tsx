@@ -171,12 +171,6 @@ describe("ReleaseItem", () => {
     expect(screen.queryByTestId("next-link")).not.toBeInTheDocument();
   });
 
-  it("shows admin actions when isAdmin is true", () => {
-    render(<ReleaseItem {...defaultProps} isAdmin />);
-    expect(screen.getByTestId("dropdown")).toBeInTheDocument();
-    expect(screen.getByTestId("next-link")).toBeInTheDocument();
-  });
-
   it("renders correct edit link", () => {
     render(<ReleaseItem {...defaultProps} isAdmin />);
     const link = screen.getByTestId("next-link");

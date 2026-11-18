@@ -37,6 +37,22 @@ vi.mock("@tiptap/extension-placeholder", () => ({
 
 vi.mock("./styles.css", () => ({}));
 
+const editorConfig = (): Record<string, unknown> => {
+  if (!useEditorCallback) {
+    throw new Error("useEditor was not called");
+  }
+  return useEditorCallback;
+};
+
+const handleKeyDown = (event: KeyboardEvent): boolean => {
+  const { editorProps } = editorConfig() as {
+    editorProps: {
+      handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
+    };
+  };
+  return editorProps.handleKeyDown(null, event);
+};
+
 describe("TiptapTitleEditor", () => {
   let TiptapTitleEditor: typeof import("./title-editor").TiptapTitleEditor;
 
@@ -99,49 +115,25 @@ describe("TiptapTitleEditor", () => {
     const onChange = vi.fn();
     render(<TiptapTitleEditor onChange={onChange} value="" />);
 
-    if (useEditorCallback?.onUpdate) {
-      const mockEd = { getText: () => "typed text" };
-      (useEditorCallback.onUpdate as (arg: { editor: unknown }) => void)({
-        editor: mockEd,
-      });
-      expect(onChange).toHaveBeenCalledWith("typed text");
-    }
+    const { onUpdate } = editorConfig() as {
+      onUpdate: (arg: { editor: { getText: () => string } }) => void;
+    };
+    onUpdate({ editor: { getText: () => "typed text" } });
+    expect(onChange).toHaveBeenCalledWith("typed text");
   });
 
-  it("prevents Enter from creating new lines", () => {
-    render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
-
-    if (useEditorCallback?.editorProps) {
-      const editorProps = useEditorCallback.editorProps as {
-        handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
-      };
-      const event = new KeyboardEvent("keydown", {
-        cancelable: true,
-        key: "Enter",
-      });
-      vi.spyOn(event, "preventDefault");
-
-      const result = editorProps.handleKeyDown(null, event);
-      expect(result).toBe(true);
-      expect(event.preventDefault).toHaveBeenCalled();
-    }
-  });
-
-  it("calls onEnter when Enter is pressed", () => {
+  it("turns Enter into onEnter instead of a new line", () => {
     const onEnter = vi.fn();
     render(<TiptapTitleEditor onChange={vi.fn()} onEnter={onEnter} value="" />);
 
-    if (useEditorCallback?.editorProps) {
-      const editorProps = useEditorCallback.editorProps as {
-        handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
-      };
-      const event = new KeyboardEvent("keydown", {
-        cancelable: true,
-        key: "Enter",
-      });
-      editorProps.handleKeyDown(null, event);
-      expect(onEnter).toHaveBeenCalled();
-    }
+    const event = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "Enter",
+    });
+
+    expect(handleKeyDown(event)).toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+    expect(onEnter).toHaveBeenCalledOnce();
   });
 
   it("calls onSubmit when Cmd+Enter is pressed", () => {
@@ -150,22 +142,15 @@ describe("TiptapTitleEditor", () => {
       <TiptapTitleEditor onChange={vi.fn()} onSubmit={onSubmit} value="" />
     );
 
-    if (useEditorCallback?.editorProps) {
-      const editorProps = useEditorCallback.editorProps as {
-        handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
-      };
-      const event = new KeyboardEvent("keydown", {
-        cancelable: true,
-        key: "Enter",
-        metaKey: true,
-      });
-      vi.spyOn(event, "preventDefault");
+    const event = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "Enter",
+      metaKey: true,
+    });
 
-      const result = editorProps.handleKeyDown(null, event);
-      expect(result).toBe(true);
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(onSubmit).toHaveBeenCalled();
-    }
+    expect(handleKeyDown(event)).toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it("calls onSubmit when Ctrl+Enter is pressed", () => {
@@ -174,31 +159,21 @@ describe("TiptapTitleEditor", () => {
       <TiptapTitleEditor onChange={vi.fn()} onSubmit={onSubmit} value="" />
     );
 
-    if (useEditorCallback?.editorProps) {
-      const editorProps = useEditorCallback.editorProps as {
-        handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
-      };
-      const event = new KeyboardEvent("keydown", {
-        cancelable: true,
-        ctrlKey: true,
-        key: "Enter",
-      });
-      const result = editorProps.handleKeyDown(null, event);
-      expect(result).toBe(true);
-      expect(onSubmit).toHaveBeenCalled();
-    }
+    const event = new KeyboardEvent("keydown", {
+      cancelable: true,
+      ctrlKey: true,
+      key: "Enter",
+    });
+
+    expect(handleKeyDown(event)).toBe(true);
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it("returns false for non-Enter keys", () => {
     render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
 
-    if (useEditorCallback?.editorProps) {
-      const editorProps = useEditorCallback.editorProps as {
-        handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
-      };
-      const event = new KeyboardEvent("keydown", { key: "a" });
-      const result = editorProps.handleKeyDown(null, event);
-      expect(result).toBe(false);
-    }
+    expect(handleKeyDown(new KeyboardEvent("keydown", { key: "a" }))).toBe(
+      false
+    );
   });
 });

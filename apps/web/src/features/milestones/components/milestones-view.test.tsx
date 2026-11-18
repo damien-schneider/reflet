@@ -222,7 +222,8 @@ describe("MilestonesView - Trackpad Zoom", () => {
     }
 
     const widths = getZoneMinWidths();
-    expect(widths.every((w) => w >= 80)).toBe(true);
+    expect(widths.length).toBeGreaterThan(0);
+    expect(new Set(widths)).toEqual(new Set([80]));
   });
 
   it("should not zoom above maximum zone width (500px)", () => {
@@ -234,7 +235,8 @@ describe("MilestonesView - Trackpad Zoom", () => {
     }
 
     const widths = getZoneMinWidths();
-    expect(widths.every((w) => w <= 500)).toBe(true);
+    expect(widths.length).toBeGreaterThan(0);
+    expect(new Set(widths)).toEqual(new Set([500]));
   });
 
   it("zooms in from an explicit control without a trackpad gesture", () => {

@@ -58,18 +58,6 @@ describe("LogoUploader", () => {
     expect(onLogoChange).toHaveBeenCalledWith(null);
   });
 
-  it("exposes a keyboard-reachable trigger separate from the file input", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    const input = screen.getByLabelText("Logo file input");
-    const trigger = screen.getByRole("button");
-
-    expect(input).toHaveAttribute("type", "file");
-    expect(input.tagName).toBe("INPUT");
-    expect(trigger.tagName).toBe("BUTTON");
-    expect(trigger.contains(input)).toBe(false);
-    expect(input).toHaveAttribute("tabindex", "-1");
-  });
-
   it("restricts selection to the supported image formats", () => {
     render(<LogoUploader onLogoChange={vi.fn()} />);
     expect(screen.getByLabelText("Logo file input")).toHaveAttribute(

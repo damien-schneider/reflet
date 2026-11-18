@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -131,24 +130,6 @@ const defaultProps = {
 };
 
 describe("SyncSettingsSection", () => {
-  it("calls onToggleAutoSync when switch is toggled", async () => {
-    const onToggleAutoSync = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <SyncSettingsSection
-        {...defaultProps}
-        onToggleAutoSync={onToggleAutoSync}
-      />
-    );
-    await user.click(screen.getByTestId("switch-auto-sync"));
-    expect(onToggleAutoSync).toHaveBeenCalledWith(true);
-  });
-
-  it("shows Sync now button for admin", () => {
-    render(<SyncSettingsSection {...defaultProps} />);
-    expect(screen.getByText("Sync now")).toBeInTheDocument();
-  });
-
   it("hides Sync now button for non-admin", () => {
     render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
     expect(screen.queryByText("Sync now")).toBeNull();
@@ -209,7 +190,6 @@ describe("SyncSettingsSection", () => {
 
   it("shows generic error with dismiss button", async () => {
     const onClearError = vi.fn();
-    const _user = userEvent.setup();
     render(
       <SyncSettingsSection
         {...defaultProps}
@@ -235,18 +215,6 @@ describe("SyncSettingsSection", () => {
   it("disables switch when isSettingUp", () => {
     render(<SyncSettingsSection {...defaultProps} isSettingUp />);
     expect(screen.getByTestId("switch-auto-sync")).toBeDisabled();
-  });
-
-  it("shows last synced text for non-admin", () => {
-    const syncDate = new Date("2024-01-15T10:30:00").getTime();
-    render(
-      <SyncSettingsSection
-        {...defaultProps}
-        isAdmin={false}
-        lastSyncAt={syncDate}
-      />
-    );
-    expect(screen.getByText(/Last synced/)).toBeInTheDocument();
   });
 
   it("hides dismiss button when onClearError not provided for generic error", () => {

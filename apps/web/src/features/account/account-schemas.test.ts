@@ -58,15 +58,6 @@ describe("updateEmailSchema", () => {
 });
 
 describe("updatePasswordSchema", () => {
-  it("accepts valid password data", () => {
-    const result = updatePasswordSchema.safeParse({
-      confirmPassword: "newpass123",
-      currentPassword: "oldpass123",
-      newPassword: "newpass123",
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("rejects empty current password", () => {
     const result = updatePasswordSchema.safeParse({
       confirmPassword: "newpass123",

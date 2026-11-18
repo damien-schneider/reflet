@@ -394,6 +394,9 @@ describe("ReleaseEditor", () => {
       vi.useFakeTimers();
       render(<ReleaseEditor {...defaultProps} />);
       fireEvent.change(screen.getByTestId("title-editor"), {
+        target: { value: "Draft" },
+      });
+      fireEvent.change(screen.getByTestId("title-editor"), {
         target: { value: "" },
       });
 
@@ -406,17 +409,6 @@ describe("ReleaseEditor", () => {
   });
 
   describe("Publish flow", () => {
-    it("opens publish confirm dialog on publish click", () => {
-      render(<ReleaseEditor {...defaultProps} />);
-      fireEvent.change(screen.getByTestId("title-editor"), {
-        target: { value: "Title" },
-      });
-      fireEvent.click(
-        screen.getByRole("button", { name: PUBLISH_BUTTON_REGEX })
-      );
-      expect(screen.getByTestId("publish-dialog")).toBeInTheDocument();
-    });
-
     it("shows error when publishing without title", async () => {
       render(<ReleaseEditor {...defaultProps} />);
       fireEvent.change(screen.getByTestId("title-editor"), {

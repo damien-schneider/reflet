@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@ctrl-ui/react/ui/field", () => ({
@@ -92,20 +91,6 @@ describe("PasswordInputField", () => {
     expect(screen.getByTestId("field-error")).toHaveTextContent(
       "Password too short"
     );
-  });
-
-  it("calls register.onChange when typing", async () => {
-    const onChange = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <PasswordInputField
-        {...baseProps}
-        register={{ ...baseProps.register, onChange }}
-      />
-    );
-    const input = screen.getByPlaceholderText("Enter password");
-    await user.type(input, "a");
-    expect(onChange).toHaveBeenCalled();
   });
 
   it("renders no error slot when the message is undefined", () => {

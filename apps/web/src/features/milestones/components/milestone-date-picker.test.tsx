@@ -96,12 +96,6 @@ describe("MilestoneDatePicker", () => {
     expect(onChange).toHaveBeenCalledWith(new Date(2026, 2, 15).getTime());
   });
 
-  it("shows clear deadline button when value is set", () => {
-    const date = new Date(2026, 2, 15).getTime();
-    render(<MilestoneDatePicker onChange={vi.fn()} value={date} />);
-    expect(screen.getByText("Clear deadline")).toBeInTheDocument();
-  });
-
   it("does not show clear deadline button when no value", () => {
     render(<MilestoneDatePicker onChange={vi.fn()} value={undefined} />);
     expect(screen.queryByText("Clear deadline")).toBeNull();

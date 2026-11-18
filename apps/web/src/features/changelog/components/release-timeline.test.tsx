@@ -76,9 +76,12 @@ describe("ReleaseTimeline", () => {
     ],
   };
 
-  it("shows empty state when releases array is empty", () => {
+  it("shows the public empty state when releases array is empty", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
     expect(screen.getByText("No releases yet")).toBeInTheDocument();
+    expect(
+      screen.getByText("Subscribe to hear about the first release.")
+    ).toBeInTheDocument();
   });
 
   it("shows admin empty-state copy to admins", () => {
@@ -89,13 +92,6 @@ describe("ReleaseTimeline", () => {
     expect(
       screen.queryByText("Subscribe to hear about the first release.")
     ).not.toBeInTheDocument();
-  });
-
-  it("shows public empty-state copy", () => {
-    render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(
-      screen.getByText("Subscribe to hear about the first release.")
-    ).toBeInTheDocument();
   });
 
   it("shows a loading state instead of the empty state while releases load", () => {

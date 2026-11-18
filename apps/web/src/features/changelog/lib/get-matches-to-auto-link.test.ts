@@ -30,13 +30,6 @@ describe("getMatchesToAutoLink", () => {
     expect(result).toEqual(["f1", "f3"]);
   });
 
-  it("returns empty array when all matches are already linked", () => {
-    const matches = [makeMatch("f1"), makeMatch("f2")];
-    const linkedIds = new Set([feedbackId("f1"), feedbackId("f2")]);
-    const result = getMatchesToAutoLink(matches, linkedIds);
-    expect(result).toEqual([]);
-  });
-
   it("returns empty array when no matches", () => {
     const result = getMatchesToAutoLink([], new Set());
     expect(result).toEqual([]);

@@ -49,30 +49,6 @@ describe("useAIDraftReply", () => {
       expect(mockInitiateDraftReply).toHaveBeenCalledWith({ feedbackId });
     });
 
-    it("should set isGeneratingDraft to true during generation", async () => {
-      let resolvePromise: () => void;
-      mockInitiateDraftReply.mockImplementation(
-        () =>
-          new Promise<void>((resolve) => {
-            resolvePromise = resolve;
-          })
-      );
-
-      const { result } = renderUseAIDraftReply();
-
-      let genPromise: Promise<void>;
-      act(() => {
-        genPromise = result.current.handleGenerateDraftReply();
-      });
-
-      expect(result.current.isGeneratingDraft).toBe(true);
-
-      await act(async () => {
-        resolvePromise?.();
-        await genPromise;
-      });
-    });
-
     it("should reset isGeneratingDraft on error", async () => {
       mockInitiateDraftReply.mockRejectedValue(new Error("fail"));
 

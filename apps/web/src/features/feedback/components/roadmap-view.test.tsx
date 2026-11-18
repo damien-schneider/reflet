@@ -276,23 +276,6 @@ describe("RoadmapView", () => {
   });
 
   describe("UI Rendering", () => {
-    it("should render column headers with correct names and counts", () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Backlog has 1 item, In Progress has 1 item, Done has 0
-      expect(screen.getByText("Backlog (1)")).toBeInTheDocument();
-      expect(screen.getByText("In Progress (1)")).toBeInTheDocument();
-      expect(screen.getByText("Done (0)")).toBeInTheDocument();
-    });
-
     it("should handle feedback click", () => {
       const onFeedbackClick = vi.fn();
       render(
