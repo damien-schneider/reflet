@@ -7,7 +7,6 @@ import {
   sessionIdentitySchema,
   speakerTokenSchema,
 } from "../../../../sdk/src/sessions/protocol";
-import { SPEAKER_DETECTION_MODEL } from "../../ai/models";
 import type { TestContext } from "../../test.helpers";
 import { SPEAKER_DETECTION_NOT_CONFIGURED } from "../ai/configuration";
 import { SPEAKER_TURN_LIMITS } from "../constants";
@@ -104,7 +103,7 @@ describe("speaker detection token", () => {
     expect(speakerTokenSchema.parse(response.body)).toEqual({
       expiresAt: Date.parse(SECRET_EXPIRES_AT),
       token: CLIENT_SECRET,
-      url: `wss://api.mistral.ai/v1/audio/transcriptions/realtime?model=${SPEAKER_DETECTION_MODEL}`,
+      url: "wss://api.mistral.ai/v1/audio/transcriptions/realtime?model=voxtral-mini-transcribe-realtime-3",
     });
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(String(url)).toBe(MISTRAL_SESSIONS_URL);

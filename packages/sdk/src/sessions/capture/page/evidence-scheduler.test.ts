@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureViewport } from "../../../feedback/core/capture";
 import type { CapturedImage } from "../../../feedback/types";
-import { SESSION_MASK_SELECTORS } from "../element-ref";
 import {
   type CapturedEvidence,
   createEvidenceScheduler,
@@ -81,7 +80,11 @@ describe("createEvidenceScheduler", () => {
     const clientKey = scheduler.capture({ note: "Here", trigger: "mark" });
     await vi.runAllTimersAsync();
     const options = vi.mocked(captureViewport).mock.calls[0]?.[0];
-    expect(options?.excludeSelectors).toEqual(SESSION_MASK_SELECTORS);
+    expect(options?.excludeSelectors).toEqual([
+      "[data-reflet-redact]",
+      "input[type=password]",
+      "[autocomplete^=cc-]",
+    ]);
     const clone = cloneWithTypedText();
     options?.prepareClone?.(clone);
     expect(clone.querySelector("input")?.value).toBe("");

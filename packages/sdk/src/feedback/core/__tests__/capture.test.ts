@@ -4,7 +4,6 @@ import {
   fitWithin,
   inlineExternalImages,
   restoreInlinedImages,
-  WIDGET_MARKER,
 } from "../capture";
 
 function mockImageFetch(responses: Record<string, boolean>): void {
@@ -133,7 +132,7 @@ describe("buildSnapdomOptions", () => {
     });
 
     expect(options.exclude).toEqual([
-      `[${WIDGET_MARKER}]`,
+      "[data-reflet-widget]",
       ".intercom-launcher",
       "#cookie-banner",
     ]);

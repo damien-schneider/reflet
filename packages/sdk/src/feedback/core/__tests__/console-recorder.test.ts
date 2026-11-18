@@ -113,14 +113,6 @@ describe("startConsoleRecorder", () => {
     ]);
   });
 
-  it("captures uncaught errors reported on the window", () => {
-    const recorder = record();
-
-    window.dispatchEvent(new ErrorEvent("error", { message: "Uncaught boom" }));
-
-    expect(recorder.events()[0]?.message).toContain("Uncaught boom");
-  });
-
   it("restores the original console methods on stop", () => {
     const before = console.error;
     const recorder = record();

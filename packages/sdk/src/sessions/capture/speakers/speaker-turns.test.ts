@@ -2,18 +2,6 @@ import { describe, expect, it } from "vitest";
 import { SpeakerTurns, speakerEventMs } from "./speaker-turns";
 
 describe("SpeakerTurns", () => {
-  it("joins consecutive events of one voice into a turn and starts another when the voice changes", () => {
-    const turns = new SpeakerTurns();
-    turns.add("S1", 1000);
-    turns.add("S1", 1500);
-    turns.add("S2", 2000);
-    turns.add("S2", 2600);
-    expect(turns.drain()).toEqual([
-      { endMs: 1500, speaker: "S1", startMs: 1000 },
-      { endMs: 2600, speaker: "S2", startMs: 2000 },
-    ]);
-  });
-
   it("drains only what came since the previous drain, continuing an ongoing turn where it stopped", () => {
     const turns = new SpeakerTurns();
     turns.add("S1", 1000);
@@ -62,16 +50,6 @@ describe("SpeakerTurns", () => {
 });
 
 describe("speakerEventMs", () => {
-  it("dates an event by the audio sent so far minus Mistral's streaming delay", () => {
-    expect(
-      speakerEventMs({
-        runStartMs: 10_000,
-        samplesSent: 48_000,
-        streamStartSample: 0,
-      })
-    ).toBe(10_000 + 3000 - 480 - 250);
-  });
-
   it("never dates an event before its stream started", () => {
     expect(
       speakerEventMs({

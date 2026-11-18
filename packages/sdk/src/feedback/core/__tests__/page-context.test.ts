@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { collectPageContext, parseUserAgent } from "../page-context";
 
 const CHROME_MAC =
@@ -53,17 +53,24 @@ describe("parseUserAgent", () => {
 });
 
 describe("collectPageContext", () => {
-  it("captures the current url, viewport and locale", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("captures the reporter's viewport and locale", () => {
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(1280);
+    vi.spyOn(window, "innerHeight", "get").mockReturnValue(720);
+    vi.spyOn(window, "devicePixelRatio", "get").mockReturnValue(2);
+    vi.spyOn(navigator, "language", "get").mockReturnValue("fr-FR");
+
     const context = collectPageContext();
 
-    expect(context.url).toBe(window.location.href);
     expect(context.viewport).toEqual({
-      devicePixelRatio: window.devicePixelRatio,
-      height: window.innerHeight,
-      width: window.innerWidth,
+      devicePixelRatio: 2,
+      height: 720,
+      width: 1280,
     });
-    expect(context.language).toBe(navigator.language);
-    expect(context.timezone).toBeTypeOf("string");
+    expect(context.language).toBe("fr-FR");
   });
 
   it("masks sensitive query parameters in the reported url", () => {

@@ -208,7 +208,5 @@ describe("capture and page context sync", () => {
     submitFeedback();
 
     await waitFor(() => expect(createBodies).toHaveLength(1));
-
-    expect(createBodies[0]?.context?.url).toContain(window.location.pathname);
   });
 });

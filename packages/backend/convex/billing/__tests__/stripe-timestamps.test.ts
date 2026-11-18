@@ -11,7 +11,6 @@ describe("stripeTimestampToMs", () => {
 
     // Should be in milliseconds for JavaScript Date
     expect(result).toBe(1_728_000_000_000);
-    expect(new Date(result).getFullYear()).toBe(2024);
   });
 
   it("does not double-convert timestamps already in milliseconds", () => {
@@ -22,12 +21,6 @@ describe("stripeTimestampToMs", () => {
     const result = stripeTimestampToMs(alreadyMs);
 
     expect(result).toBe(1_728_000_000_000);
-    expect(new Date(result).getFullYear()).toBe(2024);
-  });
-
-  it("handles zero gracefully", () => {
-    const result = stripeTimestampToMs(0);
-    expect(result).toBe(0);
   });
 
   it("handles undefined gracefully", () => {

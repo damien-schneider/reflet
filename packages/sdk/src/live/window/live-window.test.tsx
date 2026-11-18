@@ -13,7 +13,6 @@ import {
   RECORDING_SNAPSHOT,
 } from "../../sessions/ui/testing/session-fixtures";
 import { LIVE_HUB_ENDPOINTS } from "../protocol";
-import { NEEDS_ACTIVATION_MESSAGE } from "./recorder/live-commands";
 import {
   NO_APPS,
   openWindow,
@@ -64,7 +63,11 @@ it("starts recording from a remote Record only once the window has been clicked"
   const recorder = mocks.recorder;
 
   hub.send({ action: "start", id: "c1", kind: "command" });
-  expect(await screen.findByText(NEEDS_ACTIVATION_MESSAGE)).toBeTruthy();
+  expect(
+    await screen.findByText(
+      "Click Record here once: the microphone needs a first click in this window."
+    )
+  ).toBeTruthy();
   expect(recorder?.start).not.toHaveBeenCalled();
 
   setUserActivation(true);

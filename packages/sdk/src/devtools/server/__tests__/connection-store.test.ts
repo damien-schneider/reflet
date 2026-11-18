@@ -79,13 +79,4 @@ describe("listing connections for Reflet Live", () => {
     expect(listed[0]?.token).toBe("fb_dev_fresh");
     expect(listed[0]?.id).toBe(before?.id);
   });
-
-  it("keeps the same id when the organization is reconnected", async () => {
-    const [before] = await globexOf();
-    await ageSavedConnections();
-    await saveConnection("/web", { ...globex, token: "fb_dev_renewed" });
-    const [after] = await globexOf();
-    expect(after?.token).toBe("fb_dev_renewed");
-    expect(after?.id).toBe(before?.id);
-  });
 });

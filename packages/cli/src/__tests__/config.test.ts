@@ -9,7 +9,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  DEFAULT_API_URL,
   readStoredConfig,
   resolveApiKey,
   resolveApiUrl,
@@ -29,7 +28,7 @@ describe("config", () => {
   });
 
   it("falls back to the production URL", () => {
-    expect(resolveApiUrl({}, {})).toBe(DEFAULT_API_URL);
+    expect(resolveApiUrl({}, {})).toBe("https://harmless-clam-802.convex.site");
     expect(resolveApiUrl({}, { apiUrl: "https://a" })).toBe("https://a");
     expect(
       resolveApiUrl({ REFLET_API_URL: "https://b" }, { apiUrl: "https://a" })

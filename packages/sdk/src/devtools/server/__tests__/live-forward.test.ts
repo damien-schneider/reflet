@@ -20,7 +20,6 @@ import { startLiveHub } from "../../../live/hub/hub-server";
 import {
   decodeLiveAppHeader,
   LIVE_APP_HEADER,
-  LIVE_STATUS_OFF,
   type LiveStatus,
 } from "../../../live/protocol";
 import { liveTransport } from "../../client/live/live-route";
@@ -78,7 +77,12 @@ describe("live forwarder without a running hub", () => {
   it("reports Reflet Live as off to a page sending presence", async () => {
     const response = await handler(liveRequest("/live/presence", presence));
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(LIVE_STATUS_OFF);
+    expect(await response.json()).toEqual({
+      canStart: false,
+      organizationName: null,
+      session: null,
+      state: "off",
+    });
   });
 
   it("refuses commands with a message saying Live is not running", async () => {

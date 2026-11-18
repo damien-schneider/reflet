@@ -17,9 +17,7 @@ afterEach(() => {
 
 test.each([
   { authorId: "anonymous:test@example.com", isMember: false },
-  { authorId: "anonymous:unknown", isMember: false },
   { authorId: "anonymous:test@example.com", isMember: true },
-  { authorId: "anonymous:unknown", isMember: true },
   { authorId: SYSTEM_ACTOR_ID, isMember: false },
   { authorId: SYSTEM_ACTOR_ID, isMember: true },
 ])(

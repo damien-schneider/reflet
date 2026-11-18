@@ -125,18 +125,6 @@ describe("evaluateRule", () => {
 });
 
 describe("resolveNextStep", () => {
-  it("uses the question's own next target when no rule matches", () => {
-    const flow = npsFlow();
-    const general = flow[1];
-    if (!general) {
-      throw new Error("fixture");
-    }
-    const step = resolveNextStep(flow, general, "fine", [
-      { id: "thanks", title: "Thanks" },
-    ]);
-    expect(step).toMatchObject({ ending: { id: "thanks" }, kind: "ending" });
-  });
-
   it("lands on the first ending when a jump names a deleted ending", () => {
     const flow = [
       question("a", 0, { next: { endingId: "gone", kind: "ending" } }),

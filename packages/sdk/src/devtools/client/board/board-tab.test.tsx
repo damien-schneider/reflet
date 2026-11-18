@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { MISSING_SECRET_KEY_HINT } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
 import { BoardTab } from "./board-tab";
 
@@ -46,5 +45,9 @@ it("explains the missing secret key when this app cannot connect", () => {
     />
   );
 
-  expect(screen.getByText(MISSING_SECRET_KEY_HINT)).toBeTruthy();
+  expect(
+    screen.getByText(
+      "Connecting to Reflet needs a public key and a local address (localhost, *.localhost or *.test). Or set REFLET_SECRET_KEY (your fb_sec_ key) in the dev server environment to reach your board."
+    )
+  ).toBeTruthy();
 });

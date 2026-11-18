@@ -1,10 +1,10 @@
 /// <reference types="vite/client" />
+import { createHmac } from "node:crypto";
 import { convexTest } from "convex-test";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import schema from "../../schema";
-import { hmacSha256Hex } from "../../shared/hmac";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
 
@@ -99,7 +99,7 @@ describe("webhook delivery", () => {
     expect(String(url)).toBe("https://example.com/hook");
     expect(headers.get("X-Reflet-Event")).toBe("feedback.created");
     expect(headers.get("X-Reflet-Signature")).toBe(
-      `sha256=${await hmacSha256Hex("shh", body)}`
+      `sha256=${createHmac("sha256", "shh").update(body).digest("hex")}`
     );
     expect(JSON.parse(body).data.feedback.title).toBe("Draft lost on save");
 
@@ -189,9 +189,9 @@ describe("webhook delivery", () => {
     expect(state.delivery?.status).toBe("skipped");
   });
 
-  test("skips internal feedback without calling the hook", async () => {
+  test("skips internal feedback without calling the hook, even once approved", async () => {
     const t = convexTest(schema, modules);
-    const ids = await seedDelivery(t, { isApproved: false, isInternal: true });
+    const ids = await seedDelivery(t, { isApproved: true, isInternal: true });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 

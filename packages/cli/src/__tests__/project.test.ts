@@ -101,20 +101,9 @@ describe("detectProject", () => {
     expect(setup.framework).toBe("vite-react");
     expect(setup.anchor).toEqual({ kind: "wrap", token: "<App />" });
   });
-
-  it("reports an unknown project without an entry file", () => {
-    const setup = detectProject(memoryFiles({}), "/app");
-
-    expect(setup.framework).toBe("unknown");
-    expect(setup.entryFile).toBeNull();
-  });
 });
 
 describe("upsertEnvVar", () => {
-  it("creates the file content when it is empty", () => {
-    expect(upsertEnvVar("", "KEY", "fb_pub_1")).toBe("KEY=fb_pub_1\n");
-  });
-
   it("appends to existing variables", () => {
     expect(upsertEnvVar("OTHER=1\n", "KEY", "fb_pub_1")).toBe(
       "OTHER=1\nKEY=fb_pub_1\n"

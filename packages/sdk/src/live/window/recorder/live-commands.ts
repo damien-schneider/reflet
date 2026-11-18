@@ -12,7 +12,7 @@ const FAILURE_LABELS: Record<LiveCommand, string> = {
   stop: "The recording did not stop",
 };
 
-export const NEEDS_ACTIVATION_MESSAGE =
+const NEEDS_ACTIVATION_MESSAGE =
   "Click Record here once: the microphone needs a first click in this window.";
 
 async function apply(

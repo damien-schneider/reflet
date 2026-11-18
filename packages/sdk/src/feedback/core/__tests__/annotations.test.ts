@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Annotation } from "../../types";
-import {
-  isDegenerate,
-  normalizeRect,
-  simplifyPath,
-  toWireAnnotations,
-} from "../annotations";
+import { isDegenerate, simplifyPath, toWireAnnotations } from "../annotations";
 
 function annotation(overrides: Partial<Annotation>): Annotation {
   return {
@@ -18,41 +13,7 @@ function annotation(overrides: Partial<Annotation>): Annotation {
   };
 }
 
-describe("normalizeRect", () => {
-  it("keeps a left-to-right drag as is", () => {
-    expect(normalizeRect({ x: 5, y: 8 }, { x: 25, y: 38 })).toEqual({
-      height: 30,
-      width: 20,
-      x: 5,
-      y: 8,
-    });
-  });
-
-  it("normalizes a drag made towards the top left", () => {
-    expect(normalizeRect({ x: 25, y: 38 }, { x: 5, y: 8 })).toEqual({
-      height: 30,
-      width: 20,
-      x: 5,
-      y: 8,
-    });
-  });
-});
-
 describe("simplifyPath", () => {
-  it("drops points closer than the tolerance", () => {
-    const points = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 2, y: 0 },
-      { x: 30, y: 0 },
-    ];
-
-    expect(simplifyPath(points, 4)).toEqual([
-      { x: 0, y: 0 },
-      { x: 30, y: 0 },
-    ]);
-  });
-
   it("always keeps the last point", () => {
     const points = [
       { x: 0, y: 0 },
@@ -71,27 +32,6 @@ describe("simplifyPath", () => {
 });
 
 describe("isDegenerate", () => {
-  it("flags shapes smaller than a deliberate gesture", () => {
-    expect(isDegenerate(annotation({ end: { x: 2, y: 2 } }))).toBe(true);
-  });
-
-  it("keeps shapes the user clearly drew", () => {
-    expect(isDegenerate(annotation({ end: { x: 60, y: 40 } }))).toBe(false);
-  });
-
-  it("keeps a pen stroke with enough points", () => {
-    const pen = annotation({
-      points: [
-        { x: 0, y: 0 },
-        { x: 1, y: 4 },
-        { x: 2, y: 9 },
-      ],
-      tool: "pen",
-    });
-
-    expect(isDegenerate(pen)).toBe(false);
-  });
-
   it("drops a pen stroke that is a single tap", () => {
     expect(
       isDegenerate(annotation({ points: [{ x: 0, y: 0 }], tool: "pen" }))

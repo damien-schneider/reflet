@@ -8,8 +8,8 @@ import { hashSecretKey } from "../../feedback/api_auth";
 import schema from "../../schema";
 import { seedOrganization } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
-import { DEVTOOLS_TOKEN_IDLE_EXPIRY_MS } from "../constants";
 
+const DAY_MS = 24 * 60 * 60_000;
 const USER_ID = "user-1";
 const PUBLIC_KEY = "fb_pub_widget";
 const CODE_CHALLENGE = "a".repeat(43);
@@ -148,10 +148,10 @@ describe("devtools tokens", () => {
 
   test("expires after 30 idle days", async () => {
     const { t } = await connected();
-    await ageToken(t, Date.now() - DEVTOOLS_TOKEN_IDLE_EXPIRY_MS + 60_000);
+    await ageToken(t, Date.now() - 29 * DAY_MS);
     expect(await validate(t)).not.toBeNull();
 
-    await ageToken(t, Date.now() - 31 * 24 * 60 * 60_000);
+    await ageToken(t, Date.now() - 31 * DAY_MS);
     expect(await validate(t)).toBeNull();
   });
 
@@ -164,7 +164,7 @@ describe("devtools tokens", () => {
   test("cleanup deletes idle tokens and expired codes", async () => {
     const { t } = await connected();
     await storeCode(t, "code-2");
-    await ageToken(t, Date.now() - 31 * 24 * 60 * 60_000);
+    await ageToken(t, Date.now() - 31 * DAY_MS);
     await t.run(async (ctx) => {
       const [row] = await ctx.db.query("devtoolsConnectCodes").collect();
       if (row) {

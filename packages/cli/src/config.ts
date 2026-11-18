@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-export const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
+const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
 export const CONFIG_PATH = join(homedir(), ".reflet", "config.json");
 
 export interface StoredConfig {

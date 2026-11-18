@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
@@ -8,6 +8,10 @@ import { modules } from "../../test.helpers";
 import { createFeedback, createOrg } from "./test_helpers";
 
 const testSchema = schema as any;
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("admin_api_releases", () => {
   test("createRelease stores an unpublished release with its notes and version", async () => {
@@ -38,25 +42,35 @@ describe("admin_api_releases", () => {
   });
 
   test("listReleases should paginate and sort by newest", async () => {
+    vi.useFakeTimers();
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
+    vi.setSystemTime(Date.UTC(2026, 0, 1));
     await t.mutation(internal.admin_api.releases.createRelease, {
       organizationId: orgId,
       title: "First",
     });
+    vi.setSystemTime(Date.UTC(2026, 0, 2));
     await t.mutation(internal.admin_api.releases.createRelease, {
       organizationId: orgId,
       title: "Second",
     });
 
-    const result = await t.query(internal.admin_api.releases.listReleases, {
+    const firstPage = await t.query(internal.admin_api.releases.listReleases, {
+      limit: 1,
+      organizationId: orgId,
+    });
+    const secondPage = await t.query(internal.admin_api.releases.listReleases, {
+      limit: 1,
+      offset: 1,
       organizationId: orgId,
     });
 
-    expect(result.items).toHaveLength(2);
-    expect(result.total).toBe(2);
-    expect(result.hasMore).toBe(false);
+    expect(firstPage.items.map((release) => release.title)).toEqual(["Second"]);
+    expect(firstPage).toMatchObject({ hasMore: true, total: 2 });
+    expect(secondPage.items.map((release) => release.title)).toEqual(["First"]);
+    expect(secondPage.hasMore).toBe(false);
   });
 
   test("listReleases should filter by status", async () => {

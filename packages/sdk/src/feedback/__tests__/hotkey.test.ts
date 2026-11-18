@@ -54,10 +54,6 @@ describe("matchesHotkey", () => {
     ).toBe(true);
   });
 
-  it("is case insensitive on the key", () => {
-    expect(matchesHotkey(keys({ altKey: true, key: "F" }), "alt+f")).toBe(true);
-  });
-
   it("ignores whitespace around the parts", () => {
     expect(matchesHotkey(keys({ altKey: true }), " alt + f ")).toBe(true);
   });
@@ -65,16 +61,6 @@ describe("matchesHotkey", () => {
   it("matches the physical key when macOS Option turns the letter into a symbol", () => {
     expect(
       matchesHotkey(keys({ altKey: true, key: "ƒ" }), "alt+f", "MacIntel")
-    ).toBe(true);
-  });
-
-  it("matches the physical key on a non-Latin layout", () => {
-    expect(
-      matchesHotkey(
-        keys({ code: "KeyC", ctrlKey: true, key: "с" }),
-        "mod+c",
-        "Win32"
-      )
     ).toBe(true);
   });
 

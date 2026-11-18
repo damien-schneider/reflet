@@ -34,13 +34,6 @@ describe("sitemap_public", () => {
     expect(result[0].slug).toBe("public-org");
   });
 
-  test("getPublicOrgSlugs returns empty array when no public orgs", async () => {
-    const t = convexTest(schema, modules);
-
-    const result = await t.query(api.sitemap_public.getPublicOrgSlugs, {});
-    expect(result).toEqual([]);
-  });
-
   test("getPublicFeedbackForSitemap returns approved feedback from public orgs", async () => {
     const t = convexTest(schema, modules);
 

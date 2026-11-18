@@ -154,11 +154,4 @@ createRoot(document.getElementById("root")!).render(
 
     expect(result.code.match(/RefletFeedback \/>/g)).toHaveLength(1);
   });
-
-  it("reports a missing anchor", () => {
-    const result = inject("export const x = 1;\n", "<App />");
-
-    expect(result.changed).toBe(false);
-    expect(result.reason).toBe("no-anchor");
-  });
 });

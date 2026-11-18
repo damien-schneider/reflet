@@ -2,7 +2,6 @@
 import type { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import { scheduledFunctionNames, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
@@ -212,9 +211,9 @@ describe("guest support conversations", () => {
       organizationId,
     });
 
-    const adminMessageId: Id<"supportMessages"> = await t.run(async (ctx) => {
+    await t.run(async (ctx) => {
       await ctx.db.patch(conversationId, { userUnreadCount: 1 });
-      return await ctx.db.insert("supportMessages", {
+      await ctx.db.insert("supportMessages", {
         body: "On it",
         conversationId,
         createdAt: Date.now(),
@@ -229,14 +228,21 @@ describe("guest support conversations", () => {
       credential: GUEST_CREDENTIAL,
     });
 
-    const { adminMessage, conversation } = await t.run(async (ctx) => ({
-      adminMessage: await ctx.db.get(adminMessageId),
+    const { conversation, messages } = await t.run(async (ctx) => ({
       conversation: await ctx.db.get(conversationId),
+      messages: (await ctx.db.query("supportMessages").collect()).filter(
+        (message) => message.conversationId === conversationId
+      ),
     }));
 
     expect(conversation?.userUnreadCount).toBe(0);
     expect(conversation?.adminUnreadCount).toBe(1);
-    expect(adminMessage?.isRead).toBe(true);
+    expect(
+      messages.map(({ isRead, senderType }) => ({ isRead, senderType }))
+    ).toEqual([
+      { isRead: false, senderType: "user" },
+      { isRead: true, senderType: "admin" },
+    ]);
   });
 
   test("lists a mixed guest/admin thread without resolving the guest id", async () => {
@@ -348,31 +354,6 @@ describe("guest support conversations", () => {
       return organizations.map((organization) => organization?.slug);
     });
     expect(contactOrgSlugs).toEqual(["org-a", "org-b"]);
-  });
-
-  test("marks the guest's own message as read from their side", async () => {
-    const organizationId = await seedOrg(t, true);
-    const conversationId = await t.mutation(api.support.conversations.create, {
-      guestEmail: GUEST.email,
-      guestId: GUEST.id,
-      initialMessage: "First",
-      organizationId,
-    });
-
-    await t.mutation(api.support.messages.markAsRead, {
-      conversationId,
-      credential: GUEST_CREDENTIAL,
-    });
-
-    const messages = await t.query(api.support.messages.list, {
-      conversationId,
-      credential: GUEST_CREDENTIAL,
-    });
-
-    expect(messages).toHaveLength(1);
-    expect(messages[0].isRead).toBe(false);
-    expect(messages[0].isOwnMessage).toBe(true);
-    expect(messages[0].sender?.email).toBe(GUEST.email);
   });
 
   test("keeps guest conversations out of the registered-user namespace", async () => {

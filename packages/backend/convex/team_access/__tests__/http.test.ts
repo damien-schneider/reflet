@@ -6,8 +6,8 @@ import { pkceChallengeFor } from "../../devtools/pkce";
 import { hashSecretKey } from "../../feedback/api_auth";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest, type TestContext } from "../../test.helpers";
-import { TEAM_TOKEN_TTL_MS } from "../constants";
 
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60_000;
 const MEMBER = { _id: "user-1", email: "member@acme.test" };
 const PUBLIC_KEY = "fb_pub_locked";
 const APP_ORIGIN = "https://app.acme.com";
@@ -81,9 +81,9 @@ describe("team token exchange", () => {
       organizationName: "Acme",
       token: expect.stringMatching(TEAM_TOKEN_PATTERN),
     });
-    expect(body.expiresAt - Date.now()).toBeGreaterThan(
-      TEAM_TOKEN_TTL_MS - 60_000
-    );
+    const expiresIn = body.expiresAt - Date.now();
+    expect(expiresIn).toBeGreaterThan(SEVEN_DAYS_MS - 60_000);
+    expect(expiresIn).toBeLessThanOrEqual(SEVEN_DAYS_MS);
     expect(await validateFrom(t, body.token, APP_ORIGIN)).not.toBeNull();
     expect(await validateFrom(t, body.token, "https://evil.test")).toBeNull();
 
