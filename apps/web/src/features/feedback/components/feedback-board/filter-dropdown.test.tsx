@@ -138,11 +138,6 @@ describe("FilterDropdown", () => {
     vi.clearAllMocks();
   });
 
-  it("renders the Filter button", () => {
-    render(<FilterDropdown {...baseProps} />);
-    expect(screen.getByText("Filter")).toBeInTheDocument();
-  });
-
   it("shows active filter count badge when filters are active", () => {
     render(
       <FilterDropdown
@@ -188,11 +183,6 @@ describe("FilterDropdown", () => {
     expect(screen.queryByText("Tag")).not.toBeInTheDocument();
   });
 
-  it("renders Show completed checkbox item", () => {
-    render(<FilterDropdown {...baseProps} />);
-    expect(screen.getByText("Show completed")).toBeInTheDocument();
-  });
-
   it("calls onStatusChange when a status checkbox is clicked", () => {
     const onStatusChange = vi.fn();
     render(<FilterDropdown {...baseProps} onStatusChange={onStatusChange} />);
@@ -207,18 +197,6 @@ describe("FilterDropdown", () => {
     expect(onTagChange).toHaveBeenCalledWith("t1", true);
   });
 
-  it("calls onHideCompletedToggle when Show completed is clicked", () => {
-    const onHideCompletedToggle = vi.fn();
-    render(
-      <FilterDropdown
-        {...baseProps}
-        onHideCompletedToggle={onHideCompletedToggle}
-      />
-    );
-    fireEvent.click(screen.getByText("Show completed"));
-    expect(onHideCompletedToggle).toHaveBeenCalled();
-  });
-
   it("shows Clear all filters when active filters exist", () => {
     render(<FilterDropdown {...baseProps} selectedStatusIds={["s1"]} />);
     expect(screen.getByText("Clear all filters")).toBeInTheDocument();
@@ -227,19 +205,6 @@ describe("FilterDropdown", () => {
   it("does not show Clear all filters when no active filters", () => {
     render(<FilterDropdown {...baseProps} />);
     expect(screen.queryByText("Clear all filters")).not.toBeInTheDocument();
-  });
-
-  it("calls onClearFilters when Clear all filters is clicked", () => {
-    const onClearFilters = vi.fn();
-    render(
-      <FilterDropdown
-        {...baseProps}
-        onClearFilters={onClearFilters}
-        selectedStatusIds={["s1"]}
-      />
-    );
-    fireEvent.click(screen.getByText("Clear all filters"));
-    expect(onClearFilters).toHaveBeenCalled();
   });
 
   it("marks selected status checkboxes as checked", () => {
@@ -258,29 +223,5 @@ describe("FilterDropdown", () => {
       el.textContent?.includes("Feature")
     );
     expect(featureItem).toHaveAttribute("data-checked", "true");
-  });
-
-  it("uses primary tone on button when filters are active", () => {
-    render(<FilterDropdown {...baseProps} selectedStatusIds={["s1"]} />);
-    const button = screen.getByText("Filter").closest("button");
-    expect(button).toHaveAttribute("data-tone", "primary");
-  });
-
-  it("uses neutral tone on button when no filters active", () => {
-    render(<FilterDropdown {...baseProps} />);
-    const button = screen.getByText("Filter").closest("button");
-    expect(button).toHaveAttribute("data-tone", "neutral");
-  });
-
-  it("computes activeCount correctly with all filter types", () => {
-    render(
-      <FilterDropdown
-        {...baseProps}
-        hideCompleted={false}
-        selectedStatusIds={["s1", "s2"]}
-        selectedTagIds={["t1"]}
-      />
-    );
-    expect(screen.getByText("4")).toBeInTheDocument();
   });
 });

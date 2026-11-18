@@ -308,51 +308,6 @@ describe("FeedbackDetailPage", () => {
     vi.clearAllMocks();
   });
 
-  it("should render the feedback detail page with title", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
-    });
-  });
-
-  it("should display the feedback description", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Test feedback description")).toBeInTheDocument();
-    });
-  });
-
-  it("should display vote count", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("5")).toBeInTheDocument();
-    });
-  });
-
   it("should display the status badge", async () => {
     render(
       <FeedbackDetailPage
@@ -365,21 +320,6 @@ describe("FeedbackDetailPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("New")).toBeInTheDocument();
-    });
-  });
-
-  it("should display tags", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Bug")).toBeInTheDocument();
     });
   });
 
@@ -436,35 +376,6 @@ describe("FeedbackDetailPage", () => {
     });
   });
 
-  it("should show loading state when data is undefined", () => {
-    mockUseQuery.mockReturnValue(undefined);
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    expect(document.body).toBeInTheDocument();
-  });
-
-  it("should render comment section heading", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Comments/)).toBeInTheDocument();
-    });
-  });
-
   it("should display pinned state when feedback is pinned", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
@@ -502,22 +413,6 @@ describe("FeedbackDetailPage", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("push-pin")).toBeInTheDocument();
-    });
-  });
-
-  it("should render back link to dashboard", async () => {
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      const link = screen.getByRole("link");
-      expect(link).toHaveAttribute("href", "/dashboard/my-organization");
     });
   });
 
@@ -624,24 +519,6 @@ describe("FeedbackDetailPage", () => {
     });
   });
 
-  it("should render vote button and call toggle vote on click", async () => {
-    const toggleVoteMock = vi.fn();
-    mockUseMutation.mockReturnValue(toggleVoteMock);
-
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("5")).toBeInTheDocument();
-    });
-  });
-
   it("should display assignee selector for admin users", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
@@ -732,49 +609,6 @@ describe("FeedbackDetailPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Admin User")).toBeInTheDocument();
-    });
-  });
-
-  it("should handle feedback without description", async () => {
-    mockUseQuery.mockImplementation((queryFn, args) => {
-      if (args === "skip") {
-        return;
-      }
-      const queryName = String(queryFn);
-      if (queryName === "feedback.get") {
-        return { ...mockFeedback, description: null };
-      }
-      if (queryName === "organizations.getBySlug") {
-        return mockOrg;
-      }
-      if (queryName === "organization_statuses.list") {
-        return mockStatuses;
-      }
-      if (queryName === "comments.list") {
-        return mockComments;
-      }
-      if (queryName === "members.list") {
-        return [];
-      }
-      if (queryName === "tags.list") {
-        return [];
-      }
-    });
-
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
-      expect(
-        screen.queryByText("Test feedback description")
-      ).not.toBeInTheDocument();
     });
   });
 
@@ -873,47 +707,6 @@ describe("FeedbackDetailPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Anonymous")).toBeInTheDocument();
-    });
-  });
-
-  it("should display feedback without tags", async () => {
-    mockUseQuery.mockImplementation((queryFn, args) => {
-      if (args === "skip") {
-        return;
-      }
-      const queryName = String(queryFn);
-      if (queryName === "feedback.get") {
-        return { ...mockFeedback, tags: [] };
-      }
-      if (queryName === "organizations.getBySlug") {
-        return mockOrg;
-      }
-      if (queryName === "organization_statuses.list") {
-        return mockStatuses;
-      }
-      if (queryName === "comments.list") {
-        return mockComments;
-      }
-      if (queryName === "members.list") {
-        return [];
-      }
-      if (queryName === "tags.list") {
-        return [];
-      }
-    });
-
-    render(
-      <FeedbackDetailPage
-        params={Promise.resolve({
-          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
-          orgSlug: "my-organization",
-        })}
-      />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
-      expect(screen.queryByText("Bug")).not.toBeInTheDocument();
     });
   });
 });

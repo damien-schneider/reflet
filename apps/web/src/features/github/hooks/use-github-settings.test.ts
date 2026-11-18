@@ -82,20 +82,6 @@ const defaultProps = {
 };
 
 describe("useGitHubSettings", () => {
-  it("returns initial state", () => {
-    const { result } = renderHook(() => useGitHubSettings(defaultProps));
-    expect(result.current.repositories).toEqual([]);
-    expect(result.current.loadingRepos).toBe(false);
-    expect(result.current.selectedRepo).toBe("");
-    expect(result.current.isSyncing).toBe(false);
-    expect(result.current.isSettingUp).toBe(false);
-    expect(result.current.isDisconnecting).toBe(false);
-    expect(result.current.isSyncingIssues).toBe(false);
-    expect(result.current.githubLabels).toEqual([]);
-    expect(result.current.isLoadingLabels).toBe(false);
-    expect(result.current.webhookSetupError).toBeNull();
-  });
-
   it("fetchRepositories calls listRepositories action", async () => {
     mockListRepositories.mockResolvedValueOnce([
       {
@@ -393,41 +379,16 @@ describe("useGitHubSettings", () => {
     });
   });
 
-  it("handleChangeRepository triggers repo fetch", async () => {
+  it("handleChangeRepository reloads the organization's repositories", async () => {
+    mockListRepositories.mockClear();
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
       await result.current.handleChangeRepository();
     });
 
-    // After handleChangeRepository, fetchRepositories should be called
-    expect(mockListRepositories).toHaveBeenCalled();
-  });
-
-  it("fetchLabels with empty response sets empty array", async () => {
-    mockListLabels.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useGitHubSettings(defaultProps));
-
-    await act(async () => {
-      await result.current.fetchLabels();
+    expect(mockListRepositories).toHaveBeenCalledWith({
+      organizationId: "org1",
     });
-
-    expect(result.current.githubLabels).toEqual([]);
-  });
-
-  it("returns initial loadingRepos as false", () => {
-    const { result } = renderHook(() => useGitHubSettings(defaultProps));
-    expect(result.current.loadingRepos).toBe(false);
-  });
-
-  it("returns initial webhook error as null", () => {
-    const { result } = renderHook(() => useGitHubSettings(defaultProps));
-    expect(result.current.webhookSetupError).toBeNull();
-  });
-
-  it("returns empty repositories initially", () => {
-    const { result } = renderHook(() => useGitHubSettings(defaultProps));
-    expect(result.current.repositories).toEqual([]);
   });
 });

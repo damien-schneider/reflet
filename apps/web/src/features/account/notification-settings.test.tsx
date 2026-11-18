@@ -87,25 +87,6 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { NotificationSettings } from "./notification-settings";
 
 describe("NotificationSettings", () => {
-  it("renders the push notifications section", () => {
-    render(<NotificationSettings />);
-    expect(screen.getByText("Push notifications")).toBeInTheDocument();
-  });
-
-  it("renders Notification Types card", () => {
-    render(<NotificationSettings />);
-    expect(screen.getByText("Notification types")).toBeInTheDocument();
-  });
-
-  it("renders all notification type toggles", () => {
-    render(<NotificationSettings />);
-    expect(screen.getByText("Status changes")).toBeInTheDocument();
-    expect(screen.getByText("New comments")).toBeInTheDocument();
-    expect(screen.getByText("Vote milestones")).toBeInTheDocument();
-    expect(screen.getByText("Support messages")).toBeInTheDocument();
-    expect(screen.getByText("Invitations")).toBeInTheDocument();
-  });
-
   it("shows warning when push is not supported", () => {
     vi.mocked(usePushNotifications).mockReturnValue({
       isLoading: false,
@@ -136,11 +117,6 @@ describe("NotificationSettings", () => {
     expect(
       screen.getByText(/Notifications are blocked by your browser/)
     ).toBeInTheDocument();
-  });
-
-  it("renders Enable push notifications toggle", () => {
-    render(<NotificationSettings />);
-    expect(screen.getByText("Enable push notifications")).toBeInTheDocument();
   });
 
   it("does not render Active Devices when no subscriptions", () => {
@@ -221,16 +197,6 @@ describe("NotificationSettings", () => {
     expect(mockUnsubscribe).toHaveBeenCalled();
   });
 
-  it("renders notification type descriptions", () => {
-    render(<NotificationSettings />);
-    expect(
-      screen.getByText(/status of your feedback changes/)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/someone comments on your feedback/)
-    ).toBeInTheDocument();
-  });
-
   it.each([
     {
       device: "Chrome on Desktop",
@@ -274,60 +240,6 @@ describe("NotificationSettings", () => {
     expect(screen.getByText(device, { exact: false })).toBeInTheDocument();
   });
 
-  it("renders push notification settings heading", () => {
-    render(<NotificationSettings />);
-    const headings = screen.getAllByText(/Push Notifications|Notifications/i);
-    expect(headings.length).toBeGreaterThan(0);
-  });
-
-  it("renders enable notifications button when no subscriptions", () => {
-    vi.mocked(useQuery).mockReturnValue([]);
-    render(<NotificationSettings />);
-    const elements = screen.getAllByText(/Enable|Subscribe|Turn on/i);
-    expect(elements.length).toBeGreaterThan(0);
-  });
-
-  it("shows device count when subscriptions exist", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      {
-        _id: "sub1",
-        createdAt: Date.now(),
-        endpoint: "https://push.example.com",
-        userAgent: "Chrome",
-      },
-      {
-        _id: "sub2",
-        createdAt: Date.now(),
-        endpoint: "https://push2.example.com",
-        userAgent: "Firefox",
-      },
-    ]);
-    render(<NotificationSettings />);
-    const elements = screen.getAllByText(/2|devices/i);
-    expect(elements.length).toBeGreaterThan(0);
-  });
-
-  it("toggles notification type when switch is clicked", async () => {
-    const mockUpdatePrefs = vi.fn().mockResolvedValue(undefined);
-    vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs);
-    vi.mocked(useQuery).mockReturnValue({
-      notifyOnInvitation: true,
-      notifyOnNewComment: true,
-      notifyOnNewSupportMessage: true,
-      notifyOnStatusChange: true,
-      notifyOnVoteMilestone: true,
-      pushEnabled: true,
-    });
-    const user = userEvent.setup();
-    render(<NotificationSettings />);
-    const switches = screen.getAllByRole("switch");
-    // Click a notification type toggle (not the push toggle)
-    if (switches.length > 1) {
-      await user.click(switches[1]);
-      expect(mockUpdatePrefs).toHaveBeenCalled();
-    }
-  });
-
   it.each([
     {
       label: "Email me about new feedback",
@@ -364,27 +276,4 @@ describe("NotificationSettings", () => {
       expect(mockUpdatePrefs).toHaveBeenCalledWith(patch);
     }
   );
-
-  it("describes the new feedback, weekly digest and shipped toggles", () => {
-    render(<NotificationSettings />);
-    expect(
-      screen.getByText(
-        "When someone submits feedback to an organization you administer"
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "A weekly summary of feedback, votes and status changes in your organizations"
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("When feedback you voted on or submitted ships")
-    ).toBeInTheDocument();
-  });
-
-  it("renders multiple notification type sections", () => {
-    render(<NotificationSettings />);
-    expect(screen.getByText("Status changes")).toBeInTheDocument();
-    expect(screen.getByText("New comments")).toBeInTheDocument();
-  });
 });

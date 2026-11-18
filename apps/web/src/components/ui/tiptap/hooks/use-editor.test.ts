@@ -61,36 +61,6 @@ describe("useTiptapMarkdownEditor", () => {
     useTiptapMarkdownEditor = mod.useTiptapMarkdownEditor;
   });
 
-  it("returns editor instance", () => {
-    const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
-    );
-    expect(result.current.editor).toBe(mockEditor);
-  });
-
-  it("returns imageInputRef and videoInputRef", () => {
-    const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
-    );
-    expect(result.current.imageInputRef).toBeDefined();
-    expect(result.current.videoInputRef).toBeDefined();
-  });
-
-  it("returns upload state", () => {
-    const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
-    );
-    expect(result.current.isUploading).toBe(false);
-    expect(result.current.uploadProgress).toBeNull();
-  });
-
-  it("returns character count from editor storage", () => {
-    const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
-    );
-    expect(result.current.characterCount).toBe(42);
-  });
-
   it("computes isNearLimit when near maxLength", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(95);
     const { result } = renderHook(() =>
@@ -155,17 +125,6 @@ describe("useTiptapMarkdownEditor", () => {
     expect(mockSetContent).toHaveBeenCalledWith("new content", {
       emitUpdate: false,
     });
-  });
-
-  it("does not sync if editor markdown matches value", () => {
-    mockEditor.storage.markdown.getMarkdown.mockReturnValue("same");
-
-    renderHook(() =>
-      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "same" })
-    );
-
-    // setContent should not be called since values match
-    // (It may be called during initialization, but not during sync)
   });
 
   it("updates editable state when disabled changes", () => {
@@ -264,59 +223,6 @@ describe("useTiptapMarkdownEditor", () => {
     expect(event.target.value).toBe("");
   });
 
-  it("passes debounceMs to useDebouncedCallback", async () => {
-    const { useDebouncedCallback } = (await import(
-      "@tanstack/react-pacer"
-    )) as {
-      useDebouncedCallback: ReturnType<typeof vi.fn>;
-    };
-    useDebouncedCallback.mockClear();
-    renderHook(() =>
-      useTiptapMarkdownEditor({
-        debounceMs: 300,
-        onChange: vi.fn(),
-        value: "",
-      })
-    );
-    expect(useDebouncedCallback).toHaveBeenCalledWith(expect.any(Function), {
-      wait: 300,
-    });
-  });
-
-  it("calls createExtensions with options including placeholder and maxLength", async () => {
-    const { createExtensions } = (await import("../editor-extensions")) as {
-      createExtensions: ReturnType<typeof vi.fn>;
-    };
-    createExtensions.mockClear();
-    renderHook(() =>
-      useTiptapMarkdownEditor({
-        maxLength: 500,
-        onChange: vi.fn(),
-        placeholder: "Custom placeholder",
-        value: "",
-      })
-    );
-    expect(createExtensions).toHaveBeenCalledWith(
-      expect.objectContaining({
-        maxLength: 500,
-        placeholder: "Custom placeholder",
-      })
-    );
-  });
-
-  it("uses default placeholder when not provided", async () => {
-    const { createExtensions } = (await import("../editor-extensions")) as {
-      createExtensions: ReturnType<typeof vi.fn>;
-    };
-    createExtensions.mockClear();
-    renderHook(() => useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" }));
-    expect(createExtensions).toHaveBeenCalledWith(
-      expect.objectContaining({
-        placeholder: "Write something… Type / for commands",
-      })
-    );
-  });
-
   it("returns characterCount as 0 when characterCount storage missing", () => {
     const origStorage = mockEditor.storage;
     mockEditor.storage = {
@@ -327,17 +233,5 @@ describe("useTiptapMarkdownEditor", () => {
     );
     expect(result.current.characterCount).toBe(0);
     mockEditor.storage = origStorage;
-  });
-
-  it("returns isAtLimit true when characterCount equals maxLength", () => {
-    mockEditor.storage.characterCount.characters.mockReturnValue(100);
-    const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({
-        maxLength: 100,
-        onChange: vi.fn(),
-        value: "",
-      })
-    );
-    expect(result.current.isAtLimit).toBe(true);
   });
 });

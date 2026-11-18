@@ -40,11 +40,6 @@ describe("MilestoneProgressRing", () => {
     total: 10,
   };
 
-  it("renders without crash", () => {
-    render(<MilestoneProgressRing progress={baseProgress} />);
-    expect(screen.getByRole("img")).toBeInTheDocument();
-  });
-
   it("renders with aria-label containing percentage", () => {
     render(<MilestoneProgressRing progress={baseProgress} />);
     expect(
@@ -52,53 +47,9 @@ describe("MilestoneProgressRing", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders with custom size", () => {
-    const { container } = render(
-      <MilestoneProgressRing progress={baseProgress} size={64} />
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.width).toBe("64px");
-    expect(wrapper.style.height).toBe("64px");
-  });
-
-  it("renders default size of 48", () => {
-    const { container } = render(
-      <MilestoneProgressRing progress={baseProgress} />
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.width).toBe("48px");
-    expect(wrapper.style.height).toBe("48px");
-  });
-
-  it("renders background track circle", () => {
-    const { container } = render(
-      <MilestoneProgressRing progress={baseProgress} />
-    );
-    const circles = container.querySelectorAll("circle");
-    expect(circles.length).toBeGreaterThanOrEqual(1);
-  });
-
   it("handles zero total gracefully", () => {
     const progress = { completed: 0, inProgress: 0, percentage: 0, total: 0 };
     render(<MilestoneProgressRing progress={progress} />);
     expect(screen.getByLabelText("Milestone progress: 0%")).toBeInTheDocument();
-  });
-
-  it("handles 100% completion", () => {
-    const progress = {
-      completed: 5,
-      inProgress: 0,
-      percentage: 100,
-      total: 5,
-    };
-    render(<MilestoneProgressRing progress={progress} />);
-    expect(
-      screen.getByLabelText("Milestone progress: 100%")
-    ).toBeInTheDocument();
-  });
-
-  it("renders percentage text", () => {
-    render(<MilestoneProgressRing progress={baseProgress} />);
-    expect(screen.getByText("%")).toBeInTheDocument();
   });
 });

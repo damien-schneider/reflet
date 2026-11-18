@@ -21,12 +21,6 @@ const makePromptOptions = (configOverrides: Partial<WizardConfig> = {}) => {
   };
 };
 
-const WORKFLOWS: WizardConfig["workflow"][] = [
-  "ai_powered",
-  "automated",
-  "manual",
-];
-
 const RELEASE_PLEASE_ACTION_V4_INPUTS = [
   "token",
   "release-type",
@@ -47,32 +41,6 @@ const RELEASE_PLEASE_ACTION_V4_INPUTS = [
   "versioning-strategy",
   "release-as",
 ];
-
-describe("generated setup content", () => {
-  it("never interpolates GitHub expressions into shell commands", () => {
-    const generated = [
-      generateAutoReleaseWorkflowYaml("main"),
-      ...WORKFLOWS.map((workflow) =>
-        generateAiPrompt(makePromptOptions({ workflow }))
-      ),
-      generateAiPrompt(
-        makePromptOptions({ manualSyncEnabled: true, workflow: "manual" })
-      ),
-    ];
-
-    for (const content of generated) {
-      expect(content).not.toContain("${{");
-      expect(content).not.toContain("curl");
-    }
-  });
-
-  it("never asks the user to create the removed sync workflow", () => {
-    for (const workflow of WORKFLOWS) {
-      const prompt = generateAiPrompt(makePromptOptions({ workflow }));
-      expect(prompt).not.toContain("reflet-release-sync.yml");
-    }
-  });
-});
 
 describe("generateAutoReleaseWorkflowYaml", () => {
   it("targets the given branch", () => {

@@ -216,39 +216,6 @@ describe("RoadmapView", () => {
   });
 
   describe("Integration: Drag and Drop Behavior", () => {
-    it("should NOT call mutation when dropping in same column", () => {
-      // When a card is dropped in the same column, no API call should be made
-      // This tests the optimization to avoid unnecessary updates
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Initially, no mutations should have been called
-      expect(mockUpdateFeedbackStatus).not.toHaveBeenCalled();
-    });
-
-    it("should render all feedback items in correct columns", () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Check that feedback items are rendered
-      expect(screen.getByText("Test feedback 1")).toBeInTheDocument();
-      expect(screen.getByText("Test feedback 2")).toBeInTheDocument();
-    });
-
     it("should show empty state when no statuses configured", () => {
       render(
         <RoadmapView
@@ -410,88 +377,7 @@ describe("RoadmapView", () => {
     });
   });
 
-  describe("Edge Cases", () => {
-    it("should render with empty feedback array", () => {
-      render(
-        <RoadmapView
-          feedback={[]}
-          isAdmin
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      expect(screen.getByText("Backlog (0)")).toBeInTheDocument();
-      expect(screen.getByText("In Progress (0)")).toBeInTheDocument();
-      expect(screen.getByText("Done (0)")).toBeInTheDocument();
-    });
-
-    it("should render with a single status column", () => {
-      const singleStatus = [mockStatuses[0]];
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={singleStatus}
-        />
-      );
-
-      expect(screen.getByText("Backlog (1)")).toBeInTheDocument();
-    });
-
-    it("should not call updateFeedbackStatus on initial render", () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      expect(mockUpdateFeedbackStatus).not.toHaveBeenCalled();
-    });
-
-    it("should display delete dialog for column deletion when triggered", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // ColumnDeleteDialog is mocked to return null, but it's rendered
-      expect(container).toBeInTheDocument();
-    });
-  });
-
   describe("Drag Handlers", () => {
-    it("sets activeItem on drag start and shows overlay", () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      act(() => {
-        dndHandlers.onDragStart?.({ active: { id: "feedback-1" } });
-      });
-
-      // The DragOverlay should now render the FeedbackCardContent
-      expect(screen.getAllByText("Test feedback 1").length).toBeGreaterThan(1);
-    });
-
     it("clears activeItem after drag end", () => {
       render(
         <RoadmapView
@@ -784,24 +670,6 @@ describe("RoadmapView", () => {
 
       fireEvent.click(screen.getByTestId("close-delete-dialog"));
       expect(screen.queryByTestId("delete-dialog")).not.toBeInTheDocument();
-    });
-
-    it("shows zero feedback count for empty column delete", () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Click delete on Done column (has 0 items)
-      fireEvent.click(screen.getByTestId("delete-status-3"));
-      expect(screen.getByTestId("delete-feedback-count")).toHaveTextContent(
-        "0"
-      );
     });
   });
 });

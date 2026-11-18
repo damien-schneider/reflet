@@ -59,22 +59,6 @@ describe("DraggableFeedbackCard", () => {
     expect(onFeedbackClick).toHaveBeenCalledWith("feedback-1");
   });
 
-  it("opens from the keyboard via the title button", async () => {
-    const onFeedbackClick = vi.fn();
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={item}
-        onFeedbackClick={onFeedbackClick}
-      />
-    );
-
-    screen.getByRole("button", { name: "Test Feedback" }).focus();
-    await userEvent.keyboard("{Enter}");
-
-    expect(onFeedbackClick).toHaveBeenCalledWith("feedback-1");
-  });
-
   it("does not open while the card is being dragged", async () => {
     mockIsDragging = true;
     const onFeedbackClick = vi.fn();

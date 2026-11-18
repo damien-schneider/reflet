@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InviteMemberDialog } from "./invite-member-dialog";
 
 // Regex patterns used in tests
-const PAPER_PLANE_PATTERN = /PaperPlane/i;
 const INVITATION_SENT_PATTERN = /Invitation sent/i;
 const COPIED_PATTERN = /Copied/i;
 
@@ -131,21 +130,6 @@ describe("InviteMemberDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockInviteMutation.mockReset();
-  });
-
-  it("renders the dialog when open", () => {
-    render(<InviteMemberDialog {...defaultProps} />);
-
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Invite member")).toBeInTheDocument();
-  });
-
-  it("shows correct button text (not icon names)", () => {
-    render(<InviteMemberDialog {...defaultProps} />);
-
-    // Should show "Send invitation" not "PaperPlaneRight invitation"
-    expect(screen.getByText("Send invitation")).toBeInTheDocument();
-    expect(screen.queryByText(PAPER_PLANE_PATTERN)).not.toBeInTheDocument();
   });
 
   it("shows success state with copy link after invitation is sent", async () => {

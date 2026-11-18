@@ -31,11 +31,6 @@ describe("isValidHexColor", () => {
     expect(isValidHexColor("ABC")).toBe(true);
   });
 
-  it("is case-insensitive", () => {
-    expect(isValidHexColor("#AbCdEf")).toBe(true);
-    expect(isValidHexColor("AbCdEf")).toBe(true);
-  });
-
   it("rejects invalid hex values", () => {
     expect(isValidHexColor("")).toBe(false);
     expect(isValidHexColor("#")).toBe(false);
@@ -64,22 +59,9 @@ describe("normalizeHexColor", () => {
     expect(normalizeHexColor("#abc")).toBe("#aabbcc");
     expect(normalizeHexColor("f0f")).toBe("#ff00ff");
   });
-
-  it("keeps 6-digit hex unchanged", () => {
-    expect(normalizeHexColor("#abcdef")).toBe("#abcdef");
-    expect(normalizeHexColor("abcdef")).toBe("#abcdef");
-  });
 });
 
 describe("generateColorPalette", () => {
-  it("returns all expected properties", () => {
-    const palette = generateColorPalette("#3b82f6");
-    expect(palette).toHaveProperty("primary");
-    expect(palette).toHaveProperty("primaryHover");
-    expect(palette).toHaveProperty("primaryLight");
-    expect(palette).toHaveProperty("primaryForeground");
-  });
-
   it("sets primary to the original hex (with #)", () => {
     expect(generateColorPalette("#ff0000").primary).toBe("#ff0000");
     expect(generateColorPalette("ff0000").primary).toBe("#ff0000");
@@ -91,11 +73,6 @@ describe("generateColorPalette", () => {
     expect(palette.primaryHover).toMatch(/^#[0-9a-f]{6}$/i);
     // hover should be different from primary
     expect(palette.primaryHover).not.toBe(palette.primary);
-  });
-
-  it("generates a light background color", () => {
-    const palette = generateColorPalette("#3b82f6");
-    expect(palette.primaryLight).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
   it("returns white foreground for dark colors", () => {
@@ -124,11 +101,6 @@ describe("generateColorPalette", () => {
     const palette = generateColorPalette("#00ff00");
     expect(palette.primary).toBe("#00ff00");
     expect(palette.primaryForeground).toBe("#000000");
-  });
-
-  it("handles hex without # prefix", () => {
-    const palette = generateColorPalette("3b82f6");
-    expect(palette.primary).toBe("#3b82f6");
   });
 
   it("handles grayscale colors (0 saturation)", () => {
@@ -162,20 +134,5 @@ describe("generateColorCssVars", () => {
     expect(vars["--color-primary-hover"]).toBe("#2563eb");
     expect(vars["--color-primary-light"]).toBe("#eff6ff");
     expect(vars["--color-primary-foreground"]).toBe("#ffffff");
-  });
-
-  it("has exactly 4 keys", () => {
-    const palette = generateColorPalette("#ff5722");
-    const vars = generateColorCssVars(palette);
-    expect(Object.keys(vars)).toHaveLength(4);
-  });
-
-  it("integrates correctly with generateColorPalette", () => {
-    const palette = generateColorPalette("#9c27b0");
-    const vars = generateColorCssVars(palette);
-    expect(vars["--color-primary"]).toBe(palette.primary);
-    expect(vars["--color-primary-hover"]).toBe(palette.primaryHover);
-    expect(vars["--color-primary-light"]).toBe(palette.primaryLight);
-    expect(vars["--color-primary-foreground"]).toBe(palette.primaryForeground);
   });
 });

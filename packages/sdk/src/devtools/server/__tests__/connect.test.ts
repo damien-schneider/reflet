@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { createHash } from "node:crypto";
-import { mkdtempSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -24,14 +24,13 @@ const DEV_TOKEN = "fb_dev_stored_token";
 const CALLBACK_URI = `${ORIGIN}${DEVTOOLS_ROUTE_BASE}/connect/callback`;
 
 const sandbox = mkdtempSync(join(tmpdir(), "reflet-devtools-connect-"));
-const connectionsFile = join(
-  sandbox,
-  ".reflet",
-  "devtools",
-  `${createHash("sha256")
-    .update(JSON.stringify([sandbox, API_URL]))
-    .digest("hex")}.json`
-);
+const connectionsDirectory = join(sandbox, ".reflet", "devtools");
+
+function savedFileModes(): string[] {
+  return readdirSync(connectionsDirectory).map((fileName) =>
+    statSync(join(connectionsDirectory, fileName)).mode.toString(8).slice(-3)
+  );
+}
 
 vi.mock("node:os", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:os")>()),
@@ -183,7 +182,7 @@ describe("connect flow", () => {
     expect(
       createHash("sha256").update(exchange.codeVerifier).digest("base64url")
     ).toBe(authorizeUrl.searchParams.get("code_challenge"));
-    expect(statSync(connectionsFile).mode.toString(8).slice(-3)).toBe("600");
+    expect(savedFileModes()).toEqual(["600"]);
     expect((await readConnection(sandbox, API_URL))?.token).toBe(DEV_TOKEN);
     expect(await boardStatus()).toEqual({
       kind: "connected",

@@ -122,23 +122,6 @@ const baseFeedback: FeedbackItem = {
 };
 
 describe("SweepCornerFeedCard", () => {
-  it("renders title", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    expect(screen.getByText("Test Feedback")).toBeInTheDocument();
-  });
-
-  it("renders comment count in footer", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    expect(screen.getByTestId("comments")).toHaveTextContent("4");
-  });
-
-  it("passes upvotes and downvotes", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    const sweep = screen.getByTestId("sweep");
-    expect(sweep).toHaveAttribute("data-upvotes", "6");
-    expect(sweep).toHaveAttribute("data-downvotes", "4");
-  });
-
   it("calls onClick when clicked", () => {
     const onClick = vi.fn();
     render(
@@ -172,18 +155,6 @@ describe("SweepCornerFeedCard", () => {
       />
     );
     expect(screen.getByTestId("pin-icon")).toBeInTheDocument();
-  });
-
-  it("applies pinned styles to card", () => {
-    render(
-      <SweepCornerFeedCard
-        feedback={{ ...baseFeedback, isPinned: true }}
-        onVote={mockVote}
-      />
-    );
-    expect(screen.getByTestId("sweep-card").className).toContain(
-      "border-primary/50"
-    );
   });
 
   it("does not render pin icon when not pinned", () => {
@@ -306,21 +277,6 @@ describe("SweepCornerFeedCard", () => {
     expect(screen.queryByTestId("tags")).not.toBeInTheDocument();
   });
 
-  it("renders tag icon when provided", () => {
-    render(
-      <SweepCornerFeedCard
-        feedback={{
-          ...baseFeedback,
-          tags: [
-            { _id: toId("tags", "t1"), color: "red", icon: "🐛", name: "Bug" },
-          ],
-        }}
-        onVote={mockVote}
-      />
-    );
-    expect(screen.getByText("🐛")).toBeInTheDocument();
-  });
-
   it("renders sparkle for AI-applied tags", () => {
     render(
       <SweepCornerFeedCard
@@ -362,39 +318,5 @@ describe("SweepCornerFeedCard", () => {
       />
     );
     expect(screen.getByTestId("sweep")).toHaveAttribute("data-upvotes", "10");
-  });
-
-  it("passes voteType", () => {
-    render(
-      <SweepCornerFeedCard
-        feedback={{ ...baseFeedback, userVoteType: "upvote" }}
-        onVote={mockVote}
-      />
-    );
-    expect(screen.getByTestId("sweep")).toHaveAttribute(
-      "data-vote-type",
-      "upvote"
-    );
-  });
-
-  it("does not crash without onClick", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
-  });
-
-  it("applies custom className", () => {
-    render(
-      <SweepCornerFeedCard
-        className="my-cls"
-        feedback={baseFeedback}
-        onVote={mockVote}
-      />
-    );
-    expect(screen.getByTestId("sweep")).toHaveClass("my-cls");
-  });
-
-  it("renders time in footer", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    expect(screen.getByTestId("time")).toBeInTheDocument();
   });
 });

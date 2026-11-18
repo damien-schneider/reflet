@@ -5,20 +5,16 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./release-item", () => ({
   ReleaseItem: ({
     release,
-    orgSlug,
-    isAdmin,
     onPublish,
     onUnpublish,
     onDelete,
   }: {
     release: { _id: string; title: string };
-    orgSlug: string;
-    isAdmin: boolean;
     onPublish?: () => void;
     onUnpublish?: () => void;
     onDelete?: () => void;
   }) => (
-    <div data-admin={isAdmin} data-org={orgSlug} data-testid="release-item">
+    <div>
       {release.title}
       {onPublish && (
         <button
@@ -80,14 +76,6 @@ describe("ReleaseTimeline", () => {
     ],
   };
 
-  it("renders all release items", () => {
-    render(<ReleaseTimeline {...defaultProps} />);
-    const items = screen.getAllByTestId("release-item");
-    expect(items).toHaveLength(2);
-    expect(screen.getByText("Release 1")).toBeInTheDocument();
-    expect(screen.getByText("Release 2")).toBeInTheDocument();
-  });
-
   it("shows empty state when releases array is empty", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
     expect(screen.getByText("No releases yet")).toBeInTheDocument();
@@ -135,22 +123,6 @@ describe("ReleaseTimeline", () => {
       />
     );
     expect(screen.queryByText("Create Release")).not.toBeInTheDocument();
-  });
-
-  it("passes isAdmin to release items", () => {
-    render(<ReleaseTimeline {...defaultProps} isAdmin />);
-    const items = screen.getAllByTestId("release-item");
-    for (const item of items) {
-      expect(item).toHaveAttribute("data-admin", "true");
-    }
-  });
-
-  it("passes orgSlug to release items", () => {
-    render(<ReleaseTimeline {...defaultProps} />);
-    const items = screen.getAllByTestId("release-item");
-    for (const item of items) {
-      expect(item).toHaveAttribute("data-org", "test-org");
-    }
   });
 
   it("calls onPublish with release id when publish is clicked", () => {

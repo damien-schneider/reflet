@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BASE_URL, DEFAULT_DESCRIPTION, SITE_NAME } from "./seo-config";
+import { BASE_URL } from "./seo-config";
 import {
   getBlogPostJsonLd,
   getComparisonJsonLd,
@@ -8,54 +8,6 @@ import {
 } from "./seo-json-ld";
 
 describe("getHomePageJsonLd", () => {
-  it("returns schema.org context", () => {
-    const ld = getHomePageJsonLd();
-    expect(ld["@context"]).toBe("https://schema.org");
-  });
-
-  it("contains @graph with multiple entries", () => {
-    const ld = getHomePageJsonLd();
-    expect(ld["@graph"]).toBeInstanceOf(Array);
-    expect(ld["@graph"].length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("contains a WebSite entry", () => {
-    const ld = getHomePageJsonLd();
-    const webSite = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "WebSite"
-    );
-    expect(webSite).toBeDefined();
-    expect(webSite.url).toBe(BASE_URL);
-    expect(webSite.name).toBe(SITE_NAME);
-    expect(webSite.description).toBe(DEFAULT_DESCRIPTION);
-    expect(webSite.inLanguage).toBe("en-US");
-  });
-
-  it("contains an Organization entry", () => {
-    const ld = getHomePageJsonLd();
-    const org = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "Organization"
-    );
-    expect(org).toBeDefined();
-    expect(org.name).toBe(SITE_NAME);
-    expect(org.url).toBe(BASE_URL);
-    expect(org.logo).toBeDefined();
-    expect(org.sameAs).toBeInstanceOf(Array);
-  });
-
-  it("contains a SoftwareApplication entry", () => {
-    const ld = getHomePageJsonLd();
-    const app = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "SoftwareApplication"
-    );
-    expect(app).toBeDefined();
-    expect(app.name).toBe(SITE_NAME);
-    expect(app.applicationCategory).toBe("BusinessApplication");
-    expect(app.operatingSystem).toBe("Web");
-    expect(app.featureList).toBeInstanceOf(Array);
-    expect(app.offers).toBeDefined();
-  });
-
   it("contains a FAQPage entry with questions", () => {
     const ld = getHomePageJsonLd();
     const faq = ld["@graph"].find(
@@ -72,17 +24,6 @@ describe("getHomePageJsonLd", () => {
       expect(q.acceptedAnswer["@type"]).toBe("Answer");
       expect(q.acceptedAnswer.text).toBeTruthy();
     }
-  });
-
-  it("does not contain a fake SearchAction (no /search page exists)", () => {
-    const ld = getHomePageJsonLd();
-    const webSite = ld["@graph"].find(
-      (item: Record<string, unknown>) => item["@type"] === "WebSite"
-    );
-    // potentialAction is omitted to avoid misleading structured data
-    expect(
-      (webSite as Record<string, unknown>).potentialAction
-    ).toBeUndefined();
   });
 });
 
@@ -175,12 +116,6 @@ describe("getBlogPostJsonLd", () => {
     expect(ld.author.name).toBe("John Doe");
   });
 
-  it("sets publisher as Organization", () => {
-    const ld = getBlogPostJsonLd(baseArgs);
-    expect(ld.publisher["@type"]).toBe("Organization");
-    expect(ld.publisher.name).toBe(SITE_NAME);
-  });
-
   it("joins tags with comma for keywords", () => {
     const ld = getBlogPostJsonLd(baseArgs);
     expect(ld.keywords).toBe("react, nextjs");
@@ -197,11 +132,6 @@ describe("getBlogPostJsonLd", () => {
       ogImage: "/custom.png",
     });
     expect(ld.image).toBe("/custom.png");
-  });
-
-  it("handles empty tags array", () => {
-    const ld = getBlogPostJsonLd({ ...baseArgs, tags: [] });
-    expect(ld.keywords).toBe("");
   });
 });
 

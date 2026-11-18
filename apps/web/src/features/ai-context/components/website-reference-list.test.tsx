@@ -64,15 +64,6 @@ vi.mock("./add-website-dialog", () => ({
   }) => (open ? <div data-testid="add-dialog">Add Website Dialog</div> : null),
 }));
 
-vi.mock("./website-reference-card", () => ({
-  WebsiteReferenceCard: ({
-    reference,
-  }: {
-    reference: { url: string };
-    isAdmin: boolean;
-  }) => <div data-testid="ref-card">{reference.url}</div>,
-}));
-
 import { useQuery } from "convex/react";
 import { WebsiteReferenceList } from "./website-reference-list";
 
@@ -104,45 +95,5 @@ describe("WebsiteReferenceList", () => {
       />
     );
     expect(screen.getByText("No website references")).toBeInTheDocument();
-  });
-
-  it("renders references list", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      {
-        _id: "ref1",
-        status: "success",
-        url: "https://example.com",
-      },
-      {
-        _id: "ref2",
-        status: "pending",
-        url: "https://other.com",
-      },
-    ]);
-    render(
-      <WebsiteReferenceList
-        dialogState={mockDialogState}
-        isAdmin={false}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByText("https://example.com")).toBeInTheDocument();
-    expect(screen.getByText("https://other.com")).toBeInTheDocument();
-  });
-
-  it("renders correct number of reference cards", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "ref1", status: "success", url: "https://a.com" },
-      { _id: "ref2", status: "success", url: "https://b.com" },
-      { _id: "ref3", status: "success", url: "https://c.com" },
-    ]);
-    render(
-      <WebsiteReferenceList
-        dialogState={mockDialogState}
-        isAdmin={true}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getAllByTestId("ref-card")).toHaveLength(3);
   });
 });

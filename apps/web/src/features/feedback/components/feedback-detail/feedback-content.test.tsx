@@ -70,21 +70,6 @@ describe("FeedbackContent", () => {
     vi.clearAllMocks();
   });
 
-  it("renders title and description", () => {
-    render(
-      <FeedbackContent
-        description="Test description"
-        feedbackId={feedbackId}
-        isAdmin={false}
-        title="Test Title"
-      />
-    );
-    expect(screen.getByTestId("title-editor")).toHaveValue("Test Title");
-    expect(screen.getByTestId("markdown-editor")).toHaveValue(
-      "Test description"
-    );
-  });
-
   it("does not show save/cancel buttons initially", () => {
     render(
       <FeedbackContent
@@ -110,19 +95,6 @@ describe("FeedbackContent", () => {
     );
     expect(screen.getByAltText("Attachment 1")).toBeInTheDocument();
     expect(screen.getByAltText("Attachment 2")).toBeInTheDocument();
-  });
-
-  it("does not render attachments section when empty", () => {
-    render(
-      <FeedbackContent
-        attachments={[]}
-        description=""
-        feedbackId={feedbackId}
-        isAdmin={false}
-        title="Title"
-      />
-    );
-    expect(screen.queryByAltText("Attachment 1")).not.toBeInTheDocument();
   });
 
   it("attachment links have noopener rel", () => {
@@ -167,20 +139,6 @@ describe("FeedbackContent", () => {
     const descEditor = screen.getByTestId("markdown-editor");
     fireEvent.change(descEditor, { target: { value: "New desc" } });
     expect(screen.getByText("Save changes")).toBeInTheDocument();
-  });
-
-  it("does not show save/cancel for non-admin users even on change", () => {
-    render(
-      <FeedbackContent
-        description="desc"
-        feedbackId={feedbackId}
-        isAdmin={false}
-        title="Title"
-      />
-    );
-    // Non-admin won't be able to trigger changes in practice, but
-    // even if the value changes, buttons should not show because isAdmin is false
-    expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
   });
 
   it("cancels changes and restores original values", () => {
@@ -241,18 +199,5 @@ describe("FeedbackContent", () => {
         id: feedbackId,
       });
     });
-  });
-
-  it("does not call updateFeedback when nothing changed on save", async () => {
-    render(
-      <FeedbackContent
-        description="desc"
-        feedbackId={feedbackId}
-        isAdmin
-        title="Title"
-      />
-    );
-    // No changes, save/cancel buttons aren't visible
-    expect(screen.queryByText("Save changes")).not.toBeInTheDocument();
   });
 });

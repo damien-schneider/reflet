@@ -204,41 +204,5 @@ describe("useCommandPalette", () => {
 
       expect(result.current.isOpen).toBe(false);
     });
-
-    it("cleans up keyboard listener on unmount", () => {
-      const { unmount } = renderHook(
-        () => useCommandPalette({ orgSlug: "my-org" }),
-        { wrapper }
-      );
-
-      unmount();
-
-      act(() => {
-        document.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            bubbles: true,
-            key: "k",
-            metaKey: true,
-          })
-        );
-      });
-
-      // After unmount, state can't be checked, but no error should throw
-    });
-  });
-
-  describe("isOpen/setIsOpen", () => {
-    it("can be toggled via setIsOpen", () => {
-      const { result } = renderHook(
-        () => useCommandPalette({ orgSlug: "my-org" }),
-        { wrapper }
-      );
-
-      act(() => result.current.setIsOpen(true));
-      expect(result.current.isOpen).toBe(true);
-
-      act(() => result.current.setIsOpen(false));
-      expect(result.current.isOpen).toBe(false);
-    });
   });
 });

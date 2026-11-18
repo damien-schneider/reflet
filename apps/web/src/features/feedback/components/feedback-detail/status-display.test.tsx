@@ -117,19 +117,6 @@ describe("StatusDisplay", () => {
     expect(screen.getByText("Open")).toBeInTheDocument();
   });
 
-  it("renders dropdown for admin with statuses", () => {
-    render(
-      <StatusDisplay
-        currentStatus={statuses[1]}
-        isAdmin
-        onStatusChange={vi.fn()}
-        organizationStatuses={statuses}
-        statusId="s2"
-      />
-    );
-    expect(screen.getAllByText("In Progress").length).toBeGreaterThanOrEqual(1);
-  });
-
   it("shows Status placeholder for admin with no current status", () => {
     render(
       <StatusDisplay

@@ -202,11 +202,6 @@ const baseWidget = {
 };
 
 describe("WidgetCard", () => {
-  it("renders widget name", () => {
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(screen.getByText("Support Widget")).toBeInTheDocument();
-  });
-
   it("renders Active badge when widget is active", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     expect(screen.getByText("Active")).toBeInTheDocument();
@@ -242,11 +237,6 @@ describe("WidgetCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders Settings dropdown item", () => {
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(screen.getByText("Settings")).toBeInTheDocument();
-  });
-
   it("renders Deactivate option for active widget", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     expect(screen.getByText("Deactivate")).toBeInTheDocument();
@@ -257,11 +247,6 @@ describe("WidgetCard", () => {
       <WidgetCard orgSlug="test" widget={{ ...baseWidget, isActive: false }} />
     );
     expect(screen.getByText("Activate")).toBeInTheDocument();
-  });
-
-  it("renders Delete option", () => {
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(screen.getByText("Delete")).toBeInTheDocument();
   });
 
   it("renders widget settings color and position", () => {
@@ -287,20 +272,26 @@ describe("WidgetCard", () => {
     expect(await screen.findByText("Copied to clipboard")).toBeInTheDocument();
   });
 
-  it("calls mutation when Deactivate is clicked", async () => {
+  it("deactivates an active widget", async () => {
     const user = userEvent.setup();
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     await user.click(screen.getByText("Deactivate"));
-    expect(mockUpdateWidget).toHaveBeenCalled();
+    expect(mockUpdateWidget).toHaveBeenCalledWith({
+      isActive: false,
+      widgetId: "w1",
+    });
   });
 
-  it("calls mutation when Activate is clicked", async () => {
+  it("activates an inactive widget", async () => {
     const user = userEvent.setup();
     render(
       <WidgetCard orgSlug="test" widget={{ ...baseWidget, isActive: false }} />
     );
     await user.click(screen.getByText("Activate"));
-    expect(mockUpdateWidget).toHaveBeenCalled();
+    expect(mockUpdateWidget).toHaveBeenCalledWith({
+      isActive: true,
+      widgetId: "w1",
+    });
   });
 
   it("opens delete dialog when Delete is clicked", async () => {
@@ -328,46 +319,6 @@ describe("WidgetCard", () => {
         widget={{ ...baseWidget, settings: null as never }}
       />
     );
-    expect(screen.getByText("Support Widget")).toBeInTheDocument();
-  });
-
-  it("shows check icon after copy", async () => {
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText: vi.fn().mockResolvedValue(undefined) },
-      writable: true,
-    });
-    const user = userEvent.setup();
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    const copyIcon = screen.getByTestId("copy-icon");
-    const button = copyIcon.closest("button");
-    await user.click(button!);
-    await screen.findByTestId("check-icon");
-    expect(screen.getByTestId("check-icon")).toBeInTheDocument();
-  });
-
-  it("renders embed code with correct widget ID", () => {
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(
-      screen.getByText(/data-widget-id="widget-abc-123"/)
-    ).toBeInTheDocument();
-  });
-
-  it("renders multiple conversations plural form", () => {
-    render(
-      <WidgetCard
-        orgSlug="test"
-        widget={{ ...baseWidget, conversationCount: 42 }}
-      />
-    );
-    expect(screen.getByText("42 conversations")).toBeInTheDocument();
-  });
-
-  it("renders delete confirmation dialog content", async () => {
-    const user = userEvent.setup();
-    render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    await user.click(screen.getByText("Delete"));
-    expect(screen.getByText(/embed code stops working/)).toBeInTheDocument();
     expect(screen.getByText("Support Widget")).toBeInTheDocument();
   });
 });

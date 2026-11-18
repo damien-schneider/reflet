@@ -1,210 +1,74 @@
-import { describe, expect, it, vi } from "vitest";
+import { Editor } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { type CommandItem, createSlashCommands } from "./command-items";
 
-const createMockEditor = () => {
-  const chainMethods: Record<string, ReturnType<typeof vi.fn>> = {};
-  const chain = new Proxy(chainMethods, {
-    get: (_target, prop: string) => {
-      if (!chainMethods[prop]) {
-        chainMethods[prop] = vi.fn(() => chain);
-      }
-      return chainMethods[prop];
-    },
+const editors: Editor[] = [];
+
+afterEach(() => {
+  for (const editor of editors.splice(0)) {
+    editor.destroy();
+  }
+});
+
+const SLASH_RANGE = { from: 8, to: 9 };
+
+const runFromSlash = (command: CommandItem) => {
+  const editor = new Editor({
+    content: "<p>Intro</p><p>/</p>",
+    extensions: [StarterKit.configure({ link: false })],
   });
-  return {
-    _chain: chain,
-    chain: () => chain,
-  };
+  editors.push(editor);
+  editor.commands.setTextSelection(SLASH_RANGE.to);
+  command.command({ editor, range: SLASH_RANGE });
+  return editor.getHTML();
 };
 
-const defaultRange = { from: 0, to: 5 };
+const commandTitled = (commands: CommandItem[], title: string) => {
+  const command = commands.find((item) => item.title === title);
+  if (!command) {
+    throw new Error(`No "${title}" command`);
+  }
+  return command;
+};
 
 describe("createSlashCommands", () => {
-  it("returns 8 base commands without callbacks", () => {
-    const commands = createSlashCommands();
-    expect(commands).toHaveLength(8);
-  });
-
-  it("includes Heading 1 command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Heading 1")).toBeDefined();
-  });
-
-  it("includes Heading 2 command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Heading 2")).toBeDefined();
-  });
-
-  it("includes Heading 3 command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Heading 3")).toBeDefined();
-  });
-
-  it("includes Bullet List command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Bullet list")).toBeDefined();
-  });
-
-  it("includes Numbered List command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Numbered list")).toBeDefined();
-  });
-
-  it("includes Quote command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Quote")).toBeDefined();
-  });
-
-  it("includes Code Block command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Code block")).toBeDefined();
-  });
-
-  it("includes Divider command", () => {
-    const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Divider")).toBeDefined();
-  });
-
-  it("adds Image command when onImageUpload is provided", () => {
-    const commands = createSlashCommands(() => {});
-    expect(commands).toHaveLength(9);
-    expect(commands.find((c) => c.title === "Image")).toBeDefined();
-  });
-
-  it("adds Video command when onVideoUpload is provided", () => {
-    const commands = createSlashCommands(undefined, () => {});
-    expect(commands).toHaveLength(9);
-    expect(commands.find((c) => c.title === "Video")).toBeDefined();
-  });
-
-  it("adds both Image and Video when both callbacks provided", () => {
-    const commands = createSlashCommands(
-      () => {},
-      () => {}
+  it.each([
+    ["Heading 1", "<p>Intro</p><h1></h1><p></p>"],
+    ["Heading 2", "<p>Intro</p><h2></h2><p></p>"],
+    ["Heading 3", "<p>Intro</p><h3></h3><p></p>"],
+    ["Bullet list", "<p>Intro</p><ul><li><p></p></li></ul><p></p>"],
+    ["Numbered list", "<p>Intro</p><ol><li><p></p></li></ol><p></p>"],
+    ["Quote", "<p>Intro</p><blockquote><p></p></blockquote><p></p>"],
+    ["Code block", "<p>Intro</p><pre><code></code></pre><p></p>"],
+    ["Divider", "<p>Intro</p><hr><p></p>"],
+  ])("“%s” replaces the typed slash with that block", (title, html) => {
+    expect(runFromSlash(commandTitled(createSlashCommands(), title))).toBe(
+      html
     );
-    expect(commands).toHaveLength(10);
   });
 
-  it("each command has title, description, icon, and command", () => {
-    const commands = createSlashCommands();
-    for (const cmd of commands) {
-      expect(cmd.title).toBeTruthy();
-      expect(cmd.description).toBeTruthy();
-      expect(cmd.icon).toBeDefined();
-      expect(typeof cmd.command).toBe("function");
-    }
-  });
-
-  it("Heading 1 command calls toggleHeading with level 1", () => {
-    const commands = createSlashCommands();
-    const heading1 = commands.find(
-      (c) => c.title === "Heading 1"
-    ) as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    heading1.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.focus).toHaveBeenCalled();
-    expect(_chain.deleteRange).toHaveBeenCalledWith(defaultRange);
-    expect(_chain.toggleHeading).toHaveBeenCalledWith({ level: 1 });
-    expect(_chain.run).toHaveBeenCalled();
-  });
-
-  it("Heading 2 command calls toggleHeading with level 2", () => {
-    const commands = createSlashCommands();
-    const heading2 = commands.find(
-      (c) => c.title === "Heading 2"
-    ) as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    heading2.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleHeading).toHaveBeenCalledWith({ level: 2 });
-  });
-
-  it("Heading 3 command calls toggleHeading with level 3", () => {
-    const commands = createSlashCommands();
-    const heading3 = commands.find(
-      (c) => c.title === "Heading 3"
-    ) as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    heading3.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleHeading).toHaveBeenCalledWith({ level: 3 });
-  });
-
-  it("Bullet List command calls toggleBulletList", () => {
-    const commands = createSlashCommands();
-    const bullet = commands.find(
-      (c) => c.title === "Bullet list"
-    ) as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    bullet.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleBulletList).toHaveBeenCalled();
-  });
-
-  it("Numbered List command calls toggleOrderedList", () => {
-    const commands = createSlashCommands();
-    const numbered = commands.find(
-      (c) => c.title === "Numbered list"
-    ) as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    numbered.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleOrderedList).toHaveBeenCalled();
-  });
-
-  it("Quote command calls toggleBlockquote", () => {
-    const commands = createSlashCommands();
-    const quote = commands.find((c) => c.title === "Quote") as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    quote.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleBlockquote).toHaveBeenCalled();
-  });
-
-  it("Code Block command calls toggleCodeBlock", () => {
-    const commands = createSlashCommands();
-    const code = commands.find((c) => c.title === "Code block") as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    code.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.toggleCodeBlock).toHaveBeenCalled();
-  });
-
-  it("Divider command calls setHorizontalRule", () => {
-    const commands = createSlashCommands();
-    const divider = commands.find((c) => c.title === "Divider") as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    divider.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.setHorizontalRule).toHaveBeenCalled();
-  });
-
-  it("Image command calls onImageUpload after deleting range", () => {
+  it("offers Image only when uploads are wired, and removes the slash before uploading", () => {
+    expect(createSlashCommands().some((item) => item.title === "Image")).toBe(
+      false
+    );
     const onImageUpload = vi.fn();
-    const commands = createSlashCommands(onImageUpload);
-    const image = commands.find((c) => c.title === "Image") as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    image.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.focus).toHaveBeenCalled();
-    expect(_chain.deleteRange).toHaveBeenCalledWith(defaultRange);
-    expect(_chain.run).toHaveBeenCalled();
-    expect(onImageUpload).toHaveBeenCalled();
+    const html = runFromSlash(
+      commandTitled(createSlashCommands(onImageUpload), "Image")
+    );
+    expect(html).toBe("<p>Intro</p><p></p>");
+    expect(onImageUpload).toHaveBeenCalledOnce();
   });
 
-  it("Video command calls onVideoUpload after deleting range", () => {
+  it("offers Video only when uploads are wired, and removes the slash before uploading", () => {
+    expect(createSlashCommands().some((item) => item.title === "Video")).toBe(
+      false
+    );
     const onVideoUpload = vi.fn();
-    const commands = createSlashCommands(undefined, onVideoUpload);
-    const video = commands.find((c) => c.title === "Video") as CommandItem;
-    const { chain, _chain } = createMockEditor();
-    video.command({ editor: { chain } as any, range: defaultRange });
-    expect(_chain.focus).toHaveBeenCalled();
-    expect(_chain.deleteRange).toHaveBeenCalledWith(defaultRange);
-    expect(_chain.run).toHaveBeenCalled();
-    expect(onVideoUpload).toHaveBeenCalled();
-  });
-
-  it("Image command has correct description", () => {
-    const commands = createSlashCommands(() => {});
-    const image = commands.find((c) => c.title === "Image");
-    expect(image?.description).toBe("Upload an image");
-  });
-
-  it("Video command has correct description", () => {
-    const commands = createSlashCommands(undefined, () => {});
-    const video = commands.find((c) => c.title === "Video");
-    expect(video?.description).toBe("Upload a video");
+    const html = runFromSlash(
+      commandTitled(createSlashCommands(undefined, onVideoUpload), "Video")
+    );
+    expect(html).toBe("<p>Intro</p><p></p>");
+    expect(onVideoUpload).toHaveBeenCalledOnce();
   });
 });

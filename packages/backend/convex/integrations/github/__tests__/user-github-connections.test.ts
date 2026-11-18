@@ -53,8 +53,6 @@ describe("saveUserInstallation", () => {
       }
     );
 
-    expect(connectionId).toBeDefined();
-
     const connection = await t.run(async (ctx) => ctx.db.get(connectionId));
     expect(connection).not.toBeNull();
     expect(connection?.userId).toBe("user_123");
@@ -126,8 +124,6 @@ describe("linkRepoToOrg", () => {
         userGithubConnectionId: userConnectionId,
       }
     );
-
-    expect(connectionId).toBeDefined();
 
     const connection = await t.run(async (ctx) => ctx.db.get(connectionId));
     expect(connection?.organizationId).toBe(orgId);

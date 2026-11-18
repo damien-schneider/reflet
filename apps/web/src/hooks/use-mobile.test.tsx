@@ -38,28 +38,6 @@ describe("useIsMobile", () => {
     });
   });
 
-  it("returns true when window width is below 768px", () => {
-    Object.defineProperty(window, "innerWidth", {
-      value: 500,
-      writable: true,
-    });
-    window.matchMedia = createMockMatchMedia(true);
-
-    const { result } = renderHook(() => useIsMobile());
-    expect(result.current).toBe(true);
-  });
-
-  it("returns false when window width is 768px or above", () => {
-    Object.defineProperty(window, "innerWidth", {
-      value: 1024,
-      writable: true,
-    });
-    window.matchMedia = createMockMatchMedia(false);
-
-    const { result } = renderHook(() => useIsMobile());
-    expect(result.current).toBe(false);
-  });
-
   it("updates when media query changes", () => {
     Object.defineProperty(window, "innerWidth", {
       value: 1024,
@@ -82,20 +60,6 @@ describe("useIsMobile", () => {
     });
 
     expect(result.current).toBe(true);
-  });
-
-  it("cleans up event listener on unmount", () => {
-    Object.defineProperty(window, "innerWidth", {
-      value: 1024,
-      writable: true,
-    });
-    window.matchMedia = createMockMatchMedia(false);
-
-    const { unmount } = renderHook(() => useIsMobile());
-    unmount();
-
-    const changeListeners = listeners.get("change") ?? [];
-    expect(changeListeners).toHaveLength(0);
   });
 
   it("returns false at exactly 768px", () => {

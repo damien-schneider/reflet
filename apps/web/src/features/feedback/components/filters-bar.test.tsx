@@ -1,52 +1,22 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@phosphor-icons/react", () => ({
-  SortAscending: ({ "data-icon": icon }: { "data-icon"?: string }) => (
-    <span data-icon={icon} data-testid="sort-icon" />
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    size,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    size?: string;
-    variant?: string;
-  }) => (
-    <button
-      data-size={size}
-      data-variant={variant}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  ),
-}));
 
 vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-menu">{children}</div>
+    <div>{children}</div>
   ),
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-content">{children}</div>
+    <div>{children}</div>
   ),
   DropdownMenuRadioGroup: ({
     children,
     onValueChange,
-    value,
   }: {
     children: React.ReactNode;
     onValueChange: (v: string) => void;
     value: string;
   }) => (
-    <div data-testid="radio-group" data-value={value}>
+    <div>
       <button
         data-testid="trigger-sort-change"
         onClick={() => onValueChange("newest")}
@@ -64,16 +34,8 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
       {children}
     </div>
   ),
-  DropdownMenuRadioItem: ({
-    children,
-    value,
-  }: {
-    children: React.ReactNode;
-    value: string;
-  }) => (
-    <button data-testid={`radio-${value}`} data-value={value} type="button">
-      {children}
-    </button>
+  DropdownMenuRadioItem: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
   ),
   DropdownMenuTrigger: ({ render }: { render: React.ReactNode }) => (
     <div data-testid="dropdown-trigger">{render}</div>
@@ -81,22 +43,7 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
 }));
 
 vi.mock("./feedback-board/filter-dropdown", () => ({
-  FilterDropdown: ({
-    hideCompleted,
-    selectedStatusIds,
-    selectedTagIds,
-  }: {
-    hideCompleted: boolean;
-    selectedStatusIds: string[];
-    selectedTagIds: string[];
-  }) => (
-    <div
-      data-hide-completed={hideCompleted}
-      data-status-count={selectedStatusIds.length}
-      data-tag-count={selectedTagIds.length}
-      data-testid="filter-dropdown"
-    />
-  ),
+  FilterDropdown: () => null,
 }));
 
 import { FiltersBar, type SortOption } from "./filters-bar";
@@ -122,128 +69,20 @@ const defaultProps = {
 };
 
 describe("FiltersBar", () => {
-  it("renders filter dropdown", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("filter-dropdown")).toBeInTheDocument();
-  });
-
-  it("renders sort dropdown with current sort label", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getAllByText("Most votes").length).toBeGreaterThan(0);
-  });
-
-  it("renders all sort options", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("radio-votes")).toBeInTheDocument();
-    expect(screen.getByTestId("radio-newest")).toBeInTheDocument();
-    expect(screen.getByTestId("radio-oldest")).toBeInTheDocument();
-    expect(screen.getByTestId("radio-comments")).toBeInTheDocument();
-  });
-
-  it("shows correct label for newest sort", () => {
-    render(<FiltersBar {...defaultProps} sortBy="newest" />);
-    expect(screen.getAllByText("Newest").length).toBeGreaterThan(0);
-  });
-
-  it("shows correct label for oldest sort", () => {
-    render(<FiltersBar {...defaultProps} sortBy="oldest" />);
-    expect(screen.getAllByText("Oldest").length).toBeGreaterThan(0);
-  });
-
-  it("shows correct label for comments sort", () => {
-    render(<FiltersBar {...defaultProps} sortBy="comments" />);
-    expect(screen.getAllByText("Most comments").length).toBeGreaterThan(0);
-  });
-
-  it("passes hideCompleted to filter dropdown", () => {
-    render(<FiltersBar {...defaultProps} hideCompleted={true} />);
-    expect(screen.getByTestId("filter-dropdown")).toHaveAttribute(
-      "data-hide-completed",
-      "true"
-    );
-  });
-
-  it("passes selected filters to filter dropdown", () => {
-    render(
-      <FiltersBar
-        {...defaultProps}
-        selectedStatusIds={["s1"]}
-        selectedTagIds={["t1", "t2"]}
-      />
-    );
-    const dropdown = screen.getByTestId("filter-dropdown");
-    expect(dropdown).toHaveAttribute("data-status-count", "1");
-    expect(dropdown).toHaveAttribute("data-tag-count", "2");
-  });
-
-  it("renders sort icon", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("sort-icon")).toBeInTheDocument();
-  });
-
-  it("renders dropdown trigger and content", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
-    expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
-  });
-
-  it("radio group has correct value for votes", () => {
-    render(<FiltersBar {...defaultProps} sortBy="votes" />);
-    const group = screen.getByTestId("radio-group");
-    expect(group).toHaveAttribute("data-value", "votes");
-  });
-
-  it("radio group has correct value for newest", () => {
-    render(<FiltersBar {...defaultProps} sortBy="newest" />);
-    const group = screen.getByTestId("radio-group");
-    expect(group).toHaveAttribute("data-value", "newest");
-  });
-
-  it("passes hideCompleted=false to filter dropdown", () => {
-    render(<FiltersBar {...defaultProps} hideCompleted={false} />);
-    expect(screen.getByTestId("filter-dropdown")).toHaveAttribute(
-      "data-hide-completed",
-      "false"
-    );
-  });
-
-  it("passes empty status and tag counts when none selected", () => {
-    render(<FiltersBar {...defaultProps} />);
-    const dropdown = screen.getByTestId("filter-dropdown");
-    expect(dropdown).toHaveAttribute("data-status-count", "0");
-    expect(dropdown).toHaveAttribute("data-tag-count", "0");
-  });
-
-  it("renders sort icon", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("sort-icon")).toBeInTheDocument();
-  });
-
-  it("displays the current sort value label", () => {
-    const { container } = render(
-      <FiltersBar {...defaultProps} sortBy="recent" />
-    );
-    expect(container.textContent).toMatch(
-      /Most Votes|Newest|Oldest|Most Comments/i
-    );
-  });
-
-  it("renders filter dropdown component", () => {
-    render(<FiltersBar {...defaultProps} />);
-    expect(screen.getByTestId("filter-dropdown")).toBeInTheDocument();
-  });
-
-  it("passes selectedStatusIds to filter dropdown", () => {
-    render(<FiltersBar {...defaultProps} selectedStatusIds={["s1", "s2"]} />);
-    const dropdown = screen.getByTestId("filter-dropdown");
-    expect(dropdown).toHaveAttribute("data-status-count", "2");
-  });
-
-  it("passes selectedTagIds to filter dropdown", () => {
-    render(<FiltersBar {...defaultProps} selectedTagIds={["t1"]} />);
-    const dropdown = screen.getByTestId("filter-dropdown");
-    expect(dropdown).toHaveAttribute("data-tag-count", "1");
-  });
+  it.each([
+    ["votes", "Most votes"],
+    ["newest", "Newest"],
+    ["oldest", "Oldest"],
+    ["comments", "Most comments"],
+  ] as const)(
+    "shows the %s sort as “%s” on the sort control",
+    (sortBy, label) => {
+      render(<FiltersBar {...defaultProps} sortBy={sortBy} />);
+      expect(
+        within(screen.getByTestId("dropdown-trigger")).getByText(label)
+      ).toBeInTheDocument();
+    }
+  );
 
   it("calls onSortChange when a valid sort option is selected", () => {
     const onSortChange = vi.fn();

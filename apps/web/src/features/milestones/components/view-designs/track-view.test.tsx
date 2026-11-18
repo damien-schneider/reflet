@@ -155,45 +155,6 @@ describe("TrackView", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Loading");
   });
 
-  it("renders milestone segment components", () => {
-    render(
-      <TrackView
-        isAdmin={false}
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getAllByTestId("segment-m1").length).toBeGreaterThanOrEqual(
-      1
-    );
-    expect(screen.getAllByTestId("segment-m2").length).toBeGreaterThanOrEqual(
-      1
-    );
-  });
-
-  it("renders horizon labels", () => {
-    render(
-      <TrackView
-        isAdmin
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getAllByText("Now").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Later").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders Today marker", () => {
-    render(
-      <TrackView
-        isAdmin={false}
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByText("Today")).toBeInTheDocument();
-  });
-
   it("shows form popovers for admin", () => {
     render(
       <TrackView
@@ -248,6 +209,7 @@ describe("TrackView", () => {
     );
     expect(screen.getAllByText("Now").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Later").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Next Month")).not.toBeInTheDocument();
   });
 
   it("shows all horizons for admin", () => {
@@ -261,19 +223,6 @@ describe("TrackView", () => {
     expect(screen.getAllByText("Now").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Next Month").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Later").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders empty state placeholder for horizons without milestones", () => {
-    queryResult = [];
-    render(
-      <TrackView
-        isAdmin
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    // Admin sees all horizons even with no milestones
-    expect(screen.getAllByText("Now").length).toBeGreaterThanOrEqual(1);
   });
 
   it("hides form popovers for non-admin", () => {
@@ -297,16 +246,5 @@ describe("TrackView", () => {
       />
     );
     expect(screen.getByText("No milestones yet")).toBeInTheDocument();
-  });
-
-  it("renders scroll area on desktop", () => {
-    render(
-      <TrackView
-        isAdmin
-        onFeedbackClick={vi.fn()}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByTestId("scroll-area")).toBeInTheDocument();
   });
 });

@@ -6,13 +6,6 @@ vi.mock("@phosphor-icons/react", () => ({
   CalendarBlank: () => <span data-testid="icon-calendar" />,
 }));
 
-vi.mock("date-fns", () => ({
-  format: (date: Date, _fmt: string) =>
-    `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`,
-  startOfDay: (date: Date) =>
-    new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-}));
-
 vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
@@ -41,7 +34,7 @@ vi.mock("@ctrl-ui/react/ui/calendar", () => ({
     <div data-testid="calendar">
       <button
         data-testid="select-date"
-        onClick={() => onSelect(new Date(2026, 2, 15))}
+        onClick={() => onSelect(new Date(2026, 2, 15, 14, 30))}
         type="button"
       >
         Select Date
@@ -84,11 +77,6 @@ vi.mock("@/lib/milestone-deadline", () => ({
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 describe("MilestoneDatePicker", () => {
-  it("renders without crashing", () => {
-    render(<MilestoneDatePicker onChange={vi.fn()} value={undefined} />);
-    expect(screen.getByTestId("popover")).toBeInTheDocument();
-  });
-
   it("shows Set deadline when no value", () => {
     render(<MilestoneDatePicker onChange={vi.fn()} value={undefined} />);
     expect(screen.getByText("Set deadline")).toBeInTheDocument();
@@ -97,22 +85,15 @@ describe("MilestoneDatePicker", () => {
   it("shows formatted date when value is set", () => {
     const date = new Date(2026, 2, 15).getTime();
     render(<MilestoneDatePicker onChange={vi.fn()} value={date} />);
-    expect(screen.getByText("3/15/2026")).toBeInTheDocument();
+    expect(screen.getByText("Mar 15, 2026")).toBeInTheDocument();
   });
 
-  it("shows calendar", () => {
-    render(<MilestoneDatePicker onChange={vi.fn()} value={undefined} />);
-    expect(screen.getByTestId("calendar")).toBeInTheDocument();
-  });
-
-  it("calls onChange when a date is selected", async () => {
+  it("saves the picked day as its start-of-day timestamp", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
     render(<MilestoneDatePicker onChange={onChange} value={undefined} />);
     await user.click(screen.getByTestId("select-date"));
-    expect(onChange).toHaveBeenCalled();
-    const calledWith = onChange.mock.calls[0][0];
-    expect(typeof calledWith).toBe("number");
+    expect(onChange).toHaveBeenCalledWith(new Date(2026, 2, 15).getTime());
   });
 
   it("shows clear deadline button when value is set", () => {

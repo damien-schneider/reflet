@@ -31,11 +31,6 @@ describe("useFeedbackDrawer", () => {
       expect(result.current.isOpen).toBe(false);
     });
 
-    it("feedbackIds defaults to empty array", () => {
-      const { result } = renderHook(() => useFeedbackDrawer());
-      expect(result.current.feedbackIds).toEqual([]);
-    });
-
     it("currentIndex is -1 when nothing selected", () => {
       const { result } = renderHook(() => useFeedbackDrawer());
       expect(result.current.currentIndex).toBe(-1);

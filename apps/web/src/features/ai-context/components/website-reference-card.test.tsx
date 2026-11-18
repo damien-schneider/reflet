@@ -136,20 +136,6 @@ describe("WebsiteReferenceCard", () => {
     expect(screen.getByText("docs.example.com")).toBeInTheDocument();
   });
 
-  it("renders URL below title", () => {
-    render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
-    expect(
-      screen.getByText("https://docs.example.com/guide")
-    ).toBeInTheDocument();
-  });
-
-  it("renders description when available", () => {
-    render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
-    expect(
-      screen.getByText("A comprehensive guide to get started")
-    ).toBeInTheDocument();
-  });
-
   it("renders Fetched badge for success status", () => {
     render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
     expect(screen.getByText("Fetched")).toBeInTheDocument();

@@ -59,35 +59,6 @@ describe("CommandList", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders all items with titles and descriptions", () => {
-    const items = createMockItems();
-    render(<CommandList command={vi.fn()} items={items} />);
-
-    expect(screen.getByText("Heading 1")).toBeInTheDocument();
-    expect(screen.getByText("Large section heading")).toBeInTheDocument();
-    expect(screen.getByText("Bullet List")).toBeInTheDocument();
-    expect(screen.getByText("Create a bullet list")).toBeInTheDocument();
-    expect(screen.getByText("Code Block")).toBeInTheDocument();
-    expect(screen.getByText("Display code")).toBeInTheDocument();
-  });
-
-  it("renders icons for each item", () => {
-    const items = createMockItems();
-    render(<CommandList command={vi.fn()} items={items} />);
-
-    expect(screen.getByTestId("icon-heading-1")).toBeInTheDocument();
-    expect(screen.getByTestId("icon-bullet-list")).toBeInTheDocument();
-    expect(screen.getByTestId("icon-code-block")).toBeInTheDocument();
-  });
-
-  it("renders the items as a labelled listbox", () => {
-    render(<CommandList command={vi.fn()} items={createMockItems()} />);
-
-    expect(
-      screen.getByRole("listbox", { name: "Insert block" })
-    ).toBeInTheDocument();
-  });
-
   it("highlights first item by default", () => {
     const items = createMockItems();
     render(<CommandList command={vi.fn()} items={items} />);
@@ -131,15 +102,6 @@ describe("CommandList", () => {
     const preventDefaultSpy = vi.spyOn(event, "preventDefault");
     option.dispatchEvent(event);
     expect(preventDefaultSpy).toHaveBeenCalled();
-  });
-
-  it("exposes a keyboard handle via ref", () => {
-    const ref = createRef<CommandListHandle>();
-    render(
-      <CommandList command={vi.fn()} items={createMockItems()} ref={ref} />
-    );
-
-    expect(ref.current?.onKeyDown).toEqual(expect.any(Function));
   });
 
   describe("keyboard navigation", () => {

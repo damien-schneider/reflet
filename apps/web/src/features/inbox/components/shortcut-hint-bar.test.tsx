@@ -10,9 +10,11 @@ vi.mock("@ctrl-ui/react/ui/kbd", () => ({
 import { ShortcutHintBar } from "./shortcut-hint-bar";
 
 describe("ShortcutHintBar", () => {
-  it("renders navigation hints when nothing can be acted on", () => {
+  it("hides action hints when nothing can be acted on", () => {
     render(<ShortcutHintBar canActOnSelection={false} visible={true} />);
     expect(screen.getByText("navigate")).toBeInTheDocument();
+    expect(screen.queryByText("reply")).not.toBeInTheDocument();
+    expect(screen.queryByText("resolve")).not.toBeInTheDocument();
   });
 
   it("renders action hints when the selected conversation is editable", () => {

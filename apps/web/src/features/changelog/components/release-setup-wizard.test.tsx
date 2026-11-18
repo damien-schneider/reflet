@@ -128,36 +128,6 @@ describe("ReleaseSetupWizard", () => {
     vi.clearAllMocks();
   });
 
-  it("renders when open", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByTestId("sheet")).toBeInTheDocument();
-  });
-
-  it("does not render when closed", () => {
-    render(<ReleaseSetupWizard {...baseProps} open={false} />);
-    expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
-  });
-
-  it("shows Release setup title", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByText("Release setup")).toBeInTheDocument();
-  });
-
-  it("shows step 1 of 3 description", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByText(/Step 1 of 3/)).toBeInTheDocument();
-  });
-
-  it("renders WorkflowStep on step 1", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByTestId("workflow-step")).toBeInTheDocument();
-  });
-
-  it("renders Next button on step 1", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByText("Next")).toBeInTheDocument();
-  });
-
   it("renders disabled Back button on step 1", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
     expect(screen.getByText("Back").closest("button")).toBeDisabled();
@@ -193,43 +163,23 @@ describe("ReleaseSetupWizard", () => {
     expect(items[0]).not.toHaveAttribute("aria-current");
   });
 
-  it("renders github logo icon", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByTestId("github-logo")).toBeInTheDocument();
-  });
-
-  it("shows default workflow as ai_powered", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByText("ai_powered")).toBeInTheDocument();
-  });
-
-  it("updates workflow via WorkflowStep onChange", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Change to automated"));
-    expect(screen.getByText("automated")).toBeInTheDocument();
-  });
-
-  it("shows step 2 of 3 description on configure step", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByText(/Step 2 of 3/)).toBeInTheDocument();
-  });
-
-  it("shows step 3 of 3 description on setup method step", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    fireEvent.click(screen.getByText("Next"));
-    fireEvent.click(screen.getByText("Next"));
-    expect(screen.getByText(/Step 3 of 3/)).toBeInTheDocument();
-  });
-
-  it("calls handleComplete on Complete setup click", () => {
+  it("saves the chosen workflow's sync settings when setup completes", () => {
     const mockMutation = vi.fn().mockResolvedValue(undefined);
     mockUseMutation.mockReturnValue(mockMutation);
     render(<ReleaseSetupWizard {...baseProps} />);
+    fireEvent.click(screen.getByText("Change to automated"));
     fireEvent.click(screen.getByText("Next"));
     fireEvent.click(screen.getByText("Next"));
     fireEvent.click(screen.getByText("Complete setup"));
-    expect(mockMutation).toHaveBeenCalled();
+    expect(mockMutation).toHaveBeenCalledWith({
+      changelogSettings: expect.objectContaining({
+        autoPublishImported: false,
+        pushToGithubOnPublish: false,
+        targetBranch: "main",
+        versionPrefix: "v",
+      }),
+      id: orgId,
+    });
   });
 
   it("navigates back from step 3 to step 2", () => {
@@ -239,11 +189,6 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByTestId("setup-method-step")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Back"));
     expect(screen.getByTestId("configure-step")).toBeInTheDocument();
-  });
-
-  it("renders sheet header", () => {
-    render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByTestId("sheet-header")).toBeInTheDocument();
   });
 
   it("Back button is enabled on step 2", () => {

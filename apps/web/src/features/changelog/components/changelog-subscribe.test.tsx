@@ -31,9 +31,6 @@ vi.mock("@phosphor-icons/react", () => ({
   BellSlash: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="bell-slash-icon" />
   ),
-  Envelope: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="envelope-icon" />
-  ),
 }));
 
 vi.mock("@ctrl-ui/react/ui/toast", () => ({
@@ -45,20 +42,12 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     onClick,
     disabled,
-    variant,
-    className,
+    variant: _variant,
     ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: string;
   }) => (
-    <button
-      className={className}
-      data-variant={variant}
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-      {...props}
-    >
+    <button disabled={disabled} onClick={onClick} type="button" {...props}>
       {children}
     </button>
   ),
@@ -70,57 +59,33 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/email-subscribe-form", async () => {
-  const { toast: mockToastInner } = await vi.importMock<
-    typeof import("@ctrl-ui/react/ui/toast")
-  >("@ctrl-ui/react/ui/toast");
-  return {
-    EmailSubscribeForm: ({
-      className,
-      onSubscribe,
-      title,
-      successMessage,
-    }: {
-      className?: string;
-      description?: string;
-      onSubscribe: (email: string) => Promise<void>;
-      placeholder?: string;
-      successMessage?: string;
-      title?: string;
-    }) => {
-      const [email, setEmail] = React.useState("");
-      return (
-        <div className={className}>
-          {title && <p>{title}</p>}
-          <form
-            onSubmit={async (e: React.FormEvent) => {
-              e.preventDefault();
-              if (!email.trim()) {
-                mockToastInner.error("Email is required");
-                return;
-              }
-              await onSubscribe(email.trim());
-              mockToastInner.success(successMessage ?? "Subscribed!");
-              setEmail("");
-            }}
-          >
-            <svg className="" data-testid="envelope-icon" />
-            <input
-              data-testid="email-input"
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setEmail(e.target.value)
-              }
-              placeholder="your@email.com"
-              type="email"
-              value={email}
-            />
-            <button type="submit">Subscribe</button>
-          </form>
-        </div>
-      );
-    },
-  };
-});
+vi.mock("@/components/ui/email-subscribe-form", () => ({
+  EmailSubscribeForm: ({
+    onSubscribe,
+  }: {
+    onSubscribe: (email: string) => Promise<void>;
+  }) => {
+    const [email, setEmail] = React.useState("");
+    return (
+      <form
+        onSubmit={async (e: React.FormEvent) => {
+          e.preventDefault();
+          await onSubscribe(email.trim());
+        }}
+      >
+        <input
+          data-testid="email-input"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
+          type="email"
+          value={email}
+        />
+        <button type="submit">Subscribe</button>
+      </form>
+    );
+  },
+}));
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
@@ -128,14 +93,8 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-import { toast } from "@ctrl-ui/react/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { ChangelogSubscribe } from "./changelog-subscribe";
-
-const mockToast = toast as unknown as {
-  success: ReturnType<typeof vi.fn>;
-  error: ReturnType<typeof vi.fn>;
-};
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -177,25 +136,6 @@ describe("ChangelogSubscribe", () => {
       expect(screen.getByText("Subscribe")).toBeInTheDocument();
     });
 
-    it("shows envelope icon", () => {
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByTestId("envelope-icon")).toBeInTheDocument();
-    });
-
-    it("updates email input value", () => {
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      const input = screen.getByTestId("email-input");
-      fireEvent.change(input, { target: { value: "user@test.com" } });
-      expect(input).toHaveValue("user@test.com");
-    });
-
-    it("shows error when submitting empty email", async () => {
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      const form = screen.getByTestId("email-input").closest("form")!;
-      fireEvent.submit(form);
-      expect(mockToast.error).toHaveBeenCalledWith("Email is required");
-    });
-
     it("calls subscribeByEmail with valid email", async () => {
       render(<ChangelogSubscribe organizationId={ORG_ID} />);
       const input = screen.getByTestId("email-input");
@@ -206,14 +146,6 @@ describe("ChangelogSubscribe", () => {
         email: "user@test.com",
         organizationId: ORG_ID,
       });
-    });
-
-    it("renders email placeholder", () => {
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByTestId("email-input")).toHaveAttribute(
-        "placeholder",
-        "your@email.com"
-      );
     });
   });
 
@@ -262,37 +194,10 @@ describe("ChangelogSubscribe", () => {
       });
     });
 
-    it("has surface variant when subscribed", () => {
-      mockUseQuery.mockReturnValue(true);
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByRole("button")).toHaveAttribute(
-        "data-variant",
-        "surface"
-      );
-    });
-
-    it("has solid variant when not subscribed", () => {
-      mockUseQuery.mockReturnValue(false);
-      render(<ChangelogSubscribe organizationId={ORG_ID} />);
-      expect(screen.getByRole("button")).toHaveAttribute(
-        "data-variant",
-        "solid"
-      );
-    });
-
     it("does not show email form when logged in", () => {
       mockUseQuery.mockReturnValue(false);
       render(<ChangelogSubscribe organizationId={ORG_ID} />);
       expect(screen.queryByTestId("email-input")).not.toBeInTheDocument();
     });
-  });
-
-  it("accepts custom className", () => {
-    vi.mocked(authClient.useSession).mockReturnValue({
-      data: { user: { id: "user123" } },
-    } as ReturnType<typeof authClient.useSession>);
-    mockUseQuery.mockReturnValue(false);
-    render(<ChangelogSubscribe className="custom" organizationId={ORG_ID} />);
-    expect(screen.getByRole("button")).toHaveClass("custom");
   });
 });

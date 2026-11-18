@@ -14,17 +14,6 @@ const mockStatuses = [
 ];
 
 describe("createAnnouncements", () => {
-  it("should return an object with all announcement handlers", () => {
-    const announcements = createAnnouncements(
-      mockFeedback as never,
-      mockStatuses
-    );
-    expect(announcements.onDragStart).toBeTypeOf("function");
-    expect(announcements.onDragOver).toBeTypeOf("function");
-    expect(announcements.onDragEnd).toBeTypeOf("function");
-    expect(announcements.onDragCancel).toBeTypeOf("function");
-  });
-
   describe("onDragStart", () => {
     it("should return pick up message with item title", () => {
       const { onDragStart } = createAnnouncements(
@@ -33,15 +22,6 @@ describe("createAnnouncements", () => {
       );
       const result = onDragStart({ active: { id: "f1" } });
       expect(result).toBe("Picked up Fix login bug. Dragging.");
-    });
-
-    it("should handle item not found gracefully", () => {
-      const { onDragStart } = createAnnouncements(
-        mockFeedback as never,
-        mockStatuses
-      );
-      const result = onDragStart({ active: { id: "nonexistent" } });
-      expect(result).toBe("Picked up undefined. Dragging.");
     });
   });
 
@@ -112,42 +92,6 @@ describe("createAnnouncements", () => {
         over: { id: "unknown" },
       });
       expect(result).toBe("Drag cancelled");
-    });
-  });
-
-  describe("onDragCancel", () => {
-    it("should return drag cancelled string", () => {
-      const { onDragCancel } = createAnnouncements(
-        mockFeedback as never,
-        mockStatuses
-      );
-      expect(onDragCancel()).toBe("Drag cancelled");
-    });
-  });
-
-  describe("edge cases", () => {
-    it("should handle empty feedback array", () => {
-      const announcements = createAnnouncements([] as never, mockStatuses);
-      const result = announcements.onDragStart({ active: { id: "f1" } });
-      expect(result).toBe("Picked up undefined. Dragging.");
-    });
-
-    it("should handle empty statuses array", () => {
-      const announcements = createAnnouncements(mockFeedback as never, []);
-      const result = announcements.onDragOver({
-        active: { id: "f1" },
-        over: { id: "s1" },
-      });
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle numeric ids", () => {
-      const { onDragStart } = createAnnouncements(
-        mockFeedback as never,
-        mockStatuses
-      );
-      const result = onDragStart({ active: { id: 123 } });
-      expect(result).toBe("Picked up undefined. Dragging.");
     });
   });
 });

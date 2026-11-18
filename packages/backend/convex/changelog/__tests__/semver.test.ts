@@ -62,6 +62,7 @@ describe("compareSemver", () => {
       ["2.0.0", "1.9.9"],
       ["1.3.0", "1.2.9"],
       ["1.2.4", "1.2.3"],
+      ["1.10.0", "1.9.0"],
     ];
     for (const [higher, lower] of cases) {
       expect(compareSemver(parsed(higher), parsed(lower))).toBeGreaterThan(0);
@@ -71,13 +72,6 @@ describe("compareSemver", () => {
 
   test("returns zero for equal versions", () => {
     expect(compareSemver(parsed("1.2.3"), parsed("v1.2.3"))).toBe(0);
-  });
-
-  test("sorts a release list by version, not by string", () => {
-    const sorted = ["v1.9.0", "v1.10.0", "v1.2.0"].sort((a, b) =>
-      compareSemver(parsed(b), parsed(a))
-    );
-    expect(sorted).toEqual(["v1.10.0", "v1.9.0", "v1.2.0"]);
   });
 });
 

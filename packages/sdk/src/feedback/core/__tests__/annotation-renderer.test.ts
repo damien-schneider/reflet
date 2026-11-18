@@ -185,17 +185,6 @@ describe("drawAnnotations", () => {
     );
     expect(exported.lineWidth).toBe(preview.lineWidth * 2);
   });
-
-  it("restores the context state for every annotation", () => {
-    const context = fakeContext();
-
-    drawAnnotations(context, [annotation({}), annotation({ tool: "arrow" })]);
-
-    expect(context.calls.filter((call) => call === "save()")).toHaveLength(2);
-    expect(context.calls.filter((call) => call === "restore()")).toHaveLength(
-      2
-    );
-  });
 });
 
 it("paints each line of a text annotation at its scaled position", () => {

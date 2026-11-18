@@ -3,7 +3,6 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { toId } from "@/lib/convex-helpers";
 import type { Tag } from "../tag-filter-bar";
@@ -37,20 +36,6 @@ const baseProps = {
 describe("FeedbackToolbar", () => {
   afterEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("renders the submit feedback button", () => {
-    render(<FeedbackToolbar {...baseProps} />);
-    expect(
-      screen.getByRole("button", { name: /Submit Feedback/i })
-    ).toBeInTheDocument();
-  });
-
-  it("calls onSubmitClick when submit button clicked", async () => {
-    const user = userEvent.setup();
-    render(<FeedbackToolbar {...baseProps} />);
-    await user.click(screen.getByRole("button", { name: /Submit Feedback/i }));
-    expect(baseProps.onSubmitClick).toHaveBeenCalledOnce();
   });
 
   it("shows TagFilterBar when tags exist", () => {

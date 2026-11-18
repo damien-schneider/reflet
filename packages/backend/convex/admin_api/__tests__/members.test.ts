@@ -40,12 +40,10 @@ describe("admin_api_members", () => {
     const t = setupTest();
     const orgId = await createOrg(t);
 
-    const result = await t.mutation(
-      internal.admin_api.members.createInvitation,
-      { email: " Test@Example.com ", organizationId: orgId }
-    );
-
-    expect(result.id).toBeDefined();
+    await t.mutation(internal.admin_api.members.createInvitation, {
+      email: " Test@Example.com ",
+      organizationId: orgId,
+    });
 
     const invitations = await t.query(
       internal.admin_api.members.listInvitations,

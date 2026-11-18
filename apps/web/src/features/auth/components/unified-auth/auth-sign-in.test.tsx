@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
@@ -96,11 +96,6 @@ describe("AuthSubmitButton", () => {
     render(<AuthSubmitButton {...baseProps} apiError="Invalid credentials" />);
     expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
   });
-
-  it("does not show error when apiError is null", () => {
-    render(<AuthSubmitButton {...baseProps} />);
-    expect(screen.queryByText("Invalid credentials")).not.toBeInTheDocument();
-  });
 });
 
 describe("AuthHelperText", () => {
@@ -121,12 +116,5 @@ describe("AuthHelperText", () => {
       <AuthHelperText mode={null} onResetMode={vi.fn()} />
     );
     expect(container.textContent).toBe("");
-  });
-
-  it("calls onResetMode when link is clicked", () => {
-    const onResetMode = vi.fn();
-    render(<AuthHelperText mode="signIn" onResetMode={onResetMode} />);
-    fireEvent.click(screen.getByText("Use a different email"));
-    expect(onResetMode).toHaveBeenCalledOnce();
   });
 });

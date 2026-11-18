@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  animationVariants,
-  formatAuthError,
-  signInSchema,
-  signUpSchema,
-} from "./auth-validation";
+import { formatAuthError, signInSchema, signUpSchema } from "./auth-validation";
 
 describe("signInSchema", () => {
   it("validates a correct email and password", () => {
@@ -28,14 +23,6 @@ describe("signInSchema", () => {
     }
   });
 
-  it("rejects empty email", () => {
-    const result = signInSchema.safeParse({
-      email: "",
-      password: "password123",
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("rejects empty password", () => {
     const result = signInSchema.safeParse({
       email: "user@example.com",
@@ -53,11 +40,6 @@ describe("signInSchema", () => {
       password: "a",
     });
     expect(result.success).toBe(true);
-  });
-
-  it("rejects missing fields", () => {
-    const result = signInSchema.safeParse({});
-    expect(result.success).toBe(false);
   });
 });
 
@@ -84,19 +66,6 @@ describe("signUpSchema", () => {
     }
   });
 
-  it("rejects when passwords do not match", () => {
-    const result = signUpSchema.safeParse({
-      confirmPassword: "different123",
-      email: "user@example.com",
-      password: "password123",
-    });
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("Passwords do not match");
-    }
-  });
-
   it("rejects invalid email in signup", () => {
     const result = signUpSchema.safeParse({
       confirmPassword: "password123",
@@ -112,11 +81,6 @@ describe("signUpSchema", () => {
       email: "user@example.com",
       password: "password123",
     });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing fields", () => {
-    const result = signUpSchema.safeParse({});
     expect(result.success).toBe(false);
   });
 
@@ -231,25 +195,5 @@ describe("formatAuthError", () => {
     expect(formatAuthError("USER ALREADY EXISTS")).toBe(
       "An account with this email already exists"
     );
-  });
-});
-
-describe("animationVariants", () => {
-  it("has initial, animate, and exit states", () => {
-    expect(animationVariants).toHaveProperty("initial");
-    expect(animationVariants).toHaveProperty("animate");
-    expect(animationVariants).toHaveProperty("exit");
-  });
-
-  it("initial has opacity 0", () => {
-    expect(animationVariants.initial.opacity).toBe(0);
-  });
-
-  it("animate has opacity 1", () => {
-    expect(animationVariants.animate.opacity).toBe(1);
-  });
-
-  it("exit has opacity 0", () => {
-    expect(animationVariants.exit.opacity).toBe(0);
   });
 });

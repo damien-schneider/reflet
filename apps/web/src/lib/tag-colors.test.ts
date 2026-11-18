@@ -7,55 +7,11 @@ import {
   getTagColorValues,
   getTagDotColor,
   getTagSwatchClass,
-  TAG_COLOR_LABELS,
 } from "./tag-colors";
 
 const HARDCODED_COLOR = /#|dark:|rgb\(|oklch\(/;
 
-describe("TAG_COLORS", () => {
-  it("contains exactly 10 colors", () => {
-    expect(TAG_COLORS).toHaveLength(10);
-  });
-
-  it("contains all expected colors", () => {
-    const expected = [
-      "default",
-      "gray",
-      "brown",
-      "orange",
-      "yellow",
-      "green",
-      "blue",
-      "purple",
-      "pink",
-      "red",
-    ];
-    expect([...TAG_COLORS]).toEqual(expected);
-  });
-});
-
-describe("TAG_COLOR_LABELS", () => {
-  it("has a label for every TAG_COLOR", () => {
-    for (const color of TAG_COLORS) {
-      expect(TAG_COLOR_LABELS[color]).toBeDefined();
-      expect(typeof TAG_COLOR_LABELS[color]).toBe("string");
-    }
-  });
-
-  it("capitalizes labels correctly", () => {
-    expect(TAG_COLOR_LABELS.default).toBe("Default");
-    expect(TAG_COLOR_LABELS.red).toBe("Red");
-    expect(TAG_COLOR_LABELS.blue).toBe("Blue");
-  });
-});
-
 describe("isTagColor", () => {
-  it("returns true for all valid tag colors", () => {
-    for (const color of TAG_COLORS) {
-      expect(isTagColor(color)).toBe(true);
-    }
-  });
-
   it("returns false for invalid color strings", () => {
     expect(isTagColor("")).toBe(false);
     expect(isTagColor("invalid")).toBe(false);
@@ -108,14 +64,6 @@ describe("getTagColorValues", () => {
     const result = getTagColorValues("#123456");
     const defaultResult = getTagColorValues("default");
     expect(result).toEqual(defaultResult);
-  });
-
-  it("returns a bg and text string for every named color", () => {
-    for (const color of TAG_COLORS) {
-      const result = getTagColorValues(color);
-      expect(typeof result.bg).toBe("string");
-      expect(typeof result.text).toBe("string");
-    }
   });
 });
 

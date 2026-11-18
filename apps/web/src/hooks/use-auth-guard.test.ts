@@ -113,20 +113,4 @@ describe("useAuthGuard", () => {
       message: "Veuillez vous connecter pour voter",
     });
   });
-
-  it("guard handles async actions when authenticated", async () => {
-    mockUseSession.mockReturnValue({
-      data: { user: { id: "user-123" } },
-    });
-    const asyncAction = vi.fn().mockResolvedValue("async-result");
-    const { result } = renderHook(() => useAuthGuard());
-
-    let returnValue: unknown;
-    act(() => {
-      returnValue = result.current.guard(asyncAction);
-    });
-
-    expect(asyncAction).toHaveBeenCalledOnce();
-    await expect(returnValue).resolves.toBe("async-result");
-  });
 });

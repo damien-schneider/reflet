@@ -94,14 +94,6 @@ describe("EmailSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("labels the new email input", () => {
-    renderSection("test@test.com");
-    expect(screen.getByLabelText("New email")).toHaveAttribute(
-      "autocomplete",
-      "email"
-    );
-  });
-
   it("shows progress while the change is in flight", () => {
     renderSection("test@test.com", true);
     expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();

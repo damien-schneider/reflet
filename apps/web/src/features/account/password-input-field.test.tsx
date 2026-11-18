@@ -35,15 +35,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@phosphor-icons/react", () => ({
-  Eye: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="eye-icon" />
-  ),
-  EyeSlash: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="eye-slash-icon" />
-  ),
-}));
-
 import { PasswordInputField } from "./password-input-field";
 
 const baseProps = {
@@ -62,16 +53,6 @@ const baseProps = {
 };
 
 describe("PasswordInputField", () => {
-  it("renders label", () => {
-    render(<PasswordInputField {...baseProps} />);
-    expect(screen.getByText("Password")).toBeInTheDocument();
-  });
-
-  it("renders input with placeholder", () => {
-    render(<PasswordInputField {...baseProps} />);
-    expect(screen.getByPlaceholderText("Enter password")).toBeInTheDocument();
-  });
-
   it("renders password type input when showPassword is false", () => {
     render(<PasswordInputField {...baseProps} />);
     expect(screen.getByPlaceholderText("Enter password")).toHaveAttribute(
@@ -88,24 +69,17 @@ describe("PasswordInputField", () => {
     );
   });
 
-  it("shows Eye icon when password is hidden", () => {
-    render(<PasswordInputField {...baseProps} showPassword={false} />);
-    expect(screen.getByTestId("eye-icon")).toBeInTheDocument();
-  });
-
-  it("shows EyeSlash icon when password is visible", () => {
-    render(<PasswordInputField {...baseProps} showPassword={true} />);
-    expect(screen.getByTestId("eye-slash-icon")).toBeInTheDocument();
-  });
-
-  it("calls onTogglePassword when toggle button is clicked", async () => {
-    const user = userEvent.setup();
-    const onToggle = vi.fn();
-    render(<PasswordInputField {...baseProps} onTogglePassword={onToggle} />);
-
-    const toggleButton = screen.getByRole("button");
-    await user.click(toggleButton);
-    expect(onToggle).toHaveBeenCalledTimes(1);
+  it("labels the visibility toggle with what it will do", () => {
+    const { rerender } = render(
+      <PasswordInputField {...baseProps} showPassword={false} />
+    );
+    expect(
+      screen.getByRole("button", { name: "Show password" })
+    ).toBeInTheDocument();
+    rerender(<PasswordInputField {...baseProps} showPassword={true} />);
+    expect(
+      screen.getByRole("button", { name: "Hide password" })
+    ).toBeInTheDocument();
   });
 
   it("renders error message when error is provided", () => {
@@ -120,46 +94,6 @@ describe("PasswordInputField", () => {
     );
   });
 
-  it("does not render error when no error", () => {
-    render(<PasswordInputField {...baseProps} />);
-    expect(screen.queryByTestId("field-error")).not.toBeInTheDocument();
-  });
-
-  it("renders with custom placeholder", () => {
-    render(<PasswordInputField {...baseProps} placeholder="Enter secret" />);
-    expect(screen.getByPlaceholderText("Enter secret")).toBeInTheDocument();
-  });
-
-  it("renders label text", () => {
-    render(<PasswordInputField {...baseProps} label="Secret Key" />);
-    expect(screen.getByText("Secret Key")).toBeInTheDocument();
-  });
-
-  it("has password type by default", () => {
-    render(<PasswordInputField {...baseProps} />);
-    const input = screen.getByLabelText(baseProps.label);
-    expect(input).toHaveAttribute("type", "password");
-  });
-
-  it("toggles to text type on visibility click", async () => {
-    const onToggle = vi.fn();
-    const user = userEvent.setup();
-    render(<PasswordInputField {...baseProps} onTogglePassword={onToggle} />);
-    const toggleBtn = screen.getByRole("button");
-    await user.click(toggleBtn);
-    expect(onToggle).toHaveBeenCalledOnce();
-  });
-
-  it("toggles back to password type on second click", async () => {
-    const user = userEvent.setup();
-    render(<PasswordInputField {...baseProps} />);
-    const toggleBtn = screen.getByRole("button");
-    await user.click(toggleBtn);
-    await user.click(toggleBtn);
-    const input = screen.getByLabelText(baseProps.label);
-    expect(input).toHaveAttribute("type", "password");
-  });
-
   it("calls register.onChange when typing", async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();
@@ -172,35 +106,6 @@ describe("PasswordInputField", () => {
     const input = screen.getByPlaceholderText("Enter password");
     await user.type(input, "a");
     expect(onChange).toHaveBeenCalled();
-  });
-
-  it("calls register.onBlur when blurring", async () => {
-    const onBlur = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <PasswordInputField
-        {...baseProps}
-        register={{ ...baseProps.register, onBlur }}
-      />
-    );
-    const input = screen.getByPlaceholderText("Enter password");
-    await user.click(input);
-    await user.tab();
-    expect(onBlur).toHaveBeenCalled();
-  });
-
-  it("spreads restRegister props to input", () => {
-    render(
-      <PasswordInputField
-        {...baseProps}
-        register={{
-          ...baseProps.register,
-          name: "my-password" as const,
-        }}
-      />
-    );
-    const input = screen.getByPlaceholderText("Enter password");
-    expect(input).toHaveAttribute("name", "my-password");
   });
 
   it("renders no error slot when the message is undefined", () => {

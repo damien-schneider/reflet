@@ -3,20 +3,6 @@ import { describe, expect, it } from "vitest";
 import { InvitationEmail } from "./invitation-email";
 
 describe("InvitationEmail", () => {
-  it("renders with organization name", async () => {
-    const html = await render(
-      // biome-ignore lint/a11y/useValidAriaRole: role is a component prop, not ARIA role
-      <InvitationEmail
-        acceptUrl="https://app.reflet.dev/invite/abc123"
-        inviterName="John Doe"
-        organizationName="Acme Corp"
-        role="member"
-      />
-    );
-
-    expect(html).toContain("Acme Corp");
-  });
-
   it("renders with inviter name", async () => {
     const html = await render(
       // biome-ignore lint/a11y/useValidAriaRole: role is a component prop, not ARIA role
@@ -73,7 +59,7 @@ describe("InvitationEmail", () => {
     expect(html).toContain("https://app.reflet.dev/invite/abc123");
   });
 
-  it("includes preview text with organization name", async () => {
+  it("previews the invitation to the organization in the inbox", async () => {
     const html = await render(
       // biome-ignore lint/a11y/useValidAriaRole: role is a component prop, not ARIA role
       <InvitationEmail
@@ -84,7 +70,8 @@ describe("InvitationEmail", () => {
       />
     );
 
-    expect(html).toContain("invitation");
-    expect(html).toContain("Acme Corp");
+    expect(html).toContain(
+      "Vous avez reçu une invitation à rejoindre Acme Corp"
+    );
   });
 });

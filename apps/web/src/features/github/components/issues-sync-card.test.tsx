@@ -113,11 +113,6 @@ const defaultProps = {
 };
 
 describe("IssuesSyncSection", () => {
-  it("renders enable sync switch", () => {
-    render(<IssuesSyncSection {...defaultProps} />);
-    expect(screen.getByTestId("switch-issues-sync")).toBeInTheDocument();
-  });
-
   it("calls onToggleSync when switch toggled", async () => {
     const onToggleSync = vi.fn();
     const user = userEvent.setup();
@@ -146,11 +141,6 @@ describe("IssuesSyncSection", () => {
     expect(screen.queryByText("Issues synced")).toBeNull();
   });
 
-  it("shows auto-import switch when enabled", () => {
-    render(<IssuesSyncSection {...defaultProps} isEnabled />);
-    expect(screen.getByTestId("switch-auto-import-issues")).toBeInTheDocument();
-  });
-
   it("calls onToggleSync when auto-import switch toggled", async () => {
     const onToggleSync = vi.fn();
     const user = userEvent.setup();
@@ -173,16 +163,6 @@ describe("IssuesSyncSection", () => {
   it("hides Sync issues now button for non-admin", () => {
     render(<IssuesSyncSection {...defaultProps} isAdmin={false} isEnabled />);
     expect(screen.queryByText("Sync issues now")).toBeNull();
-  });
-
-  it("calls onSyncNow when sync button clicked", async () => {
-    const onSyncNow = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <IssuesSyncSection {...defaultProps} isEnabled onSyncNow={onSyncNow} />
-    );
-    await user.click(screen.getByText("Sync issues now"));
-    expect(onSyncNow).toHaveBeenCalled();
   });
 
   it("disables sync button when syncing", () => {

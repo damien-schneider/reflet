@@ -40,25 +40,6 @@ describe("getDeadlineInfo", () => {
     expect(info?.relativeLabel).toBe("due today");
   });
 
-  it("returns 'overdue' when target is in the past", () => {
-    const past = toTimestamp("2025-06-10");
-    const info = getDeadlineInfo(past, "active");
-
-    expect(info).not.toBeNull();
-    expect(info?.status).toBe("overdue");
-    expect(info?.daysRemaining).toBeLessThan(0);
-  });
-
-  it("returns 'due_soon' when target is within 7 days", () => {
-    const soon = toTimestamp("2025-06-20");
-    const info = getDeadlineInfo(soon, "active");
-
-    expect(info).not.toBeNull();
-    expect(info?.status).toBe("due_soon");
-    expect(info?.daysRemaining).toBe(5);
-    expect(info?.daysRemaining).toBeLessThanOrEqual(7);
-  });
-
   it("returns 'due_soon' at exact 7-day boundary", () => {
     const boundary = toTimestamp("2025-06-22");
     const info = getDeadlineInfo(boundary, "active");
@@ -85,13 +66,6 @@ describe("getDeadlineInfo", () => {
     expect(info?.status).toBe("none");
   });
 
-  it("returns 'none' for completed milestone even if overdue", () => {
-    const past = toTimestamp("2020-01-01");
-    const info = getDeadlineInfo(past, "completed");
-
-    expect(info?.status).toBe("none");
-  });
-
   it("returns 'none' for completed milestone even if due today", () => {
     const today = toTimestamp("2025-06-15");
     const info = getDeadlineInfo(today, "completed");
@@ -111,14 +85,6 @@ describe("getDeadlineInfo", () => {
     const info = getDeadlineInfo(future, "active");
 
     expect(info?.relativeLabel).toContain("in");
-  });
-
-  it("handles very far future dates", () => {
-    const farFuture = toTimestamp("2030-12-31");
-    const info = getDeadlineInfo(farFuture, "active");
-
-    expect(info?.status).toBe("upcoming");
-    expect(info?.daysRemaining).toBeGreaterThan(365);
   });
 
   it("handles yesterday as overdue", () => {

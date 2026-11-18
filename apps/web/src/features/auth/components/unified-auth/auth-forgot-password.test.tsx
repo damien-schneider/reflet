@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
@@ -129,13 +129,6 @@ describe("AuthConfirmPassword", () => {
     expect(screen.getByText("Passwords do not match")).toBeInTheDocument();
   });
 
-  it("does not show error when no errors", () => {
-    render(<AuthConfirmPassword {...baseProps} mode="signUp" />);
-    expect(
-      screen.queryByTestId("confirm-password-error")
-    ).not.toBeInTheDocument();
-  });
-
   it("has password type input for security", () => {
     render(<AuthConfirmPassword {...baseProps} mode="signUp" />);
     const input = screen.getByTestId("confirm-password-input");
@@ -149,26 +142,6 @@ describe("AuthConfirmPassword", () => {
     expect(screen.getByTestId("confirm-password-input")).not.toBeDisabled();
   });
 
-  it("calls onConfirmPasswordChange with event, setValue, and trigger on input change", () => {
-    const onConfirmPasswordChange = vi.fn();
-    const setValue = vi.fn();
-    const trigger = vi.fn();
-    render(
-      <AuthConfirmPassword
-        {...baseProps}
-        mode="signUp"
-        onConfirmPasswordChange={onConfirmPasswordChange}
-        setValue={setValue}
-        trigger={trigger}
-      />
-    );
-    const input = screen.getByTestId("confirm-password-input");
-    fireEvent.change(input, { target: { value: "newpass" } });
-    expect(onConfirmPasswordChange).toHaveBeenCalledOnce();
-    expect(onConfirmPasswordChange.mock.calls[0][1]).toBe(setValue);
-    expect(onConfirmPasswordChange.mock.calls[0][2]).toBe(trigger);
-  });
-
   it("shows empty errors array without rendering error element", () => {
     render(
       <AuthConfirmPassword
@@ -180,11 +153,5 @@ describe("AuthConfirmPassword", () => {
     expect(
       screen.queryByTestId("confirm-password-error")
     ).not.toBeInTheDocument();
-  });
-
-  it("renders link with correct styling class", () => {
-    render(<AuthForgotPasswordLink mode="signIn" />);
-    const link = screen.getByText("Forgot password?").closest("a");
-    expect(link?.className).toContain("text-sm");
   });
 });

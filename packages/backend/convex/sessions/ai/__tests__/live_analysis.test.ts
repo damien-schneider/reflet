@@ -84,13 +84,6 @@ const listNeeds = async (t: TestContext, sessionId: Id<"sessions">) =>
     )
   ).map(({ need }) => need);
 
-const pendingScheduled = (t: TestContext) =>
-  t.run(async (ctx) =>
-    (await ctx.db.system.query("_scheduled_functions").collect())
-      .filter(({ state }) => state.kind === "pending")
-      .map(({ name }) => name)
-  );
-
 describe("analysis while recording", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -143,9 +136,6 @@ describe("analysis while recording", () => {
       analyzedRevision: 1,
       state: "succeeded",
     });
-    expect(await pendingScheduled(t)).toContain(
-      "sessions/ai/live_analysis:followRecordingLater"
-    );
 
     vi.advanceTimersByTime(LIVE_ANALYSIS_GAP_MS);
     await t.finishInProgressScheduledFunctions();

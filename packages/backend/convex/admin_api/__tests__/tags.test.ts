@@ -14,13 +14,11 @@ describe("admin_api_tags", () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const result = await t.mutation(internal.admin_api.tags.createTag, {
+    await t.mutation(internal.admin_api.tags.createTag, {
       color: "red",
       name: "Bug Report",
       organizationId: orgId,
     });
-
-    expect(result.id).toBeDefined();
 
     const tags = await t.query(internal.admin_api.tags.listTags, {
       organizationId: orgId,

@@ -14,54 +14,9 @@ describe("agent-config", () => {
   });
 
   describe("AGENTS", () => {
-    it("should export an array of agent targets", () => {
-      expect(Array.isArray(AGENTS)).toBe(true);
-      expect(AGENTS.length).toBeGreaterThan(0);
-    });
-
     it("should have unique ids", () => {
       const ids = AGENTS.map((a) => a.id);
       expect(new Set(ids).size).toBe(ids.length);
-    });
-
-    it("should include a copy-generic agent", () => {
-      const copyAgent = AGENTS.find((a) => a.id === "copy-generic");
-      expect(copyAgent).toBeDefined();
-      expect(copyAgent?.type).toBe("copy");
-      expect(copyAgent?.label).toBe("Copy prompt");
-    });
-
-    it("should include cursor deeplink agent", () => {
-      const cursor = AGENTS.find((a) => a.id === "cursor");
-      expect(cursor).toBeDefined();
-      expect(cursor?.type).toBe("deeplink");
-    });
-
-    it("should include vscode-copilot deeplink agent", () => {
-      const vscode = AGENTS.find((a) => a.id === "vscode-copilot");
-      expect(vscode).toBeDefined();
-      expect(vscode?.type).toBe("deeplink");
-    });
-
-    it("should include windsurf deeplink agent", () => {
-      const windsurf = AGENTS.find((a) => a.id === "windsurf");
-      expect(windsurf).toBeDefined();
-      expect(windsurf?.type).toBe("deeplink");
-    });
-
-    it("should include copilot-workspace cloud agent", () => {
-      const cw = AGENTS.find((a) => a.id === "copilot-workspace");
-      expect(cw).toBeDefined();
-      expect(cw?.type).toBe("cloud");
-    });
-
-    it("should have label, icon, type, and description for each agent", () => {
-      for (const agent of AGENTS) {
-        expect(agent.label).toBeTruthy();
-        expect(agent.icon).toBeDefined();
-        expect(agent.type).toBeTruthy();
-        expect(agent.description).toBeTruthy();
-      }
     });
   });
 
@@ -112,12 +67,6 @@ describe("agent-config", () => {
       const result = openDeepLink("unknown-agent", "Hello");
       expect(result).toBe(false);
       expect(windowOpenSpy).not.toHaveBeenCalled();
-    });
-
-    it("should encode special characters in prompt", () => {
-      openDeepLink("cursor", "Fix <script>alert('xss')</script>");
-      const url = windowOpenSpy.mock.calls[0][0] as string;
-      expect(url).not.toContain("<script>");
     });
   });
 

@@ -13,7 +13,7 @@ export interface OptimisticVoteState {
   voteType: VoteType;
 }
 
-export function getVoteValue(
+function getVoteValue(
   voteType: "upvote" | "downvote" | null | undefined
 ): number {
   if (voteType === "upvote") {

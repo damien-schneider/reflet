@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { internal } from "../../_generated/api";
+import { EVALUATION_MODEL } from "../../ai/models";
 import { setupTest } from "../../test.helpers";
 import { evaluateFeedbackTriage } from "../triage_evaluation";
 
@@ -64,7 +65,7 @@ describe("feedback triage action", () => {
           description: "Checkout fails on mobile",
           title: "Checkout failure",
         },
-        model: "jev-1.13",
+        model: EVALUATION_MODEL,
         status: "completed",
       },
     ]);

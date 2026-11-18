@@ -1,18 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@phosphor-icons/react", () => ({
-  TextAlignCenter: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-align-center" {...props} />
-  ),
-  TextAlignLeft: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-align-left" {...props} />
-  ),
-  TextAlignRight: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-align-right" {...props} />
-  ),
-}));
-
 const createMockEditor = (overrides: Record<string, unknown> = {}) => {
   const mockRun = vi.fn();
   const mockUpdateAttributes = vi.fn(() => ({ run: mockRun }));
@@ -79,18 +67,6 @@ describe("ImageBubbleMenu", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders alignment icons", () => {
-    const editor = createMockEditor({
-      isActive: vi.fn(() => true),
-    });
-
-    render(<ImageBubbleMenu editor={editor as never} />);
-
-    expect(screen.getByTestId("icon-align-left")).toBeInTheDocument();
-    expect(screen.getByTestId("icon-align-center")).toBeInTheDocument();
-    expect(screen.getByTestId("icon-align-right")).toBeInTheDocument();
-  });
-
   it("calls setAlignment with left when left button clicked", () => {
     const editor = createMockEditor({
       isActive: vi.fn(() => true),
@@ -130,39 +106,6 @@ describe("ImageBubbleMenu", () => {
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
       align: "center",
     });
-  });
-
-  it("registers selectionUpdate and transaction listeners", () => {
-    const editor = createMockEditor({
-      isActive: vi.fn(() => false),
-    });
-
-    render(<ImageBubbleMenu editor={editor as never} />);
-
-    expect(editor.on).toHaveBeenCalledWith(
-      "selectionUpdate",
-      expect.any(Function)
-    );
-    expect(editor.on).toHaveBeenCalledWith("transaction", expect.any(Function));
-  });
-
-  it("cleans up listeners on unmount", () => {
-    const editor = createMockEditor({
-      isActive: vi.fn(() => false),
-    });
-
-    const { unmount } = render(<ImageBubbleMenu editor={editor as never} />);
-
-    unmount();
-
-    expect(editor.off).toHaveBeenCalledWith(
-      "selectionUpdate",
-      expect.any(Function)
-    );
-    expect(editor.off).toHaveBeenCalledWith(
-      "transaction",
-      expect.any(Function)
-    );
   });
 
   it("defaults to center when align attribute is invalid", () => {

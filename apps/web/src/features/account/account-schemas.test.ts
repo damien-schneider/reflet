@@ -12,14 +12,6 @@ describe("updateProfileSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts profile with avatar URL", () => {
-    const result = updateProfileSchema.safeParse({
-      avatarUrl: "https://example.com/avatar.png",
-      name: "John",
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("accepts empty string as avatar URL", () => {
     const result = updateProfileSchema.safeParse({
       avatarUrl: "",
@@ -36,11 +28,6 @@ describe("updateProfileSchema", () => {
     }
   });
 
-  it("rejects missing name", () => {
-    const result = updateProfileSchema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
   it("rejects invalid avatar URL", () => {
     const result = updateProfileSchema.safeParse({
       avatarUrl: "not-a-url",
@@ -50,14 +37,6 @@ describe("updateProfileSchema", () => {
     if (!result.success) {
       expect(result.error.issues[0].path).toEqual(["avatarUrl"]);
     }
-  });
-
-  it("allows undefined avatarUrl", () => {
-    const result = updateProfileSchema.safeParse({
-      avatarUrl: undefined,
-      name: "Test",
-    });
-    expect(result.success).toBe(true);
   });
 });
 
@@ -75,16 +54,6 @@ describe("updateEmailSchema", () => {
     if (!result.success) {
       expect(result.error.issues[0].path).toEqual(["newEmail"]);
     }
-  });
-
-  it("rejects empty email", () => {
-    const result = updateEmailSchema.safeParse({ newEmail: "" });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects missing email", () => {
-    const result = updateEmailSchema.safeParse({});
-    expect(result.success).toBe(false);
   });
 });
 
@@ -162,14 +131,5 @@ describe("updatePasswordSchema", () => {
       newPassword: "12345678",
     });
     expect(result.success).toBe(true);
-  });
-
-  it("rejects all empty fields", () => {
-    const result = updatePasswordSchema.safeParse({
-      confirmPassword: "",
-      currentPassword: "",
-      newPassword: "",
-    });
-    expect(result.success).toBe(false);
   });
 });

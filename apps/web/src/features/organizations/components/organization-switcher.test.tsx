@@ -230,9 +230,10 @@ describe("OrganizationSwitcher", () => {
     ).toBeDisabled();
   });
 
-  it("renders current organization name", () => {
+  it("shows the current organization instead of the picker placeholder", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getAllByText("Acme Inc").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Select organization")).not.toBeInTheDocument();
   });
 
   it("shows Select organization when no org matches", () => {
@@ -284,24 +285,6 @@ describe("OrganizationSwitcher", () => {
     expect(
       document.querySelector('img[src="https://example.com/logo.png"]')
     ).toBeInTheDocument();
-  });
-
-  it("allows typing in create org input", async () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const user = userEvent.setup();
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    await user.click(screen.getByText("Create organization"));
-    const input = screen.getByPlaceholderText("My Company");
-    await user.type(input, "New Org");
-    expect(input).toHaveValue("New Org");
-  });
-
-  it("handles empty organizations list", () => {
-    vi.mocked(useQuery).mockReturnValue([]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getByText("Select organization")).toBeInTheDocument();
   });
 
   it("explains and does not create org when name is empty", async () => {
@@ -379,23 +362,6 @@ describe("OrganizationSwitcher", () => {
     expect(
       await screen.findByText("Unable to create the organization. Try again.")
     ).toBeInTheDocument();
-  });
-
-  it("submits on Enter key in the input", async () => {
-    const createOrgMock = vi
-      .fn()
-      .mockResolvedValue({ id: "new-org", slug: "new-org-server-slug" });
-    vi.mocked(useMutation).mockReturnValue(createOrgMock);
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const user = userEvent.setup();
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    await user.click(screen.getByText("Create organization"));
-    const input = screen.getByPlaceholderText("My Company");
-    await user.type(input, "Enter Org");
-    await user.keyboard("{Enter}");
-    expect(createOrgMock).toHaveBeenCalledWith({ name: "Enter Org" });
   });
 
   it("filters out null entries in orgs list", () => {

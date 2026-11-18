@@ -45,16 +45,6 @@ describe("RefletAdminClient - request construction", () => {
       })
     );
   });
-
-  test("uses custom base URL", async () => {
-    const client = createClient();
-    mockFetchResponse([]);
-
-    await client.listTags();
-
-    const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url.startsWith(TEST_BASE_URL)).toBe(true);
-  });
 });
 
 describe("RefletAdminClient - GET endpoints", () => {

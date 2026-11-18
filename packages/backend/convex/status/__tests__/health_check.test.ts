@@ -8,7 +8,7 @@ import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
 const DNS_ENDPOINT = "https://cloudflare-dns.com";
-const CHECK_BATCH_SIZE = 10;
+const MANY_MONITORS = 23;
 
 const dns = vi.hoisted(() => ({ lookup: vi.fn() }));
 const https = vi.hoisted(() => ({ request: vi.fn() }));
@@ -293,14 +293,17 @@ describe("health checks", () => {
     }
   );
 
-  test("fans due monitors out into bounded batches", async () => {
+  test("schedules every due monitor once, split across several batches", async () => {
     const t = setupTest();
-    const monitorCount = CHECK_BATCH_SIZE * 2 + 3;
-    await t.run(async (ctx) => {
+    const monitorIds = await t.run(async (ctx) => {
       const organizationId = await seedOrganization(ctx);
-      for (let i = 0; i < monitorCount; i++) {
-        await seedMonitor(ctx, organizationId, `https://s${i}.example.com/`);
+      const ids: Id<"statusMonitors">[] = [];
+      for (let i = 0; i < MANY_MONITORS; i++) {
+        ids.push(
+          await seedMonitor(ctx, organizationId, `https://s${i}.example.com/`)
+        );
       }
+      return ids;
     });
 
     await t.action(internal.status.healthCheck.runHealthChecks, {});
@@ -310,7 +313,10 @@ describe("health checks", () => {
         (job) => job.name.includes("checkMonitorBatch")
       )
     );
-    const batchSizes = batches.map((job) => job.args[0].monitors.length);
-    expect(batchSizes).toEqual([CHECK_BATCH_SIZE, CHECK_BATCH_SIZE, 3]);
+    const scheduledIds = batches.flatMap((job) =>
+      job.args[0].monitors.map(({ _id }: { _id: string }) => _id)
+    );
+    expect(scheduledIds.sort()).toEqual([...monitorIds].sort());
+    expect(batches.length).toBeGreaterThan(1);
   });
 });

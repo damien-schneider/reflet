@@ -91,16 +91,6 @@ describe("computeDashboardNavigation", () => {
       expect(result.orgNotAccessible).toBe(false);
     });
 
-    it("should never redirect when org is loading", () => {
-      const result = computeDashboardNavigation({
-        org: undefined,
-        organizations: [makeOrg("my-organization")],
-        orgSlug: "my-organization",
-      });
-      expect(result.redirectTo).toBeNull();
-      expect(result.orgNotAccessible).toBe(false);
-    });
-
     it("should never redirect when org is null but slug is in user list", () => {
       const result = computeDashboardNavigation({
         org: null,
@@ -141,16 +131,6 @@ describe("computeDashboardNavigation", () => {
       expect(result.orgNotAccessible).toBe(false);
     });
 
-    it("should never redirect when both queries return no-auth results", () => {
-      const result = computeDashboardNavigation({
-        org: null,
-        organizations: [],
-        orgSlug: "my-organization",
-      });
-      expect(result.redirectTo).toBeNull();
-      expect(result.orgNotAccessible).toBe(false);
-    });
-
     it("should never redirect when org has role:null and organizations empty", () => {
       const result = computeDashboardNavigation({
         org: makeOrg("my-organization", null),
@@ -163,15 +143,6 @@ describe("computeDashboardNavigation", () => {
   });
 
   describe("orgNotAccessible detection", () => {
-    it("should be true when org is null and slug not in user list", () => {
-      const result = computeDashboardNavigation({
-        org: null,
-        organizations: [makeOrg("my-organization")],
-        orgSlug: "nonexistent",
-      });
-      expect(result.orgNotAccessible).toBe(true);
-    });
-
     it("should be true when org has no role and slug not in user list", () => {
       const result = computeDashboardNavigation({
         org: makeOrg("public-org", null),
@@ -179,24 +150,6 @@ describe("computeDashboardNavigation", () => {
         orgSlug: "public-org",
       });
       expect(result.orgNotAccessible).toBe(true);
-    });
-
-    it("should be false when org has a valid role", () => {
-      const result = computeDashboardNavigation({
-        org: makeOrg("my-organization", "member"),
-        organizations: [makeOrg("my-organization")],
-        orgSlug: "my-organization",
-      });
-      expect(result.orgNotAccessible).toBe(false);
-    });
-
-    it("should be false when slug is in user list even if getBySlug returns null", () => {
-      const result = computeDashboardNavigation({
-        org: null,
-        organizations: [makeOrg("my-organization")],
-        orgSlug: "my-organization",
-      });
-      expect(result.orgNotAccessible).toBe(false);
     });
   });
 

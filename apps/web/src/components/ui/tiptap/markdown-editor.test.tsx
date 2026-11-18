@@ -130,108 +130,11 @@ vi.mock("convex/react", () => ({
   useQuery: () => null,
 }));
 
-import { useTiptapMarkdownEditor } from "./hooks/use-editor";
 import { TiptapMarkdownEditor } from "./markdown-editor";
-
-const mockUseTiptapEditor = useTiptapMarkdownEditor as ReturnType<typeof vi.fn>;
 
 describe("TiptapMarkdownEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("renders with the correct container class", () => {
-    render(
-      <TiptapMarkdownEditor onChange={() => {}} value="Hello **world**" />
-    );
-
-    const container = document.querySelector(
-      '[data-slot="tiptap-markdown-editor"]'
-    );
-    expect(container).toBeInTheDocument();
-  });
-
-  it("renders the editor content area", () => {
-    render(
-      <TiptapMarkdownEditor
-        onChange={() => {}}
-        placeholder="Start typing..."
-        value=""
-      />
-    );
-
-    const editors = screen.getAllByTestId("editor-content");
-    expect(editors.length).toBeGreaterThan(0);
-    expect(editors[0]).toBeInTheDocument();
-  });
-
-  it("calls useTiptapMarkdownEditor with correct props", () => {
-    render(
-      <TiptapMarkdownEditor onChange={() => {}} value="Editable content" />
-    );
-
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.value).toBe("Editable content");
-    expect(callArgs.editable).toBe(true);
-  });
-
-  it("applies custom className to container", () => {
-    render(
-      <TiptapMarkdownEditor
-        className="custom-class my-custom-bg"
-        onChange={() => {}}
-        value="Content"
-      />
-    );
-
-    const container = document.querySelector(
-      '[data-slot="tiptap-markdown-editor"]'
-    );
-    expect(container).toHaveClass("custom-class");
-    expect(container).toHaveClass("my-custom-bg");
-  });
-
-  it("has container with data-slot for CSS targeting", () => {
-    render(
-      <TiptapMarkdownEditor onChange={() => {}} value="Select this text" />
-    );
-
-    const container = document.querySelector(
-      '[data-slot="tiptap-markdown-editor"]'
-    );
-    expect(container).toBeInTheDocument();
-
-    expect(container).toHaveClass("border-input");
-    expect(container).toHaveClass("rounded-lg");
-  });
-
-  it("renders with maxLength prop", () => {
-    render(
-      <TiptapMarkdownEditor
-        maxLength={100}
-        onChange={() => {}}
-        value="Content"
-      />
-    );
-
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.maxLength).toBe(100);
-  });
-
-  it("passes placeholder to hook", () => {
-    render(
-      <TiptapMarkdownEditor
-        onChange={() => {}}
-        placeholder="Start typing..."
-        value=""
-      />
-    );
-
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.placeholder).toBe("Start typing...");
   });
 
   describe("ImageBubbleMenu visibility", () => {
@@ -257,72 +160,6 @@ describe("TiptapMarkdownEditor", () => {
       );
 
       expect(screen.queryByTestId("image-bubble-menu")).not.toBeInTheDocument();
-    });
-  });
-
-  it("renders with empty value", () => {
-    render(<TiptapMarkdownEditor onChange={() => {}} value="" />);
-    const container = document.querySelector(
-      '[data-slot="tiptap-markdown-editor"]'
-    );
-    expect(container).toBeInTheDocument();
-  });
-
-  it("passes onChange callback to hook", () => {
-    const onChange = vi.fn();
-    render(<TiptapMarkdownEditor onChange={onChange} value="test" />);
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.onChange).toBe(onChange);
-  });
-
-  it("renders editor with editable=true by default", () => {
-    render(<TiptapMarkdownEditor onChange={() => {}} value="content" />);
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.editable).toBe(true);
-  });
-
-  it("passes disabled to hook", () => {
-    render(
-      <TiptapMarkdownEditor disabled onChange={() => {}} value="content" />
-    );
-    expect(mockUseTiptapEditor).toHaveBeenCalled();
-    const callArgs = mockUseTiptapEditor.mock.calls[0][0];
-    expect(callArgs.disabled).toBe(true);
-  });
-
-  it("renders without ImageBubbleMenu by default when editable is not set", () => {
-    render(<TiptapMarkdownEditor onChange={() => {}} value="" />);
-    expect(screen.getByTestId("image-bubble-menu")).toBeInTheDocument();
-  });
-
-  describe("minimal mode", () => {
-    it("renders in minimal mode without border classes", () => {
-      render(
-        <TiptapMarkdownEditor minimal onChange={() => {}} value="content" />
-      );
-      const container = document.querySelector(
-        '[data-slot="tiptap-markdown-editor"]'
-      );
-      expect(container).toBeInTheDocument();
-      expect(container).not.toHaveClass("border-input");
-      expect(container).toHaveClass("w-full");
-    });
-
-    it("renders disabled styling in minimal mode", () => {
-      render(
-        <TiptapMarkdownEditor
-          disabled
-          minimal
-          onChange={() => {}}
-          value="content"
-        />
-      );
-      const container = document.querySelector(
-        '[data-slot="tiptap-markdown-editor"]'
-      );
-      expect(container).toHaveClass("cursor-not-allowed");
     });
   });
 

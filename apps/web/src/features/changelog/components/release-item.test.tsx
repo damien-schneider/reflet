@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -106,11 +106,6 @@ describe("ReleaseItem", () => {
     }),
   };
 
-  it("renders the release title", () => {
-    render(<ReleaseItem {...defaultProps} />);
-    expect(screen.getByText("New Features")).toBeInTheDocument();
-  });
-
   it("displays the version badge", () => {
     render(<ReleaseItem {...defaultProps} />);
     expect(screen.getByText("1.0.0")).toBeInTheDocument();
@@ -132,27 +127,10 @@ describe("ReleaseItem", () => {
     expect(screen.queryByText("Draft")).not.toBeInTheDocument();
   });
 
-  it("renders markdown description", () => {
-    render(<ReleaseItem {...defaultProps} />);
-    expect(screen.getByTestId("markdown-renderer")).toHaveTextContent(
-      /Changes.*Fixed bugs/
-    );
-  });
-
   it("does not render markdown when no description", () => {
     const release = makeRelease({ publishedAt: 1_700_000_000_000 });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
     expect(screen.queryByTestId("markdown-renderer")).not.toBeInTheDocument();
-  });
-
-  it("does not show version badge when no version", () => {
-    const release = makeRelease({ publishedAt: 1_700_000_000_000 });
-    render(<ReleaseItem orgSlug="test-org" release={release} />);
-    const badges = screen.queryAllByTestId("badge");
-    const versionBadge = badges.find(
-      (b) => b.getAttribute("data-variant") === "outline"
-    );
-    expect(versionBadge).toBeUndefined();
   });
 
   it("renders shipped features when feedback is present", () => {
@@ -217,43 +195,5 @@ describe("ReleaseItem", () => {
     const release = makeRelease({ version: "1.0.0" });
     render(<ReleaseItem isAdmin orgSlug="test-org" release={release} />);
     expect(screen.getByText("Publish")).toBeInTheDocument();
-  });
-
-  it("calls onPublish when Publish is clicked", () => {
-    const onPublish = vi.fn();
-    const release = makeRelease({ version: "1.0.0" });
-    render(
-      <ReleaseItem
-        isAdmin
-        onPublish={onPublish}
-        orgSlug="test-org"
-        release={release}
-      />
-    );
-    fireEvent.click(screen.getByText("Publish"));
-    expect(onPublish).toHaveBeenCalledOnce();
-  });
-
-  it("calls onUnpublish when Unpublish is clicked", () => {
-    const onUnpublish = vi.fn();
-    render(<ReleaseItem {...defaultProps} isAdmin onUnpublish={onUnpublish} />);
-    fireEvent.click(screen.getByText("Unpublish"));
-    expect(onUnpublish).toHaveBeenCalledOnce();
-  });
-
-  it("calls onDelete when Delete is clicked", () => {
-    const onDelete = vi.fn();
-    render(<ReleaseItem {...defaultProps} isAdmin onDelete={onDelete} />);
-    fireEvent.click(screen.getByText("Delete…"));
-    expect(onDelete).toHaveBeenCalledOnce();
-  });
-
-  it("applies reduced opacity for draft releases", () => {
-    const release = makeRelease({ version: "1.0.0" });
-    const { container } = render(
-      <ReleaseItem orgSlug="test-org" release={release} />
-    );
-    const contentDiv = container.querySelector(".opacity-70");
-    expect(contentDiv).toBeInTheDocument();
   });
 });

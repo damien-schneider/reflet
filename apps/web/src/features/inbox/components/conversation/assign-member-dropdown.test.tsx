@@ -64,18 +64,20 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => {
     ),
     DropdownMenuSeparator: () => <hr />,
     DropdownMenuTrigger: ({
+      "aria-label": ariaLabel,
       children,
       render: Render,
       disabled,
     }: {
+      "aria-label"?: string;
       children?: React.ReactNode;
       render?: React.ReactNode;
       disabled?: boolean;
     }) => (
-      <div data-disabled={disabled}>
+      <fieldset aria-label={ariaLabel} data-disabled={disabled}>
         {Render}
         {children}
-      </div>
+      </fieldset>
     ),
   };
 });
@@ -101,13 +103,12 @@ const members = [
 ];
 
 describe("AssignMemberDropdown", () => {
-  it("shows Unassigned when no one is assigned", () => {
+  it("labels the trigger Unassigned when no one is assigned", () => {
     render(<AssignMemberDropdown members={members} onAssign={vi.fn()} />);
-    const matches = screen.getAllByText("Unassigned");
-    expect(matches.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText("Assignee: Unassigned")).toBeInTheDocument();
   });
 
-  it("shows assigned member name", () => {
+  it("labels the trigger with the assigned member's name", () => {
     render(
       <AssignMemberDropdown
         assignedTo="m1"
@@ -115,11 +116,10 @@ describe("AssignMemberDropdown", () => {
         onAssign={vi.fn()}
       />
     );
-    const matches = screen.getAllByText("Alice Smith");
-    expect(matches.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByLabelText("Assignee: Alice Smith")).toBeInTheDocument();
   });
 
-  it("shows member email as fallback when no name", () => {
+  it("falls back to the member's email when they have no name", () => {
     render(
       <AssignMemberDropdown
         assignedTo="m3"
@@ -127,34 +127,9 @@ describe("AssignMemberDropdown", () => {
         onAssign={vi.fn()}
       />
     );
-    const matches = screen.getAllByText("carol@test.com");
-    expect(matches.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders initials for assigned member", () => {
-    render(
-      <AssignMemberDropdown
-        assignedTo="m1"
-        members={members}
-        onAssign={vi.fn()}
-      />
-    );
-    const matches = screen.getAllByText("AS");
-    expect(matches.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders Unassigned option", () => {
-    render(<AssignMemberDropdown members={members} onAssign={vi.fn()} />);
-    // The Unassigned option in the dropdown
-    const unassignedButtons = screen.getAllByText("Unassigned");
-    expect(unassignedButtons.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders all members in dropdown", () => {
-    render(<AssignMemberDropdown members={members} onAssign={vi.fn()} />);
-    expect(screen.getByText("Alice Smith")).toBeInTheDocument();
-    expect(screen.getByText("Bob Jones")).toBeInTheDocument();
-    expect(screen.getByText("carol@test.com")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Assignee: carol@test.com")
+    ).toBeInTheDocument();
   });
 
   it("calls onAssign when a member is clicked", async () => {

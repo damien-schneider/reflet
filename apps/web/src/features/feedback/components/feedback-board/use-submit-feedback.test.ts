@@ -21,25 +21,6 @@ describe("useSubmitFeedback", () => {
     vi.clearAllMocks();
   });
 
-  it("initializes with empty state", () => {
-    const { result } = renderHook(() => useSubmitFeedback(baseParams));
-    expect(result.current.newFeedback.title).toBe("");
-    expect(result.current.newFeedback.description).toBe("");
-    expect(result.current.isSubmitting).toBe(false);
-    expect(result.current.submitTagId).toBeUndefined();
-    expect(result.current.submitAssigneeId).toBeUndefined();
-  });
-
-  it("does not submit when title is empty", async () => {
-    const { result } = renderHook(() => useSubmitFeedback(baseParams));
-
-    await act(async () => {
-      await result.current.handleSubmitFeedback();
-    });
-
-    expect(baseParams.createFeedbackMember).not.toHaveBeenCalled();
-  });
-
   it("does not submit when title is only whitespace", async () => {
     const { result } = renderHook(() => useSubmitFeedback(baseParams));
 

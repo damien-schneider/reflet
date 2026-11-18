@@ -10,18 +10,31 @@ import { createFeedback, createOrg } from "./test_helpers";
 const testSchema = schema as any;
 
 describe("admin_api_releases", () => {
-  test("createRelease should create a release", async () => {
+  test("createRelease stores an unpublished release with its notes and version", async () => {
     const t = convexTest(testSchema, modules);
     const orgId = await createOrg(t);
 
-    const result = await t.mutation(internal.admin_api.releases.createRelease, {
-      description: "Initial release",
+    const { id: releaseId } = await t.mutation(
+      internal.admin_api.releases.createRelease,
+      {
+        description: "Initial release",
+        organizationId: orgId,
+        title: "v1.0.0 Release",
+        version: "v1.0.0",
+      }
+    );
+
+    const release = await t.query(internal.admin_api.releases.getRelease, {
       organizationId: orgId,
+      releaseId,
+    });
+    expect(release).toMatchObject({
+      description: "Initial release",
+      linkedFeedback: [],
       title: "v1.0.0 Release",
       version: "v1.0.0",
     });
-
-    expect(result.id).toBeDefined();
+    expect(release?.publishedAt).toBeUndefined();
   });
 
   test("listReleases should paginate and sort by newest", async () => {

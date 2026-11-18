@@ -33,39 +33,6 @@ describe("FeedbackCardContent", () => {
     vi.clearAllMocks();
   });
 
-  it("renders feedback title", () => {
-    render(<FeedbackCardContent item={makeItem()} />);
-    expect(screen.getByText("Test feedback")).toBeInTheDocument();
-  });
-
-  it("renders vote and comment counts", () => {
-    render(<FeedbackCardContent item={makeItem()} />);
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
-  });
-
-  it("renders tags when present", () => {
-    const item = makeItem({
-      tags: [
-        {
-          _id: "t1" as Id<"tags">,
-          color: "red",
-          icon: "🐛",
-          name: "Bug",
-        },
-        {
-          _id: "t2" as Id<"tags">,
-          color: "blue",
-          name: "Feature",
-        },
-      ],
-    });
-    render(<FeedbackCardContent item={item} />);
-    expect(screen.getByText("Bug")).toBeInTheDocument();
-    expect(screen.getByText("🐛")).toBeInTheDocument();
-    expect(screen.getByText("Feature")).toBeInTheDocument();
-  });
-
   it("limits tags to 2 visible", () => {
     const item = makeItem({
       tags: [
@@ -78,11 +45,6 @@ describe("FeedbackCardContent", () => {
     expect(screen.getByText("Bug")).toBeInTheDocument();
     expect(screen.getByText("Feature")).toBeInTheDocument();
     expect(screen.queryByText("Hidden")).not.toBeInTheDocument();
-  });
-
-  it("does not render tags section when tags array is empty", () => {
-    render(<FeedbackCardContent item={makeItem({ tags: [] })} />);
-    expect(screen.queryByText("Bug")).not.toBeInTheDocument();
   });
 
   it("skips null tags in array", () => {
@@ -119,18 +81,6 @@ describe("FeedbackCardContent", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders milestones when present", () => {
-    const item = makeItem({
-      milestones: [
-        { _id: "m1" as Id<"milestones">, emoji: "🚀", name: "v1.0" },
-        { _id: "m2" as Id<"milestones">, emoji: "🎉", name: "v2.0" },
-      ],
-    });
-    render(<FeedbackCardContent item={item} />);
-    expect(screen.getByText("🚀")).toBeInTheDocument();
-    expect(screen.getByText("🎉")).toBeInTheDocument();
-  });
-
   it("limits milestones to 2 and shows +N", () => {
     const item = makeItem({
       milestones: [
@@ -150,10 +100,5 @@ describe("FeedbackCardContent", () => {
     });
     render(<FeedbackCardContent item={item} />);
     expect(screen.getByText("🏁")).toBeInTheDocument();
-  });
-
-  it("does not render milestones section when empty", () => {
-    render(<FeedbackCardContent item={makeItem({ milestones: [] })} />);
-    expect(screen.queryByText("🏁")).not.toBeInTheDocument();
   });
 });

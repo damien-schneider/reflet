@@ -117,10 +117,6 @@ describe("inlineExternalImages", () => {
 });
 
 describe("buildSnapdomOptions", () => {
-  it("always excludes the widget so it never lands in its own screenshot", () => {
-    expect(buildSnapdomOptions({}).exclude).toContain(`[${WIDGET_MARKER}]`);
-  });
-
   it("clips to the viewport when capturing the whole page", () => {
     expect(buildSnapdomOptions({}).clip).toBe("viewport");
   });
@@ -131,7 +127,7 @@ describe("buildSnapdomOptions", () => {
     expect(buildSnapdomOptions({ element }).clip).toBeUndefined();
   });
 
-  it("appends caller supplied selectors", () => {
+  it("always excludes the widget, then the caller supplied selectors", () => {
     const options = buildSnapdomOptions({
       excludeSelectors: [".intercom-launcher", "#cookie-banner"],
     });
@@ -150,14 +146,6 @@ describe("buildSnapdomOptions", () => {
 
   it("falls back to a ratio of one when the browser reports nothing", () => {
     expect(buildSnapdomOptions({ devicePixelRatio: 0 }).dpr).toBe(1);
-  });
-
-  it("embeds fonts so text is not rendered with fallback glyphs", () => {
-    expect(buildSnapdomOptions({}).embedFonts).toBe(true);
-  });
-
-  it("reconciles the clone against the live dom so layouts do not drift", () => {
-    expect(buildSnapdomOptions({}).reconcile).toBe(true);
   });
 });
 

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { Editor } from "@tiptap/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createEditorProps, createExtensions } from "./editor-extensions";
 import {
   createImageNodeView,
@@ -96,35 +97,6 @@ describe("Image NodeView", () => {
     expect(img?.style.width).toBe("200px");
   });
 
-  it("destroy removes event listeners without error", () => {
-    const { destroy } = createImageNodeView({
-      editor: createMockEditor(true),
-      getPos: () => 0,
-      node: createMockNode(),
-    });
-    expect(() => destroy()).not.toThrow();
-  });
-
-  it("destroy is safe for non-editable views", () => {
-    const { destroy } = createImageNodeView({
-      editor: createMockEditor(false),
-      getPos: () => 0,
-      node: createMockNode(),
-    });
-    expect(() => destroy()).not.toThrow();
-  });
-
-  it("creates error placeholder element", () => {
-    const { dom } = createImageNodeView({
-      editor: createMockEditor(false),
-      getPos: () => 0,
-      node: createMockNode(),
-    });
-    const errorEl = dom.querySelector(".tiptap-image-error");
-    expect(errorEl).not.toBeNull();
-    expect(errorEl?.textContent).toContain("Image unavailable");
-  });
-
   it("applies width style when provided", () => {
     const { dom } = createImageNodeView({
       editor: createMockEditor(false),
@@ -146,76 +118,50 @@ describe("Image NodeView", () => {
 });
 
 describe("createExtensions", () => {
-  it("returns an array of extensions", () => {
-    const result = createExtensions({
-      onImageUpload: vi.fn(),
-      onVideoUpload: vi.fn(),
-      placeholder: "Write something...",
-    });
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBeGreaterThan(0);
+  const editors: Editor[] = [];
+
+  afterEach(() => {
+    for (const editor of editors.splice(0)) {
+      editor.destroy();
+    }
   });
 
-  it("includes CharacterCount when maxLength is provided", () => {
-    const result = createExtensions({
-      maxLength: 500,
-      onImageUpload: vi.fn(),
-      onVideoUpload: vi.fn(),
-      placeholder: "Write...",
+  const createEditor = (
+    options: Partial<Parameters<typeof createExtensions>[0]>
+  ) => {
+    const editor = new Editor({
+      extensions: createExtensions({
+        onImageUpload: vi.fn(),
+        onVideoUpload: vi.fn(),
+        placeholder: "Write...",
+        ...options,
+      }),
     });
-    const hasCharCount = result.some((ext) => ext.name === "characterCount");
-    expect(hasCharCount).toBe(true);
+    editors.push(editor);
+    return editor;
+  };
+
+  it("refuses text beyond maxLength, and allows it without a limit", () => {
+    const limited = createEditor({ maxLength: 5 });
+    limited.commands.insertContent("123456789");
+    expect(limited.getText()).toBe("");
+
+    const unlimited = createEditor({});
+    unlimited.commands.insertContent("123456789");
+    expect(unlimited.getText()).toBe("123456789");
   });
 
-  it("excludes CharacterCount when maxLength is not provided", () => {
-    const result = createExtensions({
-      onImageUpload: vi.fn(),
-      onVideoUpload: vi.fn(),
-      placeholder: "Write...",
-    });
-    const hasCharCount = result.some((ext) => ext.name === "characterCount");
-    expect(hasCharCount).toBe(false);
-  });
-
-  it("includes submit shortcut when onSubmit is provided", () => {
-    const result = createExtensions({
-      onImageUpload: vi.fn(),
-      onSubmit: vi.fn(),
-      onVideoUpload: vi.fn(),
-      placeholder: "Write...",
-    });
-    const hasSubmit = result.some((ext) => ext.name === "submitShortcut");
-    expect(hasSubmit).toBe(true);
-  });
-
-  it("excludes submit shortcut when onSubmit is not provided", () => {
-    const result = createExtensions({
-      onImageUpload: vi.fn(),
-      onVideoUpload: vi.fn(),
-      placeholder: "Write...",
-    });
-    const hasSubmit = result.some((ext) => ext.name === "submitShortcut");
-    expect(hasSubmit).toBe(false);
+  it("submits on Mod-Enter instead of inserting a line break", () => {
+    const onSubmit = vi.fn();
+    const editor = createEditor({ onSubmit });
+    editor.commands.insertContent("Ship it");
+    editor.commands.keyboardShortcut("Mod-Enter");
+    expect(onSubmit).toHaveBeenCalledOnce();
+    expect(editor.getHTML()).toBe("<p>Ship it</p>");
   });
 });
 
 describe("createEditorProps", () => {
-  it("returns minimal class when minimal is true", () => {
-    const props = createEditorProps({
-      minimal: true,
-      uploadMedia: vi.fn(),
-    });
-    expect(props.attributes.class).toContain("tiptap-minimal-editor");
-  });
-
-  it("returns full class when minimal is false", () => {
-    const props = createEditorProps({
-      minimal: false,
-      uploadMedia: vi.fn(),
-    });
-    expect(props.attributes.class).toContain("tiptap-markdown-editor");
-  });
-
   it("handlePaste uploads image files", () => {
     const uploadMedia = vi.fn();
     const props = createEditorProps({ minimal: false, uploadMedia });
@@ -415,26 +361,6 @@ describe("Image NodeView - error/load events", () => {
     // Error placeholder is NOT reset because src didn't change
     expect(img.style.display).toBe("none");
   });
-
-  it("update without width does not set width style", () => {
-    const { dom, update } = createImageNodeView({
-      editor: createMockEditor(true),
-      getPos: () => 0,
-      node: createMockNode({ width: 200 }),
-    });
-    update({
-      attrs: {
-        align: "center",
-        alt: "",
-        src: "https://example.com/new.png",
-        width: null,
-      },
-      type: { name: "image" },
-    });
-    const img = dom.querySelector("img")!;
-    // Width should still be from previous state since update only sets if width exists
-    expect(img.src).toBe("https://example.com/new.png");
-  });
 });
 
 describe("Image NodeView - resize interactions", () => {
@@ -464,21 +390,6 @@ describe("Image NodeView - resize interactions", () => {
     });
     return { destroy, dom, img, mockRun };
   };
-
-  it("mousedown on resize handle sets data-resizing attribute", () => {
-    const { dom } = createResizableView();
-    const handle = dom.querySelector(".tiptap-resize-handle.bottom-right")!;
-    handle.dispatchEvent(
-      new MouseEvent("mousedown", {
-        bubbles: true,
-        clientX: 100,
-        clientY: 100,
-      })
-    );
-    expect(dom.getAttribute("data-resizing")).toBe("true");
-    // Clean up
-    document.dispatchEvent(new MouseEvent("mouseup"));
-  });
 
   it("mouse drag resizes image width", () => {
     const { dom, img } = createResizableView();
@@ -542,28 +453,6 @@ describe("Image NodeView - resize interactions", () => {
     document.dispatchEvent(new MouseEvent("mouseup"));
   });
 
-  it("touchstart on resize handle starts resize", () => {
-    const { dom } = createResizableView();
-    const handle = dom.querySelector(".tiptap-resize-handle.bottom-right")!;
-
-    const touchEvent = new Event("touchstart", {
-      bubbles: true,
-      cancelable: true,
-    });
-    Object.defineProperty(touchEvent, "touches", {
-      value: [{ clientX: 100, clientY: 100 }],
-    });
-    Object.defineProperty(touchEvent, "preventDefault", { value: vi.fn() });
-    Object.defineProperty(touchEvent, "stopPropagation", { value: vi.fn() });
-    handle.dispatchEvent(touchEvent);
-
-    expect(dom.getAttribute("data-resizing")).toBe("true");
-
-    const endEvent = new Event("touchend", { bubbles: true });
-    Object.defineProperty(endEvent, "touches", { value: [] });
-    document.dispatchEvent(endEvent);
-  });
-
   it("touch drag resizes and touchend saves", () => {
     const { dom, img, mockRun } = createResizableView();
     const handle = dom.querySelector(".tiptap-resize-handle.bottom-right")!;
@@ -616,11 +505,6 @@ describe("Image NodeView - resize interactions", () => {
 
     expect(dom.getAttribute("data-resizing")).toBeNull();
     expect(mockRun).toHaveBeenCalled();
-  });
-
-  it("destroy removes document event listeners", () => {
-    const { destroy } = createResizableView();
-    expect(() => destroy()).not.toThrow();
   });
 
   it("getPos returning undefined skips editor update", () => {

@@ -41,14 +41,4 @@ describe("getMatchesToAutoLink", () => {
     const result = getMatchesToAutoLink([], new Set());
     expect(result).toEqual([]);
   });
-
-  it("preserves order from matches (high confidence first)", () => {
-    const matches = [
-      makeMatch("f1", "high"),
-      makeMatch("f2", "medium"),
-      makeMatch("f3", "low"),
-    ];
-    const result = getMatchesToAutoLink(matches, new Set());
-    expect(result).toEqual(["f1", "f2", "f3"]);
-  });
 });

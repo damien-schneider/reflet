@@ -38,16 +38,6 @@ describe("useAIDraftReply", () => {
       })
     );
 
-  it("should initialize with isGeneratingDraft false", () => {
-    const { result } = renderUseAIDraftReply();
-    expect(result.current.isGeneratingDraft).toBe(false);
-  });
-
-  it("should return handleGenerateDraftReply function", () => {
-    const { result } = renderUseAIDraftReply();
-    expect(result.current.handleGenerateDraftReply).toBeTypeOf("function");
-  });
-
   describe("handleGenerateDraftReply", () => {
     it("should call initiateDraftReply with feedbackId", async () => {
       const { result } = renderUseAIDraftReply();

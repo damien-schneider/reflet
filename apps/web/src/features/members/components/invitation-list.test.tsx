@@ -94,11 +94,6 @@ describe("InvitationList", () => {
     expect(screen.getByText(/Invited as member/)).toBeInTheDocument();
   });
 
-  it("renders Cancel button", () => {
-    render(<InvitationList invitations={[makeInvitation()]} />);
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-  });
-
   it("calls cancelInvitation when Cancel is clicked", async () => {
     const user = userEvent.setup();
     render(<InvitationList invitations={[makeInvitation({ _id: "inv1" })]} />);
@@ -136,23 +131,5 @@ describe("InvitationList", () => {
     expect(mockResendInvitation).toHaveBeenCalledWith({
       invitationId: "inv1",
     });
-  });
-
-  it("renders multiple invitations", () => {
-    const invitations = [
-      makeInvitation({
-        _creationTime: Date.now() - 120_000,
-        _id: "inv1" as never,
-        email: "a@test.com",
-      }),
-      makeInvitation({
-        _creationTime: Date.now() - 120_000,
-        _id: "inv2" as never,
-        email: "b@test.com",
-      }),
-    ];
-    render(<InvitationList invitations={invitations} />);
-    expect(screen.getByText("a@test.com")).toBeInTheDocument();
-    expect(screen.getByText("b@test.com")).toBeInTheDocument();
   });
 });

@@ -12,82 +12,13 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@phosphor-icons/react", () => ({
-  GithubLogo: ({
-    className,
-    weight,
-  }: {
-    className?: string;
-    weight?: string;
-  }) => (
-    <svg className={className} data-testid="github-logo" data-weight={weight} />
-  ),
-  GoogleLogo: ({
-    className,
-    weight,
-  }: {
-    className?: string;
-    weight?: string;
-  }) => (
-    <svg className={className} data-testid="google-logo" data-weight={weight} />
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    className,
-    disabled,
-    variant,
-    type,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    className?: string;
-    disabled?: boolean;
-    variant?: string;
-    type?: string;
-  }) => (
-    <button
-      className={className}
-      data-variant={variant}
-      disabled={disabled}
-      onClick={onClick}
-      type={type as "button" | "submit"}
-    >
-      {children}
-    </button>
-  ),
-}));
-
-import { AuthDivider, AuthSocialProviders } from "./auth-social-providers";
+import { AuthSocialProviders } from "./auth-social-providers";
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
 describe("AuthSocialProviders", () => {
-  it("renders Google sign in button", () => {
-    render(<AuthSocialProviders />);
-    expect(screen.getByText("Continue with Google")).toBeInTheDocument();
-  });
-
-  it("renders GitHub sign in button", () => {
-    render(<AuthSocialProviders />);
-    expect(screen.getByText("Continue with GitHub")).toBeInTheDocument();
-  });
-
-  it("renders Google logo icon", () => {
-    render(<AuthSocialProviders />);
-    expect(screen.getByTestId("google-logo")).toBeInTheDocument();
-  });
-
-  it("renders GitHub logo icon", () => {
-    render(<AuthSocialProviders />);
-    expect(screen.getByTestId("github-logo")).toBeInTheDocument();
-  });
-
   it("calls signIn.social with google provider on Google click", async () => {
     const user = userEvent.setup();
     render(<AuthSocialProviders />);
@@ -108,22 +39,6 @@ describe("AuthSocialProviders", () => {
     });
   });
 
-  it("renders buttons with surface variant", () => {
-    render(<AuthSocialProviders />);
-    const buttons = screen.getAllByRole("button");
-    for (const button of buttons) {
-      expect(button).toHaveAttribute("data-variant", "surface");
-    }
-  });
-
-  it("renders buttons with type button", () => {
-    render(<AuthSocialProviders />);
-    const buttons = screen.getAllByRole("button");
-    for (const button of buttons) {
-      expect(button).toHaveAttribute("type", "button");
-    }
-  });
-
   it("disables both providers while redirecting so the flow can't start twice", async () => {
     const user = userEvent.setup();
     render(<AuthSocialProviders />);
@@ -131,13 +46,6 @@ describe("AuthSocialProviders", () => {
     for (const button of screen.getAllByRole("button")) {
       expect(button).toBeDisabled();
     }
-  });
-});
-
-describe("AuthDivider", () => {
-  it("renders divider text", () => {
-    render(<AuthDivider />);
-    expect(screen.getByText("Or continue with email")).toBeInTheDocument();
   });
 });
 

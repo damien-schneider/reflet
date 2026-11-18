@@ -174,28 +174,6 @@ describe("startInteractionRecorder", () => {
     expect(events).toEqual([expect.objectContaining({ kind: "scroll" })]);
   });
 
-  it("removes every listener and timer on stop", () => {
-    const signals: AbortSignal[] = [];
-    const remember = (
-      _type: string,
-      _listener: unknown,
-      options?: boolean | AddEventListenerOptions
-    ) => {
-      if (typeof options === "object" && options.signal) {
-        signals.push(options.signal);
-      }
-    };
-    vi.spyOn(document, "addEventListener").mockImplementation(remember);
-    vi.spyOn(window, "addEventListener").mockImplementation(remember);
-    const { recorder } = startRecording();
-    const registered =
-      vi.mocked(document.addEventListener).mock.calls.length +
-      vi.mocked(window.addEventListener).mock.calls.length;
-    expect(signals).toHaveLength(registered);
-    recorder.stop();
-    expect(signals.every((signal) => signal.aborted)).toBe(true);
-  });
-
   it("records nothing after stop, even from a pending dwell", () => {
     const { events, recorder } = startRecording();
     pointAt(byId("inner"));

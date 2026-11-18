@@ -39,14 +39,6 @@ describe("useMediaUpload", () => {
     useMediaUpload = mod.useMediaUpload;
   });
 
-  it("returns initial state", () => {
-    const { result } = renderHook(() => useMediaUpload());
-    expect(result.current.isUploading).toBe(false);
-    expect(result.current.uploadProgress).toBeNull();
-    expect(result.current.uploadMedia).toBeInstanceOf(Function);
-    expect(result.current.openFilePicker).toBeInstanceOf(Function);
-  });
-
   describe("uploadMedia", () => {
     it("uploads image successfully", async () => {
       const onSuccess = vi.fn();

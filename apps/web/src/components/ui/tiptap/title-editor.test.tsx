@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSetContent = vi.fn();
@@ -45,48 +45,6 @@ describe("TiptapTitleEditor", () => {
     useEditorCallback = null;
     const mod = await import("./title-editor");
     TiptapTitleEditor = mod.TiptapTitleEditor;
-  });
-
-  it("renders with data-slot attribute", () => {
-    render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
-    const container = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    expect(container).toBeInTheDocument();
-  });
-
-  it("renders editor content", () => {
-    render(<TiptapTitleEditor onChange={vi.fn()} value="Test" />);
-    expect(screen.getByTestId("editor-content")).toBeInTheDocument();
-  });
-
-  it("applies custom className", () => {
-    render(
-      <TiptapTitleEditor className="my-class" onChange={vi.fn()} value="" />
-    );
-    const container = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    expect(container).toHaveClass("my-class");
-  });
-
-  it("applies custom style", () => {
-    render(
-      <TiptapTitleEditor onChange={vi.fn()} style={{ color: "red" }} value="" />
-    );
-    const container = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    expect(container).toHaveStyle({ color: "rgb(255, 0, 0)" });
-  });
-
-  it("applies disabled styles when disabled", () => {
-    render(<TiptapTitleEditor disabled onChange={vi.fn()} value="" />);
-    const container = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    expect(container?.className).toContain("cursor-not-allowed");
-    expect(container?.className).toContain("opacity-50");
   });
 
   it("syncs editable state when disabled changes", () => {
@@ -241,19 +199,6 @@ describe("TiptapTitleEditor", () => {
       const event = new KeyboardEvent("keydown", { key: "a" });
       const result = editorProps.handleKeyDown(null, event);
       expect(result).toBe(false);
-    }
-  });
-
-  it("passes autoFocus to useEditor config", () => {
-    render(<TiptapTitleEditor autoFocus onChange={vi.fn()} value="" />);
-    expect(useEditorCallback).toMatchObject({ autofocus: true });
-  });
-
-  it("configures StarterKit with all block elements disabled", () => {
-    render(<TiptapTitleEditor onChange={vi.fn()} value="" />);
-
-    if (useEditorCallback?.extensions) {
-      expect(useEditorCallback.extensions).toBeDefined();
     }
   });
 });

@@ -109,24 +109,6 @@ const makeMember = (
 });
 
 describe("MemberList", () => {
-  it("renders without crash with undefined members", () => {
-    render(
-      <MemberList
-        isOwner={false}
-        members={undefined}
-        onRemoveMember={vi.fn()}
-      />
-    );
-    expect(screen.queryByText("John Doe")).toBeNull();
-  });
-
-  it("renders empty list", () => {
-    render(
-      <MemberList isOwner={false} members={[]} onRemoveMember={vi.fn()} />
-    );
-    expect(screen.queryByText("John Doe")).toBeNull();
-  });
-
   it("renders member name and email", () => {
     render(
       <MemberList
@@ -265,19 +247,5 @@ describe("MemberList", () => {
       memberId: "m1",
       role: "admin",
     });
-  });
-
-  it("renders multiple members", () => {
-    const members = [
-      makeMember({ _id: "m1" as never, role: "owner" }),
-      makeMember({
-        _id: "m2" as never,
-        role: "member",
-        user: { email: "jane@test.com", image: null, name: "Jane" },
-      }),
-    ];
-    render(<MemberList isOwner members={members} onRemoveMember={vi.fn()} />);
-    expect(screen.getByText("John Doe")).toBeInTheDocument();
-    expect(screen.getByText("Jane")).toBeInTheDocument();
   });
 });

@@ -13,7 +13,6 @@ vi.mock("@ctrl-ui/react/ui/toast", () => ({
 import type { FeedbackItem } from "../feed-feedback-view";
 import {
   applyOptimisticVote,
-  getVoteValue,
   useOptimisticVotes,
 } from "./use-optimistic-votes";
 
@@ -31,24 +30,6 @@ const makeFeedbackItem = (
   userVoteType: null,
   voteCount: 5,
   ...overrides,
-});
-
-describe("getVoteValue", () => {
-  it("returns 1 for upvote", () => {
-    expect(getVoteValue("upvote")).toBe(1);
-  });
-
-  it("returns -1 for downvote", () => {
-    expect(getVoteValue("downvote")).toBe(-1);
-  });
-
-  it("returns 0 for null", () => {
-    expect(getVoteValue(null)).toBe(0);
-  });
-
-  it("returns 0 for undefined", () => {
-    expect(getVoteValue(undefined)).toBe(0);
-  });
 });
 
 describe("applyOptimisticVote", () => {

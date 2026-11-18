@@ -15,7 +15,7 @@ import {
 } from "./command-items";
 import { CommandList } from "./command-list";
 
-export const SLASH_MENU_Z_INDEX = 100;
+const SLASH_MENU_Z_INDEX = 100;
 
 const MODAL_SURFACE_SELECTOR = '[role="dialog"], [role="alertdialog"]';
 

@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -88,16 +87,6 @@ describe("SubmitFeedbackDialog", () => {
     mockUseQuery.mockReturnValue(undefined);
   });
 
-  it("renders when open", () => {
-    render(<SubmitFeedbackDialog {...baseProps} />);
-    expect(screen.getByText("Submit feedback")).toBeInTheDocument();
-  });
-
-  it("does not render when closed", () => {
-    render(<SubmitFeedbackDialog {...baseProps} isOpen={false} />);
-    expect(screen.queryByText("Submit feedback")).not.toBeInTheDocument();
-  });
-
   it("disables submit when title is empty", () => {
     render(<SubmitFeedbackDialog {...baseProps} />);
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
@@ -160,23 +149,6 @@ describe("SubmitFeedbackDialog", () => {
     expect(screen.getByText("Submitting…")).toBeInTheDocument();
   });
 
-  it("shows Cancel button", () => {
-    render(<SubmitFeedbackDialog {...baseProps} />);
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
-  });
-
-  it("calls onSubmit when submit button is clicked", async () => {
-    const user = userEvent.setup();
-    render(
-      <SubmitFeedbackDialog
-        {...baseProps}
-        feedback={{ ...baseFeedback, title: "Valid" }}
-      />
-    );
-    await user.click(screen.getByRole("button", { name: "Submit" }));
-    expect(baseProps.onSubmit).toHaveBeenCalledOnce();
-  });
-
   it("shows title required when description present but title empty", () => {
     render(
       <SubmitFeedbackDialog
@@ -185,10 +157,5 @@ describe("SubmitFeedbackDialog", () => {
       />
     );
     expect(screen.getByText("Add a title to submit")).toBeInTheDocument();
-  });
-
-  it("renders attachment upload", () => {
-    render(<SubmitFeedbackDialog {...baseProps} />);
-    expect(screen.getByTestId("attachment-upload")).toBeInTheDocument();
   });
 });

@@ -83,11 +83,6 @@ describe("CommentItem", () => {
     vi.clearAllMocks();
   });
 
-  it("renders comment content", () => {
-    render(<CommentItem comment={makeComment()} />);
-    expect(screen.getByText("Test comment content")).toBeInTheDocument();
-  });
-
   it("renders author name", () => {
     render(<CommentItem comment={makeComment()} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -96,17 +91,6 @@ describe("CommentItem", () => {
   it("renders Anonymous when no author", () => {
     render(<CommentItem comment={makeComment({ author: undefined })} />);
     expect(screen.getByText("Anonymous")).toBeInTheDocument();
-  });
-
-  it("renders relative time", () => {
-    render(<CommentItem comment={makeComment()} />);
-    // "about 1 hour ago" or similar
-    expect(screen.getByText(/ago/)).toBeInTheDocument();
-  });
-
-  it("renders Reply button", () => {
-    render(<CommentItem comment={makeComment()} />);
-    expect(screen.getByText("Reply")).toBeInTheDocument();
   });
 
   it("renders nested replies", () => {
@@ -122,12 +106,6 @@ describe("CommentItem", () => {
     render(<CommentItem comment={comment} />);
     expect(screen.getByText("Nested reply")).toBeInTheDocument();
     expect(screen.getByText("Bob")).toBeInTheDocument();
-  });
-
-  it("does not render replies section when empty", () => {
-    render(<CommentItem comment={makeComment()} />);
-    // No nested reply content
-    expect(screen.queryByText("Nested reply")).not.toBeInTheDocument();
   });
 
   it("shows edit form when Edit is clicked from dropdown", async () => {
@@ -227,14 +205,15 @@ describe("CommentItem", () => {
     });
   });
 
-  it("disables reply submit button when content is empty", () => {
+  it("enables sending a reply only once it has content", () => {
     render(<CommentItem comment={makeComment()} />);
     fireEvent.click(screen.getByText("Reply"));
-    // After opening reply, the reply submit button should be disabled because content is empty
-    const buttons = screen.getAllByRole("button");
-    // The reply submit button is the one that is disabled (empty content)
-    const disabledBtns = buttons.filter((btn) => btn.hasAttribute("disabled"));
-    expect(disabledBtns.length).toBeGreaterThan(0);
+    const sendReply = screen.getAllByRole("button", { name: "Reply" }).at(-1);
+    expect(sendReply).toBeDisabled();
+    fireEvent.change(screen.getByPlaceholderText("Write a reply…"), {
+      target: { value: "Thanks!" },
+    });
+    expect(sendReply).toBeEnabled();
   });
 
   it("shows ? fallback when author has no name", () => {

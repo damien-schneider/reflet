@@ -8,7 +8,6 @@ import {
 import { type FunctionReference, getFunctionName } from "convex/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const VERSION_PLACEHOLDER_REGEX = /v1\.0\.0/i;
 const PUBLISH_BUTTON_REGEX = /publish/i;
 const DONE_BUTTON_REGEX = /^done$/i;
 
@@ -258,61 +257,6 @@ describe("ReleaseEditor", () => {
     vi.useRealTimers();
   });
 
-  it("renders with Notion-like title editor", () => {
-    render(<ReleaseEditor {...defaultProps} />);
-
-    const titleEditor = document.querySelector(
-      '[data-slot="tiptap-title-editor"]'
-    );
-    expect(titleEditor).toBeInTheDocument();
-  });
-
-  it("renders with rich text description editor", () => {
-    render(<ReleaseEditor {...defaultProps} />);
-
-    const descriptionEditor = document.querySelector(
-      '[data-slot="tiptap-markdown-editor"]'
-    );
-    expect(descriptionEditor).toBeInTheDocument();
-  });
-
-  it("renders version input field", () => {
-    render(<ReleaseEditor {...defaultProps} />);
-
-    const versionInput = screen.getByPlaceholderText(VERSION_PLACEHOLDER_REGEX);
-    expect(versionInput).toBeInTheDocument();
-  });
-
-  it("shows publish button for new release", () => {
-    render(<ReleaseEditor {...defaultProps} />);
-
-    const publishButton = screen.getByRole("button", {
-      name: PUBLISH_BUTTON_REGEX,
-    });
-    expect(publishButton).toBeInTheDocument();
-  });
-
-  it("shows publish button when editing existing release", () => {
-    render(
-      <ReleaseEditor
-        {...defaultProps}
-        release={
-          {
-            _id: "release123",
-            description: "Test description",
-            title: "Test Release",
-            version: "v1.0.0",
-          } as never
-        }
-      />
-    );
-
-    const publishButton = screen.getByRole("button", {
-      name: PUBLISH_BUTTON_REGEX,
-    });
-    expect(publishButton).toBeInTheDocument();
-  });
-
   it("renders Draft status for existing unpublished release", () => {
     render(
       <ReleaseEditor
@@ -346,27 +290,6 @@ describe("ReleaseEditor", () => {
       />
     );
     expect(screen.getByText("Published")).toBeInTheDocument();
-  });
-
-  it("renders Unpublish button for published release", () => {
-    render(
-      <ReleaseEditor
-        {...defaultProps}
-        release={
-          {
-            _id: "release123",
-            description: "Published desc",
-            publishedAt: Date.now(),
-            title: "Published Release",
-            version: "v2.0.0",
-          } as never
-        }
-      />
-    );
-    const unpublishButton = screen.queryByRole("button", {
-      name: /unpublish/i,
-    });
-    expect(unpublishButton).toBeInTheDocument();
   });
 
   it("renders version input with existing release value", () => {

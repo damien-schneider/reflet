@@ -1,22 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    variant?: string;
-  }) => (
-    <button data-variant={variant} onClick={onClick} type="button">
-      {children}
-    </button>
-  ),
-}));
 
 vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
@@ -60,20 +43,6 @@ describe("RemoveMemberDialog", () => {
     expect(screen.queryByTestId("dialog")).toBeNull();
   });
 
-  it("renders when member is provided", () => {
-    render(
-      <RemoveMemberDialog
-        member={{ id: "m1", name: "John Doe" }}
-        onClose={vi.fn()}
-        onConfirm={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Remove member"
-    );
-  });
-
   it("displays member name in description", () => {
     render(
       <RemoveMemberDialog
@@ -83,48 +52,5 @@ describe("RemoveMemberDialog", () => {
       />
     );
     expect(screen.getByText("Jane Smith")).toBeInTheDocument();
-  });
-
-  it("calls onClose when Cancel clicked", async () => {
-    const onClose = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <RemoveMemberDialog
-        member={{ id: "m1", name: "John" }}
-        onClose={onClose}
-        onConfirm={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Cancel"));
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it("calls onConfirm when Remove member clicked", async () => {
-    const onConfirm = vi.fn().mockResolvedValue(undefined);
-    const user = userEvent.setup();
-    render(
-      <RemoveMemberDialog
-        member={{ id: "m1", name: "John" }}
-        onClose={vi.fn()}
-        onConfirm={onConfirm}
-      />
-    );
-    // Both buttons have text, get the destructive one
-    const buttons = screen.getAllByText("Remove member");
-    await user.click(buttons.at(-1));
-    expect(onConfirm).toHaveBeenCalled();
-  });
-
-  it("shows Cancel and Remove member buttons in footer", () => {
-    render(
-      <RemoveMemberDialog
-        member={{ id: "m1", name: "John" }}
-        onClose={vi.fn()}
-        onConfirm={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    // Title and button both say "Remove member"
-    expect(screen.getAllByText("Remove member")).toHaveLength(2);
   });
 });

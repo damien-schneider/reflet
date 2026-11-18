@@ -116,74 +116,6 @@ describe("useAuthForm - button disabled state", () => {
     expect(result.current.isCheckingEmail).toBe(false);
   });
 
-  it("isCheckingEmail stays false after blur when email check already completed", async () => {
-    const { result, rerender } = renderHook(() => useAuthForm());
-
-    // Set up: complete email check flow
-    debouncedValue = "test@example.com";
-    act(() => {
-      result.current.setValue("email", "test@example.com");
-    });
-    rerender();
-
-    // Wait for isCheckingEmail to be true first
-    await waitFor(() => {
-      expect(result.current.isCheckingEmail).toBe(true);
-    });
-
-    mockEmailExistsData = { exists: true };
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.mode).toBe("signIn");
-      expect(result.current.isCheckingEmail).toBe(false);
-    });
-
-    // Now email check is complete, simulate user blurring and re-focusing
-    // which calls handleEmailChange with the SAME value
-    act(() => {
-      result.current.handleEmailChange({
-        target: { value: "test@example.com" },
-      } as React.ChangeEvent<HTMLInputElement>);
-    });
-    rerender();
-
-    // Button should STILL be enabled - isCheckingEmail should remain false
-    expect(result.current.isCheckingEmail).toBe(false);
-  });
-
-  it("does not re-trigger check when debounced email matches lastCheckedEmail", async () => {
-    const { result, rerender } = renderHook(() => useAuthForm());
-
-    // Complete an email check
-    debouncedValue = "user@test.com";
-    act(() => {
-      result.current.setValue("email", "user@test.com");
-    });
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.isCheckingEmail).toBe(true);
-    });
-
-    mockEmailExistsData = { exists: true };
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.isCheckingEmail).toBe(false);
-      expect(result.current.mode).toBe("signIn");
-    });
-
-    // The debounced value is still the same, re-render should NOT set isCheckingEmail true
-    rerender();
-    expect(result.current.isCheckingEmail).toBe(false);
-
-    // Multiple re-renders should keep it false
-    rerender();
-    rerender();
-    expect(result.current.isCheckingEmail).toBe(false);
-  });
-
   it("clears isCheckingEmail when query returns even if email state has leading/trailing spaces", async () => {
     const { result, rerender } = renderHook(() => useAuthForm());
 
@@ -243,42 +175,6 @@ describe("useAuthForm - button disabled state", () => {
       // This might require multiple rerenders as state settles
       expect(result.current.isCheckingEmail).toBe(false);
     });
-  });
-
-  it("form validation allows sign-in with any password length", async () => {
-    const { result, rerender } = renderHook(() => useAuthForm());
-
-    // Complete email check for sign-in mode
-    act(() => {
-      result.current.setValue("email", "test@example.com");
-    });
-    debouncedValue = "test@example.com";
-    rerender();
-
-    mockEmailExistsData = { exists: true };
-    rerender();
-
-    await waitFor(() => {
-      expect(result.current.mode).toBe("signIn");
-      expect(result.current.isCheckingEmail).toBe(false);
-    });
-
-    // Enter a short password (< 8 chars) - should be allowed for sign-in
-    act(() => {
-      result.current.setValue("password", "short");
-    });
-    rerender();
-
-    // Trigger validation
-    await act(async () => {
-      await result.current.trigger("password");
-    });
-    rerender();
-
-    // For sign-in mode, there should be NO password length error
-    // (existing users may have shorter passwords)
-    expect(result.current.errors.password).toBeUndefined();
-    expect(result.current.isCheckingEmail).toBe(false);
   });
 
   it("validation uses correct schema after mode changes from null to signIn", async () => {
@@ -344,9 +240,9 @@ describe("useAuthForm - button disabled state", () => {
       expect(result.current.mode).toBe("signUp");
     });
 
-    // For signUp, enter a valid password (>= 8 chars)
+    // A password that sign-in would accept is too short for sign-up
     act(() => {
-      result.current.setValue("password", "longpassword123");
+      result.current.setValue("password", "short");
     });
     rerender();
 
@@ -355,9 +251,9 @@ describe("useAuthForm - button disabled state", () => {
     });
     rerender();
 
-    // Long password should not have errors
-    expect(result.current.errors.password).toBeUndefined();
-    expect(result.current.mode).toBe("signUp");
+    expect(result.current.errors.password?.message).toBe(
+      "Use at least 8 characters"
+    );
   });
 
   it("REGRESSION: button should be enabled when sign-in mode active with password", async () => {
@@ -543,7 +439,7 @@ describe("useAuthForm - onSubmit", () => {
       });
     });
 
-    expect(result.current.apiError).not.toBeNull();
+    expect(result.current.apiError).toBe("Invalid credentials");
   });
 
   it("redirects to check-email on email not verified error", async () => {
@@ -648,7 +544,9 @@ describe("useAuthForm - onSubmit", () => {
       });
     });
 
-    expect(result.current.apiError).not.toBeNull();
+    expect(result.current.apiError).toBe(
+      "An account with this email already exists"
+    );
   });
 });
 

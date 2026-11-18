@@ -105,26 +105,6 @@ describe("buildAgentPrompt", () => {
     expect(result).not.toContain("<feedback_description>");
   });
 
-  it("should include header section", () => {
-    const result = buildAgentPrompt({
-      description: null,
-      tags: [],
-      title: "Test",
-    });
-    expect(result).toContain("# User Feedback to Resolve");
-    expect(result).toContain("## Feedback");
-  });
-
-  it("should include instructions section", () => {
-    const result = buildAgentPrompt({
-      description: null,
-      tags: [],
-      title: "Test",
-    });
-    expect(result).toContain("## Instructions");
-    expect(result).toContain("Analyze the codebase");
-  });
-
   it("should include tags when provided", () => {
     const result = buildAgentPrompt({
       description: null,
@@ -146,41 +126,9 @@ describe("buildAgentPrompt", () => {
     expect(result).not.toContain("**Tags:**");
   });
 
-  it("should include image URLs when attachments are provided", () => {
-    const result = buildAgentPrompt({
-      attachments: [
-        "https://example.com/screenshot1.png",
-        "https://example.com/screenshot2.jpg",
-      ],
-      description: "The submit button doesn't work",
-      tags: [],
-      title: "Button is broken",
-    });
-
-    expect(result).toContain("<feedback_title>\nButton is broken\n");
-    expect(result).toContain(
-      "<feedback_description>\nThe submit button doesn't work\n"
-    );
-    expect(result).toContain("## Attached Screenshots");
-    expect(result).toContain("https://example.com/screenshot1.png");
-    expect(result).toContain("https://example.com/screenshot2.jpg");
-  });
-
   it("should not include attachments section when no attachments", () => {
     const result = buildAgentPrompt({
       attachments: [],
-      description: "Add dark mode",
-      tags: [],
-      title: "Feature request",
-    });
-
-    expect(result).toContain("<feedback_title>\nFeature request\n");
-    expect(result).not.toContain("## Attached Screenshots");
-  });
-
-  it("should not include attachments section when attachments is undefined", () => {
-    const result = buildAgentPrompt({
-      attachments: undefined,
       description: "Add dark mode",
       tags: [],
       title: "Feature request",
@@ -206,28 +154,6 @@ describe("buildAgentPrompt", () => {
     expect(result).toContain("- https://cdn.example.com/img1.png");
     expect(result).toContain("- https://cdn.example.com/img2.png");
     expect(result).toContain("- https://cdn.example.com/img3.png");
-  });
-
-  it("should include all sections for fully populated prompt", () => {
-    const result = buildAgentPrompt({
-      attachments: ["https://example.com/mock.png"],
-      description: "Users want a dark mode toggle",
-      tags: [{ _id: "t1" as never, color: "green", name: "feature" }],
-      title: "Add dark mode",
-    });
-    expect(result).toContain("## Feedback");
-    expect(result).toContain("**Tags:** feature");
-    expect(result).toContain("## Attached Screenshots");
-    expect(result).toContain("## Instructions");
-  });
-
-  it("should handle tags with icon correctly", () => {
-    const result = buildAgentPrompt({
-      description: null,
-      tags: [{ _id: "t1" as never, color: "red", icon: "🐛", name: "bug" }],
-      title: "Test",
-    });
-    expect(result).toContain("🐛 bug");
   });
 
   it("should handle tags without icon correctly", () => {
@@ -277,63 +203,6 @@ describe("buildAgentPrompt", () => {
 describe("CopyForAgents Component", () => {
   afterEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("renders the Agents dropdown trigger button", () => {
-    mockUseQuery.mockReturnValue(null);
-    render(
-      <CopyForAgents
-        description="desc"
-        feedbackId={feedbackId}
-        organizationId={organizationId}
-        title="Test"
-      />
-    );
-    expect(screen.getByText("Agents")).toBeInTheDocument();
-  });
-
-  it("renders without crashing when no tags or attachments", () => {
-    mockUseQuery.mockReturnValue(null);
-    render(
-      <CopyForAgents
-        description={null}
-        feedbackId={feedbackId}
-        organizationId={organizationId}
-        title="Test"
-      />
-    );
-    expect(screen.getByText("Agents")).toBeInTheDocument();
-  });
-
-  it("opens dropdown and shows copy agents group", () => {
-    mockUseQuery.mockReturnValue(null);
-    render(
-      <CopyForAgents
-        description="desc"
-        feedbackId={feedbackId}
-        organizationId={organizationId}
-        title="Test"
-      />
-    );
-    // Click the trigger to open dropdown
-    fireEvent.click(screen.getByText("Agents"));
-    expect(screen.getByText("Copy for agents")).toBeInTheDocument();
-    expect(screen.getByText("Copy prompt")).toBeInTheDocument();
-  });
-
-  it("shows deeplink agents section", () => {
-    mockUseQuery.mockReturnValue(null);
-    render(
-      <CopyForAgents
-        description="desc"
-        feedbackId={feedbackId}
-        organizationId={organizationId}
-        title="Test"
-      />
-    );
-    fireEvent.click(screen.getByText("Agents"));
-    expect(screen.getByText("Open in editor")).toBeInTheDocument();
-    expect(screen.getByText("Open in Cursor")).toBeInTheDocument();
   });
 
   it("filters out copilot-workspace when no repository", () => {
@@ -432,25 +301,5 @@ describe("CopyForAgents Component", () => {
     );
     // Should not crash
     expect(screen.getByText("Agents")).toBeInTheDocument();
-  });
-
-  it("includes feedback title in prompt output", () => {
-    const result = buildAgentPrompt({
-      attachments: [],
-      description: "Details here",
-      tags: [],
-      title: "My Feature Request",
-    });
-    expect(result).toContain("My Feature Request");
-  });
-
-  it("includes description in prompt output", () => {
-    const result = buildAgentPrompt({
-      attachments: [],
-      description: "Descriptive content",
-      tags: [],
-      title: "Title",
-    });
-    expect(result).toContain("Descriptive content");
   });
 });

@@ -169,7 +169,7 @@ describe("capture and page context sync", () => {
     });
   });
 
-  it("opens the screenshot when its thumbnail is clicked", async () => {
+  it("opens the screenshot for drawing when its thumbnail is clicked", async () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();
     render(<RefletFeedback publicKey="fb_pub_test" />);
@@ -188,9 +188,11 @@ describe("capture and page context sync", () => {
       thumbnail.click();
     });
 
-    expect(shadow().querySelector(".root")?.getAttribute("data-editing")).toBe(
-      "true"
-    );
+    expect(
+      shadow().querySelector(
+        'dialog[aria-label="Draw on the screenshot to point at the problem."]'
+      )
+    ).not.toBeNull();
   });
 
   it("still submits the written feedback when every capture fails", async () => {

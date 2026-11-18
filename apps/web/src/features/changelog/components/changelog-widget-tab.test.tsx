@@ -144,26 +144,6 @@ describe("ChangelogWidgetTab", () => {
     mockUseMutation.mockReturnValue(mockGenerateKeys);
   });
 
-  it("renders embed configuration section", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("Embed configuration")).toBeInTheDocument();
-  });
-
-  it("renders script tag section", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("Script tag")).toBeInTheDocument();
-  });
-
-  it("renders react SDK section", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("React SDK")).toBeInTheDocument();
-  });
-
-  it("renders AI integration prompt section", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("AI integration prompt")).toBeInTheDocument();
-  });
-
   it("does not show API keys warning when hasApiKeys is true", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
     expect(screen.queryByText("API keys required")).not.toBeInTheDocument();
@@ -172,11 +152,6 @@ describe("ChangelogWidgetTab", () => {
   it("shows API keys warning when hasApiKeys is false", () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
     expect(screen.getByText("API keys required")).toBeInTheDocument();
-  });
-
-  it("shows generate API keys button when no keys", () => {
-    render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
-    expect(screen.getByText("Generate API keys")).toBeInTheDocument();
   });
 
   it("calls generateApiKeys mutation on button click", async () => {
@@ -228,17 +203,12 @@ describe("ChangelogWidgetTab", () => {
     );
   });
 
-  it("renders mode dropdown with default card value", () => {
+  it("puts the chosen mode in the embed code", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    const modeSelect = screen.getByLabelText("Mode") as HTMLSelectElement;
-    expect(modeSelect.value).toBe("card");
-  });
-
-  it("changes mode when selecting popup", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    const modeSelect = screen.getByLabelText("Mode");
-    fireEvent.change(modeSelect, { target: { value: "popup" } });
-    expect((modeSelect as HTMLSelectElement).value).toBe("popup");
+    fireEvent.change(screen.getByLabelText("Mode"), {
+      target: { value: "popup" },
+    });
+    expect(screen.getByText(/data-mode="popup"/)).toBeInTheDocument();
   });
 
   it("shows trigger element section when mode is trigger", () => {
@@ -256,12 +226,6 @@ describe("ChangelogWidgetTab", () => {
     expect(screen.getByLabelText("Position")).toBeDisabled();
   });
 
-  it("renders theme selector", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    const themeSelect = screen.getByLabelText("Theme") as HTMLSelectElement;
-    expect(themeSelect.value).toBe("auto");
-  });
-
   it("applies custom primary color", () => {
     render(<ChangelogWidgetTab {...defaultProps} primaryColor="#ff0000" />);
     expect(screen.getByText("#ff0000")).toBeInTheDocument();
@@ -270,11 +234,6 @@ describe("ChangelogWidgetTab", () => {
   it("shows default color when no primary color provided", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
     expect(screen.getByText(DEFAULT_PRIMARY_COLOR)).toBeInTheDocument();
-  });
-
-  it("links to branding settings page", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("Change in branding settings")).toBeInTheDocument();
   });
 
   it("copies AI prompt to clipboard", async () => {
@@ -288,18 +247,11 @@ describe("ChangelogWidgetTab", () => {
     );
   });
 
-  it("renders mode description text for card mode", () => {
+  it("puts the chosen position in the embed code", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(
-      screen.getByText("Floating notification card in corner")
-    ).toBeInTheDocument();
-  });
-
-  it("changes position dropdown value", () => {
-    render(<ChangelogWidgetTab {...defaultProps} />);
-    const posSelect = screen.getByLabelText("Position") as HTMLSelectElement;
-    expect(posSelect.value).toBe("bottom-right");
-    fireEvent.change(posSelect, { target: { value: "bottom-left" } });
-    expect(posSelect.value).toBe("bottom-left");
+    fireEvent.change(screen.getByLabelText("Position"), {
+      target: { value: "bottom-left" },
+    });
+    expect(screen.getByText(/data-position="bottom-left"/)).toBeInTheDocument();
   });
 });

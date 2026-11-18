@@ -127,6 +127,9 @@ describe("admin_api_feedback - assignFeedback", () => {
     const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
+    await t.run(async (ctx) =>
+      ctx.db.patch(feedbackId, { assigneeId: "user-123" })
+    );
 
     await t.mutation(internal.admin_api.feedback.assignFeedback, {
       feedbackId,

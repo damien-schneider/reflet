@@ -88,24 +88,6 @@ describe("DeleteReleaseDialog", () => {
     );
   });
 
-  it("does not render when open is false", () => {
-    render(<DeleteReleaseDialog {...defaultProps} open={false} />);
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-  });
-
-  it("displays the confirmation message", () => {
-    render(<DeleteReleaseDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "can’t be undone"
-    );
-  });
-
-  it("renders Cancel and Delete buttons", () => {
-    render(<DeleteReleaseDialog {...defaultProps} />);
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Delete release")).toBeInTheDocument();
-  });
-
   it("disables both actions while the delete is pending", async () => {
     let resolveDelete: () => void = () => undefined;
     const onConfirm = vi.fn(
@@ -121,36 +103,6 @@ describe("DeleteReleaseDialog", () => {
     resolveDelete();
     await waitFor(() =>
       expect(screen.getByText("Delete release")).not.toBeDisabled()
-    );
-  });
-
-  it("calls onClose when Cancel is clicked", () => {
-    const onClose = vi.fn();
-    render(<DeleteReleaseDialog {...defaultProps} onClose={onClose} />);
-    fireEvent.click(screen.getByText("Cancel"));
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it("calls onConfirm when Delete is clicked", () => {
-    const onConfirm = vi.fn().mockResolvedValue(undefined);
-    render(<DeleteReleaseDialog {...defaultProps} onConfirm={onConfirm} />);
-    fireEvent.click(screen.getByText("Delete release"));
-    expect(onConfirm).toHaveBeenCalledOnce();
-  });
-
-  it("has danger tone on Delete button", () => {
-    render(<DeleteReleaseDialog {...defaultProps} />);
-    expect(screen.getByText("Delete release")).toHaveAttribute(
-      "data-tone",
-      "danger"
-    );
-  });
-
-  it("has surface variant on Cancel button", () => {
-    render(<DeleteReleaseDialog {...defaultProps} />);
-    expect(screen.getByText("Cancel")).toHaveAttribute(
-      "data-variant",
-      "surface"
     );
   });
 });

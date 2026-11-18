@@ -135,22 +135,6 @@ describe("GitHubConnectionSection", () => {
     expect(screen.getByText("Connected")).toBeInTheDocument();
   });
 
-  it("renders avatar image when connected", () => {
-    render(
-      <GitHubConnectionSection
-        accountAvatarUrl="https://example.com/avatar.png"
-        accountLogin="octocat"
-        connectHref="/api/github/install?test=1"
-        isAdmin
-        isConnected
-        isDisconnecting={false}
-        onConnectClick={vi.fn()}
-        onDisconnect={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("next-image")).toBeInTheDocument();
-  });
-
   it("renders connect link with correct href", () => {
     render(
       <GitHubConnectionSection

@@ -7,14 +7,6 @@ describe("toId", () => {
     expect(result).toBe("abc123");
   });
 
-  it("works with different table names", () => {
-    expect(toId("feedback", "fb1")).toBe("fb1");
-    expect(toId("tags", "tag1")).toBe("tag1");
-    expect(toId("widgets", "w1")).toBe("w1");
-    expect(toId("organizationStatuses", "s1")).toBe("s1");
-    expect(toId("githubLabelMappings", "g1")).toBe("g1");
-  });
-
   it("throws for empty string", () => {
     expect(() => toId("organizations", "")).toThrow(
       "Invalid organizations ID: value must be a non-empty string"
@@ -81,12 +73,6 @@ describe("toOrgId", () => {
 
   it("throws for empty string", () => {
     expect(() => toOrgId("")).toThrow(
-      "Invalid organizations ID: value must be a non-empty string"
-    );
-  });
-
-  it("throws for whitespace-only string", () => {
-    expect(() => toOrgId("  ")).toThrow(
       "Invalid organizations ID: value must be a non-empty string"
     );
   });

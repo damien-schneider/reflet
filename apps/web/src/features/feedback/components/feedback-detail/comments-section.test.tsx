@@ -69,12 +69,6 @@ describe("CommentsSection", () => {
     vi.clearAllMocks();
   });
 
-  it("renders Discussion heading", () => {
-    mockUseQuery.mockReturnValue([]);
-    render(<CommentsSection feedbackId={feedbackId} />);
-    expect(screen.getByText("Discussion")).toBeInTheDocument();
-  });
-
   it("shows empty state when no comments", () => {
     mockUseQuery.mockReturnValue([]);
     render(<CommentsSection feedbackId={feedbackId} />);
@@ -98,33 +92,6 @@ describe("CommentsSection", () => {
     ]);
     render(<CommentsSection feedbackId={feedbackId} />);
     expect(screen.getByText("(2)")).toBeInTheDocument();
-  });
-
-  it("renders comments from data", () => {
-    mockUseQuery.mockReturnValue([
-      {
-        _id: "c1",
-        author: { email: "a@test.com", name: "Alice" },
-        body: "First comment",
-        createdAt: Date.now(),
-      },
-    ]);
-    render(<CommentsSection feedbackId={feedbackId} />);
-    expect(screen.getByTestId("comment-item")).toHaveTextContent(
-      "First comment"
-    );
-  });
-
-  it("renders comment input with placeholder", () => {
-    mockUseQuery.mockReturnValue([]);
-    render(<CommentsSection feedbackId={feedbackId} />);
-    expect(screen.getByPlaceholderText(/Write a comment/)).toBeInTheDocument();
-  });
-
-  it("renders Post button", () => {
-    mockUseQuery.mockReturnValue([]);
-    render(<CommentsSection feedbackId={feedbackId} />);
-    expect(screen.getByText("Post")).toBeInTheDocument();
   });
 
   it("renders AI Draft for admins", () => {

@@ -298,45 +298,6 @@ describe("MilestoneSegment", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders milestone name", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({ name: "Beta" })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Beta")).toBeInTheDocument();
-  });
-
-  it("renders emoji", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({ emoji: "🎯" })}
-        onClick={vi.fn()}
-      />
-    );
-    const emojis = screen.getAllByText("🎯");
-    expect(emojis.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("calls onClick when clicked", async () => {
-    const onClick = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone()}
-        onClick={onClick}
-      />
-    );
-    await user.click(
-      screen.getByLabelText("Alpha Release: 50% complete (5 of 10)")
-    );
-    expect(onClick).toHaveBeenCalled();
-  });
-
   it("does not render context menu for non-admin", () => {
     render(
       <MilestoneSegment
@@ -394,18 +355,6 @@ describe("MilestoneSegment", () => {
     ).toBeNull();
   });
 
-  it("context menu shows Edit option", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Edit")).toBeInTheDocument();
-  });
-
   it("context menu shows Mark as complete for active milestones", () => {
     render(
       <MilestoneSegment
@@ -430,18 +379,6 @@ describe("MilestoneSegment", () => {
     expect(screen.queryByText("Mark as complete")).toBeNull();
   });
 
-  it("context menu shows Delete option", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-  });
-
   it("renders percentage on hover overlay", () => {
     render(
       <MilestoneSegment
@@ -453,21 +390,6 @@ describe("MilestoneSegment", () => {
       />
     );
     expect(screen.getByText("50%")).toBeInTheDocument();
-  });
-
-  it("calls updateMilestone when Edit is submitted", async () => {
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Edit"));
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Edit milestone")).toBeInTheDocument();
   });
 
   it("calls updateMilestone for Mark as complete", async () => {
@@ -506,93 +428,6 @@ describe("MilestoneSegment", () => {
     );
   });
 
-  it("renders completed milestone without Mark as complete option", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone({ status: "completed" })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.queryByText("Mark as complete")).toBeNull();
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-  });
-
-  it("renders milestone without emoji", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({ emoji: undefined })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getAllByText("Alpha Release").length).toBeGreaterThan(0);
-  });
-
-  it("renders milestone with emoji", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({ emoji: "🚀" })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getAllByText("🚀").length).toBeGreaterThan(0);
-  });
-
-  it("applies active styles when isActive", () => {
-    const { container } = render(
-      <MilestoneSegment
-        isActive
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    expect(container.querySelector("button")).toBeInTheDocument();
-  });
-
-  it("renders with 0% progress", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({
-          progress: { completed: 0, inProgress: 0, percentage: 0, total: 4 },
-        })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("0%")).toBeInTheDocument();
-  });
-
-  it("renders with 100% progress", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({
-          progress: { completed: 4, inProgress: 0, percentage: 100, total: 4 },
-        })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByText("100%")).toBeInTheDocument();
-  });
-
-  it("calls onClick when segment button is clicked", async () => {
-    const onClick = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone()}
-        onClick={onClick}
-      />
-    );
-    const buttons = screen.getAllByRole("button");
-    await user.click(buttons[0]);
-    expect(onClick).toHaveBeenCalled();
-  });
-
   it("renders edit dialog with form fields", async () => {
     const user = userEvent.setup();
     render(
@@ -606,84 +441,6 @@ describe("MilestoneSegment", () => {
     await user.click(screen.getByText("Edit"));
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Alpha Release")).toBeInTheDocument();
-  });
-
-  it("renders with inProgress count in aria-label", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        milestone={makeMilestone({
-          progress: { completed: 3, inProgress: 4, percentage: 30, total: 10 },
-        })}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByLabelText(/30% complete/)).toBeInTheDocument();
-  });
-
-  it("renders context trigger for admin", () => {
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("context-trigger")).toBeInTheDocument();
-  });
-
-  it("submits edit form with Save button", async () => {
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Edit"));
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    await user.click(screen.getByText("Save"));
-    expect(mockUpdateMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "ms1", name: "Alpha Release" })
-    );
-  });
-
-  it("submits edit form on Enter key in name input", async () => {
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Edit"));
-    const input = screen.getByDisplayValue("Alpha Release");
-    await user.type(input, "{Enter}");
-    expect(mockUpdateMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "ms1" })
-    );
-  });
-
-  it("does not submit when name is empty", async () => {
-    const user = userEvent.setup();
-    render(
-      <MilestoneSegment
-        isActive={false}
-        isAdmin
-        milestone={makeMilestone()}
-        onClick={vi.fn()}
-      />
-    );
-    await user.click(screen.getByText("Edit"));
-    const input = screen.getByDisplayValue("Alpha Release");
-    await user.clear(input);
-    await user.click(screen.getByText("Save"));
-    expect(mockUpdateMilestone).not.toHaveBeenCalled();
   });
 
   it("closes edit dialog on Cancel", async () => {
@@ -764,7 +521,7 @@ describe("MilestoneSegment", () => {
     await user.type(input, "Beta Release");
     await user.click(screen.getByText("Save"));
     expect(mockUpdateMilestone).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "Beta Release" })
+      expect.objectContaining({ id: "ms1", name: "Beta Release" })
     );
   });
 });

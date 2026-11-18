@@ -167,29 +167,6 @@ describe("MilestoneExpandedPanel", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("renders description when available", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByText("First alpha release")).toBeInTheDocument();
-  });
-
-  it("renders progress ring", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByTestId("progress-ring")).toBeInTheDocument();
-    expect(screen.getByText("40%")).toBeInTheDocument();
-  });
-
   it("shows progress stats", () => {
     render(
       <MilestoneExpandedPanel
@@ -200,18 +177,6 @@ describe("MilestoneExpandedPanel", () => {
     );
     expect(screen.getByText("2/5 done")).toBeInTheDocument();
     expect(screen.getByText("1 in progress")).toBeInTheDocument();
-  });
-
-  it("renders linked feedback for admin", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByText("Feedback One")).toBeInTheDocument();
-    expect(screen.getByText("Feedback Two")).toBeInTheDocument();
   });
 
   it("shows Linked feedback count", () => {
@@ -285,19 +250,7 @@ describe("MilestoneExpandedPanel", () => {
     expect(onFeedbackClick).toHaveBeenCalledWith("fb1");
   });
 
-  it("renders linked feedback read-only for non-admin", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin={false}
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
-    );
-    expect(screen.getByText("Feedback One")).toBeInTheDocument();
-    expect(screen.getByText("Linked feedback (2)")).toBeInTheDocument();
-  });
-
-  it("search input filters displayed unlinked feedback", async () => {
+  it("offers only feedback that is not linked yet when searching", async () => {
     const user = userEvent.setup();
     render(
       <MilestoneExpandedPanel
@@ -306,22 +259,13 @@ describe("MilestoneExpandedPanel", () => {
         organizationId={"org1" as never}
       />
     );
-    const searchInput = screen.getByPlaceholderText("Search feedback to link…");
-    await user.type(searchInput, "Unlinked");
-    expect(searchInput).toHaveValue("Unlinked");
-  });
-
-  it("shows vote count on linked feedback", () => {
-    render(
-      <MilestoneExpandedPanel
-        isAdmin
-        milestoneId={"ms1" as never}
-        organizationId={"org1" as never}
-      />
+    expect(screen.queryByText("Unlinked Feedback")).not.toBeInTheDocument();
+    await user.type(
+      screen.getByPlaceholderText("Search feedback to link…"),
+      "Feedback"
     );
-    // Vote counts are rendered as part of feedback items
-    expect(screen.getByText("Feedback One")).toBeInTheDocument();
-    expect(screen.getByText("Feedback Two")).toBeInTheDocument();
+    expect(screen.getByText("Unlinked Feedback")).toBeInTheDocument();
+    expect(screen.getAllByText("Feedback One")).toHaveLength(1);
   });
 
   it("shows status badge on linked feedback", () => {

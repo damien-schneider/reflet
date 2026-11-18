@@ -88,51 +88,6 @@ describe("TagFilterBar", () => {
     vi.clearAllMocks();
   });
 
-  it("renders All button", () => {
-    render(
-      <TagFilterBar
-        isAdmin={false}
-        onClearTags={vi.fn()}
-        onTagChange={vi.fn()}
-        organizationId={organizationId}
-        selectedTagIds={[]}
-        tags={tags}
-      />
-    );
-    expect(screen.getByText("All")).toBeInTheDocument();
-  });
-
-  it("renders all tag buttons", () => {
-    render(
-      <TagFilterBar
-        isAdmin={false}
-        onClearTags={vi.fn()}
-        onTagChange={vi.fn()}
-        organizationId={organizationId}
-        selectedTagIds={[]}
-        tags={tags}
-      />
-    );
-    expect(screen.getByText("Bug")).toBeInTheDocument();
-    expect(screen.getByText("Feature")).toBeInTheDocument();
-    expect(screen.getByText("UX")).toBeInTheDocument();
-  });
-
-  it("renders tag icons", () => {
-    render(
-      <TagFilterBar
-        isAdmin={false}
-        onClearTags={vi.fn()}
-        onTagChange={vi.fn()}
-        organizationId={organizationId}
-        selectedTagIds={[]}
-        tags={tags}
-      />
-    );
-    expect(screen.getByText("🐛")).toBeInTheDocument();
-    expect(screen.getByText("✨")).toBeInTheDocument();
-  });
-
   it("calls onTagSelect with null when All clicked", async () => {
     const user = userEvent.setup();
     const onTagSelect = vi.fn();
@@ -210,36 +165,6 @@ describe("TagFilterBar", () => {
       />
     );
     expect(screen.queryByTestId("triage-pulse")).not.toBeInTheDocument();
-  });
-
-  it("shows add tag popover for admin", () => {
-    render(
-      <TagFilterBar
-        isAdmin
-        onClearTags={vi.fn()}
-        onTagChange={vi.fn()}
-        organizationId={organizationId}
-        selectedTagIds={[]}
-        tags={tags}
-      />
-    );
-    const popovers = screen.getAllByTestId("tag-form-popover");
-    expect(popovers.length).toBeGreaterThan(0);
-  });
-
-  it("renders empty tag list", () => {
-    render(
-      <TagFilterBar
-        isAdmin={false}
-        onClearTags={vi.fn()}
-        onTagChange={vi.fn()}
-        organizationId={organizationId}
-        selectedTagIds={[]}
-        tags={[]}
-      />
-    );
-    expect(screen.getByText("All")).toBeInTheDocument();
-    expect(screen.queryByText("Bug")).not.toBeInTheDocument();
   });
 
   it("renders context menu items for admin tags", () => {

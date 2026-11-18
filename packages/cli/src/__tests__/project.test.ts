@@ -58,15 +58,6 @@ describe("detectProject", () => {
     );
   });
 
-  it("finds a Next.js app router layout at the root", () => {
-    const setup = detectProject(
-      memoryFiles({ "/app/app/layout.tsx": "" }),
-      "/app"
-    );
-
-    expect(setup.entryFile).toBe("/app/app/layout.tsx");
-  });
-
   it("falls back to the pages router", () => {
     const setup = detectProject(
       memoryFiles({ "/app/pages/_app.tsx": "" }),

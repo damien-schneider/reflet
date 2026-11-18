@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -181,23 +181,6 @@ describe("PublishConfirmDialog", () => {
     });
   });
 
-  it("renders when open is true", () => {
-    render(<PublishConfirmDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
-  });
-
-  it("does not render when open is false", () => {
-    render(<PublishConfirmDialog {...defaultProps} open={false} />);
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-  });
-
-  it("displays the dialog title", () => {
-    render(<PublishConfirmDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Publish release"
-    );
-  });
-
   it("displays release title", () => {
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(screen.getByText("Big Update")).toBeInTheDocument();
@@ -327,22 +310,6 @@ describe("PublishConfirmDialog", () => {
       "href",
       "/dashboard/test-org/project/github"
     );
-  });
-
-  it("calls onConfirm when Publish button is clicked", () => {
-    const onConfirm = vi.fn();
-    render(<PublishConfirmDialog {...defaultProps} onConfirm={onConfirm} />);
-    fireEvent.click(screen.getByText("Publish"));
-    expect(onConfirm).toHaveBeenCalledOnce();
-  });
-
-  it("calls onOpenChange(false) when Cancel button is clicked", () => {
-    const onOpenChange = vi.fn();
-    render(
-      <PublishConfirmDialog {...defaultProps} onOpenChange={onOpenChange} />
-    );
-    fireEvent.click(screen.getByText("Cancel"));
-    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it("disables Publish button when isSubmitting", () => {

@@ -29,26 +29,6 @@ describe("useBoardFilters", () => {
       expect(result.current.sortBy).toBe("newest");
     });
 
-    it("returns empty selectedStatusIds", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.selectedStatusIds).toEqual([]);
-    });
-
-    it("returns empty selectedTagIds", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.selectedTagIds).toEqual([]);
-    });
-
-    it("returns empty searchQuery", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.searchQuery).toBe("");
-    });
-
-    it("returns showSubmitDrawer as false", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.showSubmitDrawer).toBe(false);
-    });
-
     it("hides completed by default", () => {
       const { result } = renderHook(() => useBoardFilters());
       expect(result.current.hideCompleted).toBe(true);
@@ -65,12 +45,6 @@ describe("useBoardFilters", () => {
       currentSearchParams = new URLSearchParams("view=roadmap");
       const { result } = renderHook(() => useBoardFilters());
       expect(result.current.view).toBe("roadmap");
-    });
-
-    it("parses milestones view from URL", () => {
-      currentSearchParams = new URLSearchParams("view=milestones");
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.view).toBe("milestones");
     });
 
     it("falls back to default for invalid view", () => {
@@ -211,14 +185,6 @@ describe("useBoardFilters", () => {
       });
     });
 
-    it("setSelectedTagId updates URL", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.setSelectedTagIds(["t1"]));
-      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?tags=t1", {
-        scroll: false,
-      });
-    });
-
     it("setSelectedTagId removes param when null", () => {
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.setSelectedTagIds([]));
@@ -249,14 +215,18 @@ describe("useBoardFilters", () => {
     it("adds status when checked", () => {
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.handleStatusChange("s1", true));
-      expect(mockReplace).toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?status=s1", {
+        scroll: false,
+      });
     });
 
     it("removes status when unchecked", () => {
       currentSearchParams = new URLSearchParams("status=s1,s2");
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.handleStatusChange("s1", false));
-      expect(mockReplace).toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?status=s2", {
+        scroll: false,
+      });
     });
   });
 
@@ -264,14 +234,18 @@ describe("useBoardFilters", () => {
     it("adds tag when checked", () => {
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.handleTagChange("t1", true));
-      expect(mockReplace).toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?tags=t1", {
+        scroll: false,
+      });
     });
 
     it("removes tag when unchecked", () => {
       currentSearchParams = new URLSearchParams("tags=t1,t2");
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.handleTagChange("t1", false));
-      expect(mockReplace).toHaveBeenCalled();
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?tags=t2", {
+        scroll: false,
+      });
     });
   });
 

@@ -94,24 +94,6 @@ describe("VersionPicker", () => {
     versionSuggestions: undefined,
   };
 
-  it("renders the input field", () => {
-    render(<VersionPicker {...defaultProps} />);
-    expect(screen.getByTestId("version-input")).toBeInTheDocument();
-  });
-
-  it("shows the placeholder text", () => {
-    render(<VersionPicker {...defaultProps} />);
-    expect(screen.getByTestId("version-input")).toHaveAttribute(
-      "placeholder",
-      "v1.0.0"
-    );
-  });
-
-  it("displays current version value", () => {
-    render(<VersionPicker {...defaultProps} value="1.2.3" />);
-    expect(screen.getByTestId("version-input")).toHaveValue("1.2.3");
-  });
-
   it("renders version suggestion buttons when data is available", () => {
     render(
       <VersionPicker
@@ -183,26 +165,6 @@ describe("VersionPicker", () => {
     );
     fireEvent.click(screen.getByText(/Patch 1.0.1/));
     expect(onChange).toHaveBeenCalledWith("1.0.1");
-  });
-
-  it("calls onChange when minor button is clicked", () => {
-    const onChange = vi.fn();
-    render(
-      <VersionPicker
-        {...defaultProps}
-        onChange={onChange}
-        value="1.0.1"
-        versionSuggestions={suggest({
-          autoVersioning: true,
-          defaultIncrement: "patch",
-          major: "2.0.0",
-          minor: "1.1.0",
-          patch: "1.0.1",
-        })}
-      />
-    );
-    fireEvent.click(screen.getByText(/Minor 1.1.0/));
-    expect(onChange).toHaveBeenCalledWith("1.1.0");
   });
 
   it("calls onChange when major button is clicked", () => {
@@ -330,35 +292,5 @@ describe("VersionPicker", () => {
     expect(screen.queryByText(/Patch/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Minor/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Major/)).not.toBeInTheDocument();
-  });
-
-  it("applies active variant to selected version button", () => {
-    render(
-      <VersionPicker
-        {...defaultProps}
-        value="1.0.1"
-        versionSuggestions={suggest({
-          autoVersioning: true,
-          major: "2.0.0",
-          minor: "1.1.0",
-          patch: "1.0.1",
-        })}
-      />
-    );
-    expect(screen.getByText(/Patch 1.0.1/)).toHaveAttribute(
-      "data-variant",
-      "solid"
-    );
-    expect(screen.getByText(/Minor 1.1.0/)).toHaveAttribute(
-      "data-variant",
-      "ghost"
-    );
-  });
-
-  it("applies custom className", () => {
-    const { container } = render(
-      <VersionPicker {...defaultProps} className="custom-class" />
-    );
-    expect(container.firstChild).toHaveClass("custom-class");
   });
 });

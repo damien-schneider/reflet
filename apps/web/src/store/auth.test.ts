@@ -9,23 +9,6 @@ import {
 } from "./auth";
 
 describe("auth store", () => {
-  describe("initial values", () => {
-    it("authDialogOpenAtom defaults to false", () => {
-      const store = createStore();
-      expect(store.get(authDialogOpenAtom)).toBe(false);
-    });
-
-    it("authDialogModeAtom defaults to signIn", () => {
-      const store = createStore();
-      expect(store.get(authDialogModeAtom)).toBe("signIn");
-    });
-
-    it("authDialogMessageAtom defaults to null", () => {
-      const store = createStore();
-      expect(store.get(authDialogMessageAtom)).toBeNull();
-    });
-  });
-
   describe("openAuthDialogAtom", () => {
     it("opens dialog with default mode when called with no options", () => {
       const store = createStore();
@@ -42,15 +25,6 @@ describe("auth store", () => {
 
       expect(store.get(authDialogOpenAtom)).toBe(true);
       expect(store.get(authDialogModeAtom)).toBe("signUp");
-      expect(store.get(authDialogMessageAtom)).toBeNull();
-    });
-
-    it("opens dialog in signIn mode when passed string", () => {
-      const store = createStore();
-      store.set(openAuthDialogAtom, "signIn");
-
-      expect(store.get(authDialogOpenAtom)).toBe(true);
-      expect(store.get(authDialogModeAtom)).toBe("signIn");
       expect(store.get(authDialogMessageAtom)).toBeNull();
     });
 

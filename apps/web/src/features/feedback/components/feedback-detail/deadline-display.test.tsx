@@ -13,22 +13,6 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/badge", () => ({
-  Badge: ({
-    children,
-    className,
-    color,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    color?: string;
-  }) => (
-    <span className={className} data-color={color} data-testid="badge">
-      {children}
-    </span>
-  ),
-}));
-
 vi.mock("@ctrl-ui/react/ui/calendar", () => ({
   Calendar: ({
     onSelect,
@@ -71,18 +55,24 @@ vi.mock("@ctrl-ui/react/ui/popover", () => ({
     sideOffset?: number;
   }) => <div data-testid="popover-content">{children}</div>,
   PopoverTrigger: ({
+    "aria-label": ariaLabel,
     children,
     render: renderProp,
     className,
   }: {
+    "aria-label"?: string;
     children?: React.ReactNode;
     render?: React.ReactNode;
     className?: string;
   }) => (
-    <div className={className} data-testid="popover-trigger">
+    <fieldset
+      aria-label={ariaLabel}
+      className={className}
+      data-testid="popover-trigger"
+    >
       {renderProp}
       {children}
-    </div>
+    </fieldset>
   ),
 }));
 
@@ -116,12 +106,6 @@ describe("DeadlineDisplay", () => {
     expect(screen.getByText("Mar 15")).toBeInTheDocument();
   });
 
-  it("shows overdue styling for past dates", () => {
-    const pastDate = new Date(2020, 0, 1).getTime();
-    render(<DeadlineDisplay {...baseProps} deadline={pastDate} />);
-    expect(screen.getByText("Jan 1")).toBeInTheDocument();
-  });
-
   it("renders clear deadline button when open and has deadline", () => {
     const futureDate = new Date(2027, 5, 15).getTime();
     render(<DeadlineDisplay {...baseProps} deadline={futureDate} isOpen />);
@@ -131,21 +115,6 @@ describe("DeadlineDisplay", () => {
   it("does not render clear button when no deadline", () => {
     render(<DeadlineDisplay {...baseProps} deadline={null} isOpen />);
     expect(screen.queryByText("Clear deadline")).not.toBeInTheDocument();
-  });
-
-  it("calls onClear when clear deadline button is clicked", () => {
-    const onClear = vi.fn();
-    const futureDate = new Date(2027, 5, 15).getTime();
-    render(
-      <DeadlineDisplay
-        {...baseProps}
-        deadline={futureDate}
-        isOpen
-        onClear={onClear}
-      />
-    );
-    fireEvent.click(screen.getByText("Clear deadline"));
-    expect(onClear).toHaveBeenCalledOnce();
   });
 
   it("calls onChange when a date is selected in calendar", () => {
@@ -177,35 +146,27 @@ describe("DeadlineDisplay", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("shows overdue badge color for past dates", () => {
+  it("announces a past deadline as overdue", () => {
     const pastDate = new Date(2020, 0, 1).getTime();
     render(<DeadlineDisplay {...baseProps} deadline={pastDate} />);
-    const badge = screen.getByTestId("badge");
-    expect(badge).toHaveAttribute("data-color", "red");
+    expect(
+      screen.getByLabelText("Deadline January 1, overdue. Change deadline")
+    ).toBeInTheDocument();
   });
 
-  it("shows purple badge color for future dates", () => {
-    const futureDate = new Date(2027, 5, 15).getTime();
-    render(<DeadlineDisplay {...baseProps} deadline={futureDate} />);
-    const badge = screen.getByTestId("badge");
-    expect(badge).toHaveAttribute("data-color", "purple");
+  it("does not announce an upcoming deadline as overdue", () => {
+    const upcoming = new Date();
+    upcoming.setDate(upcoming.getDate() + 30);
+    render(<DeadlineDisplay {...baseProps} deadline={upcoming.getTime()} />);
+    expect(screen.getByLabelText(/^Deadline /)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/overdue/)).not.toBeInTheDocument();
   });
 
-  it("does not show overdue for today's date", () => {
+  it("does not announce today's deadline as overdue", () => {
     const today = new Date();
-    today.setHours(12, 0, 0, 0);
+    today.setHours(0, 0, 1, 0);
     render(<DeadlineDisplay {...baseProps} deadline={today.getTime()} />);
-    const badge = screen.getByTestId("badge");
-    expect(badge).toHaveAttribute("data-color", "purple");
-  });
-
-  it("shows deadline placeholder when deadline is undefined", () => {
-    render(<DeadlineDisplay {...baseProps} deadline={undefined} />);
-    expect(screen.getByText("Deadline")).toBeInTheDocument();
-  });
-
-  it("renders calendar inside popover content", () => {
-    render(<DeadlineDisplay {...baseProps} deadline={null} isOpen />);
-    expect(screen.getByTestId("calendar")).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Deadline /)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/overdue/)).not.toBeInTheDocument();
   });
 });

@@ -89,30 +89,6 @@ const baseProps = {
 };
 
 describe("AddWebsiteDialog", () => {
-  it("renders when open", () => {
-    render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByText("Add website reference")).toBeInTheDocument();
-  });
-
-  it("does not render when closed", () => {
-    render(<AddWebsiteDialog {...baseProps} open={false} />);
-    expect(screen.queryByText("Add website reference")).not.toBeInTheDocument();
-  });
-
-  it("renders URL input field", () => {
-    render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByLabelText("Website URL")).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("https://example.com/docs")
-    ).toBeInTheDocument();
-  });
-
-  it("renders Cancel and Add website buttons", () => {
-    render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Add website")).toBeInTheDocument();
-  });
-
   it("disables Add button when URL is empty", () => {
     render(<AddWebsiteDialog {...baseProps} />);
     expect(screen.getByText("Add website")).toBeDisabled();

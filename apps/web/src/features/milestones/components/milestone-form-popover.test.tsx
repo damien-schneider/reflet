@@ -151,12 +151,6 @@ describe("MilestoneFormPopover", () => {
     mockCreateMilestone.mockReset();
   });
 
-  it("should render a popover with trigger button", () => {
-    render(<MilestoneFormPopover {...defaultProps} open={false} />);
-
-    expect(screen.getByTestId("popover-root")).toBeInTheDocument();
-  });
-
   it("labels the add trigger with its time horizon in both layouts", () => {
     const { rerender } = render(<MilestoneFormPopover {...defaultProps} />);
     expect(
@@ -167,21 +161,6 @@ describe("MilestoneFormPopover", () => {
     expect(
       screen.getByRole("button", { name: "Add milestone to Now" })
     ).toBeInTheDocument();
-  });
-
-  it("should show emoji picker, name input, and color picker when open", () => {
-    render(<MilestoneFormPopover {...defaultProps} />);
-
-    expect(screen.getByTestId("emoji-picker")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Milestone name…")).toBeInTheDocument();
-    expect(screen.getByTestId("color-picker")).toBeInTheDocument();
-  });
-
-  it("should show Cancel and Create buttons", () => {
-    render(<MilestoneFormPopover {...defaultProps} />);
-
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Create")).toBeInTheDocument();
   });
 
   it("should call createMilestone with form data when Create is clicked", async () => {

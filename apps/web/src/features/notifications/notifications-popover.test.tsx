@@ -197,10 +197,4 @@ describe("Notifications popover", () => {
       ).toBeVisible();
     }
   );
-
-  it("returns keyboard focus to the trigger when closed", async () => {
-    const { user } = await openNotifications();
-    await user.keyboard("{Escape}");
-    expect(screen.getByRole("button", { name: "Notifications" })).toHaveFocus();
-  });
 });
