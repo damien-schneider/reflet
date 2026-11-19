@@ -31,9 +31,17 @@ function FeedCardSkeleton() {
 }
 
 export function LoadingState({ view }: { view?: BoardView }) {
+  // Mirror the loaded header so the content does not shift on load: the search
+  // field is a control-height input the milestones view does not have, and
+  // from md up the actions hold the small view toggle (a tab list, so its
+  // height is the small control plus the list's padding).
+  const showsSearch = view !== "milestones";
   return (
     <FeedbackPage
-      search={<Skeleton className="h-9 w-full sm:w-64" />}
+      actions={
+        <Skeleton className="hidden h-[calc(var(--control-h-sm)+var(--spacing)*2)] w-72 md:block" />
+      }
+      search={showsSearch && <Skeleton className="h-control w-full sm:w-64" />}
       view={view}
     >
       <div aria-busy="true">
