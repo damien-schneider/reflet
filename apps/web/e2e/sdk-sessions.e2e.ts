@@ -105,7 +105,9 @@ async function confirmAndHandOff(page: Page, activate: Activate) {
   await expect(page.getByText(`Confirmed “${PROPOSAL_NEED}”`)).toBeVisible();
   await activate(page.getByRole("button", { name: "Show intentions" }));
   await activate(page.getByRole("menuitemradio", { name: "Details" }));
-  await expect(page.getByText("No considered response yet.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Add a considered response" })
+  ).toBeVisible();
   await activate(page.getByRole("button", { name: PREPARE_ONE_BRIEF }));
   await activate(page.getByRole("button", { name: "Copy brief" }));
   await expect(page.getByText("Brief copied").first()).toBeVisible();
@@ -209,6 +211,14 @@ test.describe("Reflet sessions in the devtools", () => {
     await page.mouse.wheel(0, 400);
     await page.getByRole("button", { name: "Resume" }).click();
     await page.getByRole("button", { name: "Mark moment" }).click();
+    // the review places intentions on a screenshot only once one has uploaded
+    await expect
+      .poll(() =>
+        firstSession(board).evidence.some(
+          ({ status }) => status === "available"
+        )
+      )
+      .toBe(true);
     await page.getByRole("button", { name: "Finish" }).click();
 
     await page

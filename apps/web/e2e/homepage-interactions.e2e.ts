@@ -8,11 +8,11 @@ test("feature descriptions fit inside their controls at every screen size", asyn
   await page.goto("/");
   for (const width of [1440, 900, 390, 320]) {
     await page.setViewportSize({ height: 900, width });
-    const choices = page.getByRole("group", {
+    const choices = page.getByRole("tablist", {
       name: "Explore Reflet features",
     });
     await choices.scrollIntoViewIfNeeded();
-    const bounds = await choices.getByRole("button").evaluateAll((buttons) =>
+    const bounds = await choices.getByRole("tab").evaluateAll((buttons) =>
       buttons.map((button) => {
         const description = button.querySelector("strong + span");
         const title = button.querySelector("strong");
@@ -76,8 +76,8 @@ test("the interactive widget previews a user's own idea", async ({ page }) => {
     name: "Interactive feature preview",
   });
   await expect(
-    preview.locator('.feature-preview-body[data-active="true"]')
-  ).toHaveCSS("opacity", "1");
+    preview.getByRole("tabpanel", { name: "Collect in the moment" })
+  ).toBeVisible();
   await preview.getByLabel("Your idea").fill("Remember my dashboard filters");
   await preview.getByRole("button", { name: "Send idea" }).click();
   await expect(preview.getByRole("status")).toContainText(
@@ -113,23 +113,26 @@ test("reduced-motion hero links open their matching story step", async ({
 
 test("feature selectors and the FAQ work with a keyboard", async ({ page }) => {
   await page.goto("/");
-  const planning = page.getByRole("button", { name: "Plan with context" });
+  const preview = page.getByRole("region", {
+    name: "Interactive feature preview",
+  });
+  const planning = page.getByRole("tab", { name: "Plan with context" });
   await planning.focus();
   await planning.press("Enter");
-  await expect(planning).toHaveAttribute("aria-pressed", "true");
+  await expect(planning).toHaveAttribute("aria-selected", "true");
+  const plan = preview.getByRole("tabpanel", { name: "Plan with context" });
+  await expect(plan).toBeVisible();
+  await expect(plan).toContainText("Next up");
   await expect(
-    page
-      .getByRole("region", { name: "Interactive feature preview" })
-      .locator('[data-active="true"]')
-  ).toContainText("Next up");
-  const announcement = page.getByRole("button", { name: "Close the loop" });
+    preview.getByRole("tabpanel", { name: "Collect in the moment" })
+  ).toBeHidden();
+  const announcement = page.getByRole("tab", { name: "Close the loop" });
   await announcement.press("Enter");
-  await expect(announcement).toHaveAttribute("aria-pressed", "true");
-  await expect(
-    page
-      .getByRole("region", { name: "Interactive feature preview" })
-      .locator('[data-active="true"]')
-  ).toContainText("Saved views are here");
+  await expect(announcement).toHaveAttribute("aria-selected", "true");
+  const release = preview.getByRole("tabpanel", { name: "Close the loop" });
+  await expect(release).toBeVisible();
+  await expect(release).toContainText("Saved views are here");
+  await expect(plan).toBeHidden();
   const question = page.getByText("Does AI make decisions for my team?", {
     exact: true,
   });

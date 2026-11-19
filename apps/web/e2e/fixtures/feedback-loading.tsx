@@ -4,6 +4,8 @@ import {
   AppShellHeader,
 } from "@ctrl-ui/react/ui/app-shell";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +14,7 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@ctrl-ui/react/ui/sidebar";
-import { Chat } from "@phosphor-icons/react";
+import { Chat, MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -46,6 +48,16 @@ function FeedbackStates() {
               size="sm"
               view={view}
             />
+          }
+          search={
+            view !== "milestones" && (
+              <InputGroup className="w-full sm:w-64">
+                <InputGroupAddon>
+                  <MagnifyingGlass aria-hidden className="size-4" />
+                </InputGroupAddon>
+                <Input aria-label="Search feedback" type="search" />
+              </InputGroup>
+            )
           }
           view={view}
         >

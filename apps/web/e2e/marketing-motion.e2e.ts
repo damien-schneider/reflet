@@ -1,13 +1,4 @@
-import { expect, type Locator, test } from "@playwright/test";
-
-async function placeInViewport(target: Locator, viewportTop: number) {
-  await target.evaluate((element, top) => {
-    window.scrollTo({
-      behavior: "instant",
-      top: window.scrollY + element.getBoundingClientRect().top - top,
-    });
-  }, viewportTop);
-}
+import { expect, test } from "@playwright/test";
 
 test("feature choices preserve layout and the user's draft", async ({
   page,
@@ -16,12 +7,10 @@ test("feature choices preserve layout and the user's draft", async ({
   for (const width of [1440, 900, 390, 320]) {
     await page.setViewportSize({ height: 1000, width });
     const explorer = page.locator(".feature-explorer");
-    const choices = page.getByRole("group", {
+    const choices = page.getByRole("tablist", {
       name: "Explore Reflet features",
     });
-    await choices
-      .getByRole("button", { name: "Collect in the moment" })
-      .click();
+    await choices.getByRole("tab", { name: "Collect in the moment" }).click();
     await page.getByLabel("Your idea").fill("Keep my filters");
     const height = await explorer.evaluate(
       (element) => element.getBoundingClientRect().height
@@ -31,7 +20,7 @@ test("feature choices preserve layout and the user's draft", async ({
       "Close the loop",
       "Collect in the moment",
     ]) {
-      await choices.getByRole("button", { name }).click();
+      await choices.getByRole("tab", { name }).click();
       expect(
         await explorer.evaluate(
           (element) => element.getBoundingClientRect().height
@@ -46,14 +35,22 @@ test("reduced motion keeps content still and billing immediately usable", async 
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/pricing");
-  const heading = page.getByRole("heading", { level: 1 });
-  await expect(heading).toHaveCSS("opacity", "1");
-  const group = page.locator(".marketing-faq > div").first();
-  await placeInViewport(group, 700);
-  await expect(group.getByRole("heading")).toHaveCSS("translate", "none");
-  await page.getByRole("button", { exact: true, name: "Monthly" }).click();
-  await expect(page.getByTestId("pro-price")).toContainText("€15");
+  await page.goto("/");
+  const headingLines = page
+    .getByRole("heading", { level: 1 })
+    .locator(":scope > span");
+  await expect(headingLines).toHaveCount(2);
+  for (const line of await headingLines.all()) {
+    await expect(line).toHaveCSS("animation-name", "none");
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  await expect(page.locator(".hero-product-scene")).toHaveCSS(
+    "animation-name",
+    "none"
+  );
+  const pricing = page.getByTestId("marketing-pricing");
+  await pricing.getByRole("button", { exact: true, name: "Monthly" }).click();
+  await expect(pricing.getByTestId("pro-price")).toContainText("€15");
 });
 
 test("navigation links show their underline on keyboard focus", async ({

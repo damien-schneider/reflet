@@ -115,7 +115,8 @@ test.describe("UI Components - No Console Errors", () => {
     page.on("pageerror", (error) => allErrors.push(error.message));
 
     await page.goto("/");
-    await page.waitForLoadState("domcontentloaded", { timeout: 10_000 });
+    // React reports hydration and key warnings after DOMContentLoaded
+    await page.waitForLoadState("networkidle");
 
     expect(allErrors.filter((e) => !e.includes("ResizeObserver"))).toEqual([]);
   });

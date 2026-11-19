@@ -324,6 +324,7 @@ test.describe("Reflet devtools under next dev", () => {
         json: {
           board: { kind: "secretKey" },
           editor: "vscode",
+          machineAccounts: [],
           marker: "reflet-devtools",
         },
       })
@@ -424,6 +425,7 @@ test("Board reconnects after consent and allows disconnecting by keyboard", asyn
             }
           : { canConnect: true, kind: "disconnected" },
         editor: "vscode",
+        machineAccounts: [],
         marker: "reflet-devtools",
       },
     })

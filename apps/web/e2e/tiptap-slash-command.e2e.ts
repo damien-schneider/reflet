@@ -56,7 +56,7 @@ test.describe("Tiptap Slash Command", () => {
     await page.keyboard.type("My Heading");
 
     const markdownOutput = page.getByTestId("markdown-output");
-    await expect(markdownOutput).toContainText("# My Heading", {
+    await expect(markdownOutput).toHaveText("# My Heading", {
       timeout: 5000,
     });
   });
@@ -85,7 +85,7 @@ test.describe("Tiptap Slash Command", () => {
     await page.keyboard.type("Subheading");
 
     const markdownOutput = page.getByTestId("markdown-output");
-    await expect(markdownOutput).toContainText("## Subheading", {
+    await expect(markdownOutput).toHaveText("## Subheading", {
       timeout: 5000,
     });
   });

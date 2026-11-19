@@ -263,6 +263,7 @@ function captureResponders(
     identity: () => ({
       analysisConfigured: true,
       limits: LIMITS,
+      liveLimits: LIMITS,
       organizationId: "org-1",
       organizationName: "Acme",
       transcriptionConfigured: true,
@@ -309,6 +310,7 @@ export async function mockSessionBoard(page: Page): Promise<SessionBoard> {
       json: {
         board: { kind: "connected", organizationName: "Acme" },
         editor: "vscode",
+        machineAccounts: [],
         marker: "reflet-devtools",
       },
     })
