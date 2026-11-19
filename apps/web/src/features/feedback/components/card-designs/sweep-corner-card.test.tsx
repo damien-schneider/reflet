@@ -245,7 +245,9 @@ describe("SweepCornerFeedCard", () => {
 
   it("does not render status when absent", () => {
     render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    expect(screen.queryByTestId("tag")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Feedback properties" })
+    ).toBeEmptyDOMElement();
   });
 
   it("renders tags when provided", () => {
