@@ -35,7 +35,7 @@ export default function UsingRefletPage() {
       <DocsSection id="first-feedback" sections={SECTIONS}>
         <DocsList>
           <li>
-            <DocsLink href="/auth/sign-up">Create an account</DocsLink>, then
+            <DocsLink href="/dashboard">Create an account</DocsLink>, then
             create an organization from the workspace switcher.
           </li>
           <li>
